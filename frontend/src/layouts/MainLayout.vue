@@ -18,29 +18,74 @@
           <el-icon><DataAnalysis /></el-icon>
           <template #title>工作台</template>
         </el-menu-item>
-        <el-menu-item index="/elders">
-          <el-icon><User /></el-icon>
-          <template #title>老人管理</template>
-        </el-menu-item>
-        <el-menu-item index="/nursing">
-          <el-icon><Document /></el-icon>
-          <template #title>护理记录</template>
-        </el-menu-item>
-        <el-menu-item index="/health">
-          <el-icon><TrendCharts /></el-icon>
-          <template #title>健康监测</template>
-        </el-menu-item>
-        <el-menu-item index="/care-plan">
-          <el-icon><Collection /></el-icon>
-          <template #title>护理计划</template>
-        </el-menu-item>
+
+        <!-- 老人用户菜单 -->
+        <el-sub-menu v-if="userType === 1" index="elder">
+          <template #title>
+            <el-icon><User /></el-icon>
+            <span>我的服务</span>
+          </template>
+          <el-menu-item index="/health">
+            <el-icon><TrendCharts /></el-icon>
+            <template #title>健康监测</template>
+          </el-menu-item>
+          <el-menu-item index="/care-plan">
+            <el-icon><Collection /></el-icon>
+            <template #title>护理计划</template>
+          </el-menu-item>
+          <el-menu-item index="/notifications">
+            <el-icon><Bell /></el-icon>
+            <template #title>消息通知</template>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 护理人员菜单 -->
+        <el-sub-menu v-if="userType === 2" index="nurse">
+          <template #title>
+            <el-icon><FirstAidKit /></el-icon>
+            <span>护理工作</span>
+          </template>
+          <el-menu-item index="/nursing">
+            <el-icon><Document /></el-icon>
+            <template #title>护理记录</template>
+          </el-menu-item>
+          <el-menu-item index="/health">
+            <el-icon><TrendCharts /></el-icon>
+            <template #title>健康监测</template>
+          </el-menu-item>
+          <el-menu-item index="/care-plan">
+            <el-icon><Collection /></el-icon>
+            <template #title>护理计划</template>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 管理员菜单 -->
+        <template v-if="userType === 3">
+          <el-menu-item index="/elders">
+            <el-icon><User /></el-icon>
+            <template #title>老人管理</template>
+          </el-menu-item>
+          <el-menu-item index="/nursing">
+            <el-icon><Document /></el-icon>
+            <template #title>护理记录</template>
+          </el-menu-item>
+          <el-menu-item index="/health">
+            <el-icon><TrendCharts /></el-icon>
+            <template #title>健康监测</template>
+          </el-menu-item>
+          <el-menu-item index="/care-plan">
+            <el-icon><Collection /></el-icon>
+            <template #title>护理计划</template>
+          </el-menu-item>
+          <el-menu-item index="/statistics">
+            <el-icon><PieChart /></el-icon>
+            <template #title>数据统计</template>
+          </el-menu-item>
+        </template>
+
         <el-menu-item index="/notifications">
           <el-icon><Bell /></el-icon>
           <template #title>消息通知</template>
-        </el-menu-item>
-        <el-menu-item index="/statistics">
-          <el-icon><PieChart /></el-icon>
-          <template #title>数据统计</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -94,10 +139,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import api from '@/store/auth'
+import {
+  DataAnalysis, User, Document, TrendCharts, Collection, Bell, PieChart,
+  Fold, Expand, SwitchButton, FirstAidKit
+} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -105,7 +154,20 @@ const authStore = useAuthStore()
 
 const isCollapse = ref(false)
 const unreadCount = ref(0)
-const userInfo = authStore.userInfo
+const userType = ref(3)
+
+const userInfo = computed(() => {
+  if (authStore.userInfo) return authStore.userInfo
+  const stored = localStorage.getItem('userInfo')
+  if (stored) {
+    try {
+      return JSON.parse(stored)
+    } catch {
+      return null
+    }
+  }
+  return null
+})
 
 const handleCommand = (command: string) => {
   if (command === 'logout') {
@@ -113,6 +175,13 @@ const handleCommand = (command: string) => {
     router.push('/login')
   } else if (command === 'profile') {
     router.push('/profile')
+  }
+}
+
+const getUserType = () => {
+  const info = userInfo.value
+  if (info) {
+    userType.value = info.user_type || 3
   }
 }
 
@@ -129,6 +198,7 @@ const getUnreadCount = async () => {
 
 onMounted(() => {
   authStore.getProfile()
+  getUserType()
   getUnreadCount()
 })
 </script>
