@@ -35,7 +35,7 @@ class User(db.Model):
     emergency_contact = db.Column(db.String(50), comment='紧急联系人')
     emergency_phone = db.Column(db.String(20), comment='紧急联系电话')
     status = db.Column(db.SmallInteger, default=1, comment='状态: 0-禁用, 1-正常')
-    user_type = db.Column(db.SmallInteger, default=1, comment='用户类型: 1-老人, 2-护理人员, 3-管理员')
+    user_type = db.Column(db.SmallInteger, default=1, comment='用户类型: 1-老人, 2-护理人员, 3-管理员, 4-家属')
     created_at = db.Column(db.DateTime, default=datetime.now, comment='创建时间')
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
     last_login = db.Column(db.DateTime, comment='最后登录时间')

@@ -65,6 +65,48 @@ def init_test_data():
             db.session.add(nurse)
             print('已创建护理人员账号: 13700137000 / 123456')
 
+        # 创建老人账号 (张三)
+        if not User.query.filter_by(phone='13900001001').first():
+            user = User(
+                username='zhangsan',
+                phone='13900001001',
+                real_name='张三',
+                gender=1,
+                age=75,
+                user_type=1,
+                status=1
+            )
+            user.set_password('123456')
+            db.session.add(user)
+            print('已创建老人账号: 13900001001 / 123456')
+
+        # 创建护理人员账号 (李护理)
+        if not User.query.filter_by(phone='13900001002').first():
+            nurse2 = User(
+                username='linurse',
+                phone='13900001002',
+                real_name='李护理',
+                user_type=2,
+                status=1
+            )
+            nurse2.set_password('123456')
+            db.session.add(nurse2)
+            print('已创建护理人员账号: 13900001002 / 123456')
+
+        # 创建家属账号 (王家人)
+        if not User.query.filter_by(phone='13900001004').first():
+            family = User(
+                username='wangfamily',
+                phone='13900001004',
+                real_name='王家人',
+                gender=1,
+                user_type=4,  # 家属
+                status=1
+            )
+            family.set_password('123456')
+            db.session.add(family)
+            print('已创建家属账号: 13900001004 / 123456')
+
         db.session.commit()
         print('测试数据初始化完成！')
 
