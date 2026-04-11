@@ -14,73 +14,54 @@
         text-color="#bfcbd9"
         active-text-color="#409eff"
       >
-        <el-menu-item index="/dashboard">
-          <el-icon><DataAnalysis /></el-icon>
-          <template #title>工作台</template>
+        <el-menu-item :index="dashboardPath">
+          <el-icon><component :is="dashboardIcon" /></el-icon>
+          <template #title>{{ dashboardTitle }}</template>
         </el-menu-item>
 
         <!-- 老人用户菜单 -->
-        <el-sub-menu v-if="userType === 1" index="elder">
-          <template #title>
-            <el-icon><User /></el-icon>
-            <span>我的服务</span>
-          </template>
-          <el-menu-item index="/health">
-            <el-icon><TrendCharts /></el-icon>
-            <template #title>健康监测</template>
-          </el-menu-item>
-          <el-menu-item index="/care-plan">
-            <el-icon><Collection /></el-icon>
-            <template #title>护理计划</template>
-          </el-menu-item>
-          <el-menu-item index="/notifications">
-            <el-icon><Bell /></el-icon>
-            <template #title>消息通知</template>
-          </el-menu-item>
-        </el-sub-menu>
+        <template v-if="userType === 1">
+          <el-sub-menu index="elder">
+            <template #title>
+              <el-icon><User /></el-icon>
+              <span>我的服务</span>
+            </template>
+            <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+            <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
+          </el-sub-menu>
+        </template>
 
         <!-- 护理人员菜单 -->
-        <el-sub-menu v-if="userType === 2" index="nurse">
-          <template #title>
-            <el-icon><FirstAidKit /></el-icon>
-            <span>护理工作</span>
-          </template>
-          <el-menu-item index="/nursing">
-            <el-icon><Document /></el-icon>
-            <template #title>护理记录</template>
-          </el-menu-item>
-          <el-menu-item index="/health">
-            <el-icon><TrendCharts /></el-icon>
-            <template #title>健康监测</template>
-          </el-menu-item>
-          <el-menu-item index="/care-plan">
-            <el-icon><Collection /></el-icon>
-            <template #title>护理计划</template>
-          </el-menu-item>
-        </el-sub-menu>
+        <template v-if="userType === 2">
+          <el-sub-menu index="nurse">
+            <template #title>
+              <el-icon><FirstAidKit /></el-icon>
+              <span>护理工作</span>
+            </template>
+            <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
+            <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+          </el-sub-menu>
+        </template>
+
+        <!-- 家属菜单 -->
+        <template v-if="userType === 4">
+          <el-sub-menu index="family">
+            <template #title>
+              <el-icon><House /></el-icon>
+              <span>家属服务</span>
+            </template>
+            <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+            <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
+            <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
+          </el-sub-menu>
+        </template>
 
         <!-- 管理员菜单 -->
         <template v-if="userType === 3">
-          <el-menu-item index="/elders">
-            <el-icon><User /></el-icon>
-            <template #title>老人管理</template>
-          </el-menu-item>
-          <el-menu-item index="/nursing">
-            <el-icon><Document /></el-icon>
-            <template #title>护理记录</template>
-          </el-menu-item>
-          <el-menu-item index="/health">
-            <el-icon><TrendCharts /></el-icon>
-            <template #title>健康监测</template>
-          </el-menu-item>
-          <el-menu-item index="/care-plan">
-            <el-icon><Collection /></el-icon>
-            <template #title>护理计划</template>
-          </el-menu-item>
-          <el-menu-item index="/statistics">
-            <el-icon><PieChart /></el-icon>
-            <template #title>数据统计</template>
-          </el-menu-item>
+          <el-menu-item index="/elders"><el-icon><User /></el-icon>老人管理</el-menu-item>
+          <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
+          <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+          <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
         </template>
 
         <el-menu-item index="/notifications">
@@ -109,6 +90,9 @@
               <Bell />
             </el-icon>
           </el-badge>
+          <div class="user-type-badge" :class="'type-' + userType">
+            {{ userTypeName }}
+          </div>
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-avatar :size="32" :src="userInfo?.avatar || ''">
@@ -145,7 +129,7 @@ import { useAuthStore } from '@/store/auth'
 import api from '@/store/auth'
 import {
   DataAnalysis, User, Document, TrendCharts, Collection, Bell, PieChart,
-  Fold, Expand, SwitchButton, FirstAidKit
+  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -155,6 +139,21 @@ const authStore = useAuthStore()
 const isCollapse = ref(false)
 const unreadCount = ref(0)
 const userType = ref(3)
+
+const dashboardPath = computed(() => {
+  const paths: Record<number, string> = { 1: '/elder-dashboard', 2: '/nurse-dashboard', 3: '/admin-dashboard', 4: '/family-dashboard' }
+  return paths[userType.value] || '/admin-dashboard'
+})
+
+const dashboardIcon = computed(() => {
+  const icons: Record<number, any> = { 1: Sunny, 2: FirstAidKit, 3: DataAnalysis, 4: House }
+  return icons[userType.value] || DataAnalysis
+})
+
+const dashboardTitle = computed(() => {
+  const titles: Record<number, string> = { 1: '我的主页', 2: '工作台', 3: '管理中心', 4: '家属首页' }
+  return titles[userType.value] || '工作台'
+})
 
 const userInfo = computed(() => {
   if (authStore.userInfo) return authStore.userInfo
@@ -167,6 +166,11 @@ const userInfo = computed(() => {
     }
   }
   return null
+})
+
+const userTypeName = computed(() => {
+  const names: Record<number, string> = { 1: '老人', 2: '护理人员', 3: '管理员', 4: '家属' }
+  return names[userType.value] || '用户'
 })
 
 const handleCommand = (command: string) => {
@@ -248,7 +252,7 @@ onMounted(() => {
   .header-right {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
 
     .header-icon {
       font-size: 20px;
@@ -258,6 +262,19 @@ onMounted(() => {
       &:hover {
         color: #409eff;
       }
+    }
+
+    .user-type-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #fff;
+
+      &.type-1 { background: #67c23a; }
+      &.type-2 { background: #409eff; }
+      &.type-3 { background: #e6a23c; }
+      &.type-4 { background: #f56c6c; }
     }
 
     .user-info {

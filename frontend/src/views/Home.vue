@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { UserFilled, Pointer, Clock, FirstAidKit, DataAnalysis } from '@element-plus/icons-vue'
+import { UserFilled, Pointer, Clock, FirstAidKit, DataAnalysis, House, User as UserIcon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 
@@ -76,6 +76,15 @@ const demoUsers = [
     phone: '13900001001',
     password: '123456',
     features: ['健康记录', '护理计划', '预约服务']
+  },
+  {
+    id: 4,
+    name: '王家人',
+    role: 'family',
+    roleName: '老人家属',
+    phone: '13900001004',
+    password: '123456',
+    features: ['健康监测', '护理记录', '紧急求助']
   },
   {
     id: 2,
@@ -104,10 +113,36 @@ const quickLogin = async (user: any) => {
       password: user.password
     })
     if (res.code === 200) {
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('userInfo', JSON.stringify(res.data))
+      const loginData = res.data || {}
+
+      // 根据角色确定 user_type
+      const roleMap: Record<string, number> = {
+        elder: 1,
+        nurse: 2,
+        admin: 3,
+        family: 4
+      }
+      const userType = loginData.user_type || roleMap[user.role] || 3
+
+      const userInfo = {
+        id: loginData.user_id || loginData.id || 0,
+        user_type: userType,
+        name: loginData.name || user.name,
+        phone: user.phone
+      }
+      localStorage.setItem('token', loginData.token || '')
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
+
       ElMessage.success(`以${user.roleName}身份登录成功`)
-      window.location.href = '/dashboard'
+
+      // 根据角色跳转到对应的页面
+      const routeMap: Record<number, string> = {
+        1: '/elder-dashboard',
+        2: '/nurse-dashboard',
+        3: '/admin-dashboard',
+        4: '/family-dashboard'
+      }
+      window.location.href = routeMap[userType] || '/admin-dashboard'
     }
   } catch (error) {
     ElMessage.error('登录失败，请稍后重试')
@@ -209,6 +244,11 @@ const quickLogin = async (user: any) => {
   &.admin {
     border: 3px solid #e6a23c;
     .user-avatar { background: linear-gradient(135deg, #e6a23c, #ebb563); }
+  }
+
+  &.family {
+    border: 3px solid #f56c6c;
+    .user-avatar { background: linear-gradient(135deg, #f56c6c, #f78989); }
   }
 
   .user-avatar {

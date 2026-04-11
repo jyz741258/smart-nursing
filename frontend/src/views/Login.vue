@@ -110,7 +110,20 @@ const handleLogin = async () => {
 
     if (res.code === 200) {
       ElMessage.success('登录成功')
-      router.push('/dashboard')
+
+      // 保存用户信息到 localStorage
+      const userData = res.data || {}
+      localStorage.setItem('userInfo', JSON.stringify(userData))
+
+      // 根据用户类型跳转到对应页面
+      const userType = userData.user_type || 3
+      const routeMap: Record<number, string> = {
+        1: '/elder-dashboard',
+        2: '/nurse-dashboard',
+        3: '/admin-dashboard',
+        4: '/family-dashboard'
+      }
+      router.push(routeMap[userType] || '/admin-dashboard')
     } else {
       ElMessage.error(res.message || '登录失败')
     }

@@ -160,6 +160,23 @@
           <el-button type="success" @click="$router.push('/statistics')">数据统计</el-button>
         </div>
       </div>
+
+      <div v-if="userType === 4" class="profile-card family-section">
+        <div class="card-header">
+          <h3>关注的老人</h3>
+        </div>
+        <div class="elder-list">
+          <div v-for="elder in watchedElders" :key="elder.id" class="elder-item">
+            <el-avatar :size="40" :style="{ background: elder.color }">{{ elder.name.charAt(0) }}</el-avatar>
+            <div class="elder-info">
+              <div class="elder-name">{{ elder.name }}</div>
+              <div class="elder-relation">{{ elder.relation }}</div>
+            </div>
+            <div class="elder-status" :class="elder.healthStatus">{{ elder.healthStatusText }}</div>
+          </div>
+        </div>
+        <el-button type="primary" plain @click="$router.push('/health')">查看健康详情</el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -180,6 +197,10 @@ const stats = ref({
   todayOrders: 0
 })
 
+const watchedElders = ref([
+  { id: 1, name: '张三', relation: '父亲', healthStatus: 'normal', healthStatusText: '健康', color: '#67c23a' }
+])
+
 const form = reactive({
   phone: '',
   name: '',
@@ -198,12 +219,12 @@ const pwdForm = reactive({
 })
 
 const userTypeName = computed(() => {
-  const names = { 1: '老人用户', 2: '护理人员', 3: '管理员' }
+  const names = { 1: '老人用户', 2: '护理人员', 3: '管理员', 4: '老人家属' }
   return names[userType.value] || '未知'
 })
 
 const userTypeClass = computed(() => {
-  const classes = { 1: 'elder', 2: 'nurse', 3: 'admin' }
+  const classes = { 1: 'elder', 2: 'nurse', 3: 'admin', 4: 'family' }
   return classes[userType.value] || ''
 })
 
@@ -211,7 +232,8 @@ const roleDescription = computed(() => {
   const descs = {
     1: '享受专业护理服务，管理个人健康档案',
     2: '提供护理服务，管理护理计划和记录',
-    3: '管理系统用户和数据，查看统计报表'
+    3: '管理系统用户和数据，查看统计报表',
+    4: '查看老人健康状况，联系护理人员'
   }
   return descs[userType.value] || ''
 })
@@ -220,7 +242,8 @@ const permissions = computed(() => {
   const perms = {
     1: ['健康记录', '护理计划', '预约服务', '消息通知'],
     2: ['护理记录', '健康监测', '任务管理', '服务统计'],
-    3: ['老人管理', '护理人员管理', '数据统计', '系统设置']
+    3: ['老人管理', '护理人员管理', '数据统计', '系统设置'],
+    4: ['健康监测', '护理记录', '紧急求助', '联系护理']
   }
   return perms[userType.value] || []
 })
@@ -342,6 +365,11 @@ onMounted(() => {
       background: #fdf6ec;
       color: #e6a23c;
     }
+
+    &.family {
+      background: #fef0f0;
+      color: #f56c6c;
+    }
   }
 }
 
@@ -389,6 +417,7 @@ onMounted(() => {
       &.elder { background: linear-gradient(135deg, #67c23a, #85ce61); }
       &.nurse { background: linear-gradient(135deg, #409eff, #66b1ff); }
       &.admin { background: linear-gradient(135deg, #e6a23c, #ebb563); }
+      &.family { background: linear-gradient(135deg, #f56c6c, #fab6b6); }
     }
 
     .role-details {
@@ -465,6 +494,58 @@ onMounted(() => {
   .admin-actions {
     display: flex;
     gap: 10px;
+  }
+}
+
+.family-section {
+  .elder-list {
+    margin-bottom: 20px;
+
+    .elder-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f5f7fa;
+      margin-bottom: 10px;
+
+      .elder-info {
+        flex: 1;
+        margin-left: 12px;
+
+        .elder-name {
+          font-size: 15px;
+          font-weight: 500;
+          color: #303133;
+        }
+
+        .elder-relation {
+          font-size: 12px;
+          color: #909399;
+        }
+      }
+
+      .elder-status {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+
+        &.normal {
+          background: #f0f9eb;
+          color: #67c23a;
+        }
+
+        &.warning {
+          background: #fdf6ec;
+          color: #e6a23c;
+        }
+
+        &.danger {
+          background: #fef0f0;
+          color: #f56c6c;
+        }
+      }
+    }
   }
 }
 </style>

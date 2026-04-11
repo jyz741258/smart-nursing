@@ -26,6 +26,30 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '工作台' }
       },
       {
+        path: 'elder-dashboard',
+        name: 'ElderDashboard',
+        component: () => import('@/views/ElderDashboard.vue'),
+        meta: { title: '工作台', roles: [1] }
+      },
+      {
+        path: 'nurse-dashboard',
+        name: 'NurseDashboard',
+        component: () => import('@/views/NurseDashboard.vue'),
+        meta: { title: '工作台', roles: [2] }
+      },
+      {
+        path: 'family-dashboard',
+        name: 'FamilyDashboard',
+        component: () => import('@/views/FamilyDashboard.vue'),
+        meta: { title: '工作台', roles: [4] }
+      },
+      {
+        path: 'admin-dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/AdminDashboard.vue'),
+        meta: { title: '管理中心', roles: [3] }
+      },
+      {
         path: 'elders',
         name: 'Elders',
         component: () => import('@/views/Elders.vue'),
@@ -40,8 +64,8 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'health',
         name: 'Health',
-        component: () => import('@/views/Health.vue'),
-        meta: { title: '健康监测' }
+        component: () => import('@/views/HealthManagement.vue'),
+        meta: { title: '健康管理与护理计划' }
       },
       {
         path: 'care-plan',
