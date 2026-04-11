@@ -136,8 +136,11 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
+import { useAuthStore } from '@/store/auth'
 
 const emergencyDialog = ref(false)
+const authStore = useAuthStore()
+const elderId = ref('1') // 这里应该从用户信息中获取老人ID
 
 const currentDate = computed(() => {
   const now = new Date()
@@ -161,12 +164,12 @@ const notices = ref([
 
 const getHealthData = async () => {
   try {
-    const res: any = await api.get('/health/latest')
+    const res: any = await api.get(`/health/metrics/latest/${elderId.value}`)
     if (res.code === 200 && res.data) {
-      healthData.heartRate = res.data.heart_rate || '--'
-      healthData.bloodPressure = `${res.data.blood_pressure_high || '--'}/${res.data.blood_pressure_low || '--'}`
-      healthData.sleepHours = res.data.sleep_hours || '--'
-      healthData.steps = res.data.steps || '--'
+      healthData.heartRate = res.data.心率?.value || '--'
+      healthData.bloodPressure = `${res.data['血压-收缩压']?.value || '--'}/${res.data['血压-舒张压']?.value || '--'}`
+      healthData.sleepHours = res.data.睡眠时长?.value || '--'
+      healthData.steps = res.data.今日步数?.value || '--'
     }
   } catch (error) {
     console.error('获取健康数据失败', error)

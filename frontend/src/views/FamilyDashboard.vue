@@ -182,12 +182,12 @@ const alerts = ref<any[]>([])
 
 const getHealthData = async () => {
   try {
-    const res: any = await api.get(`/health/elder/${selectedElder.value}`)
+    const res: any = await api.get(`/health/metrics/latest/${selectedElder.value}`)
     if (res.code === 200 && res.data) {
-      healthData.heartRate = res.data.heart_rate || '72'
-      healthData.bloodPressure = `${res.data.blood_pressure_high || '--'}/${res.data.blood_pressure_low || '--'}`
-      healthData.sleepHours = res.data.sleep_hours || '--'
-      healthData.steps = res.data.steps || '--'
+      healthData.heartRate = res.data.心率?.value || '72'
+      healthData.bloodPressure = `${res.data['血压-收缩压']?.value || '--'}/${res.data['血压-舒张压']?.value || '--'}`
+      healthData.sleepHours = res.data.睡眠时长?.value || '7.5'
+      healthData.steps = res.data.今日步数?.value || '3200'
     }
   } catch (error) {
     console.error('获取健康数据失败', error)

@@ -96,7 +96,7 @@ def get_health_metric_detail(current_user, metric_id):
 @require_token
 def get_latest_metrics(current_user, elder_id):
     """获取老人最新健康指标"""
-    metric_types = [1, 2, 3, 4, 5, 6]  # 各种指标类型
+    metric_types = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # 各种指标类型
     latest_metrics = {}
 
     for metric_type in metric_types:
@@ -107,7 +107,7 @@ def get_latest_metrics(current_user, elder_id):
 
         if metric:
             latest_metrics[metric.get_metric_type_display()] = {
-                'value': metric.metric_value,
+                'value': float(metric.metric_value),
                 'unit': metric.unit,
                 'recorded_at': metric.recorded_at.isoformat()
             }
@@ -146,6 +146,8 @@ def get_metric_types(current_user):
         {'value': 5, 'label': '血氧', 'unit': '%'},
         {'value': 6, 'label': '血糖', 'unit': 'mmol/L'},
         {'value': 7, 'label': '体重', 'unit': 'kg'},
-        {'value': 8, 'label': '身高', 'unit': 'cm'}
+        {'value': 8, 'label': '身高', 'unit': 'cm'},
+        {'value': 9, 'label': '睡眠时长', 'unit': 'h'},
+        {'value': 10, 'label': '今日步数', 'unit': '步'}
     ]
     return api_response(types)

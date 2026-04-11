@@ -34,14 +34,30 @@ def get_dashboard(current_user):
     # 护理人员数
     staff_count = User.query.filter_by(user_type=2).count()
 
+    # 家属数量
+    family_count = User.query.filter_by(user_type=4).count()
+
     # 待处理任务数
     pending_tasks = CareTask.query.filter_by(status=1).count()
+
+    # 今日订单数（假设订单模型存在）
+    today_orders = 0
+    try:
+        from ..models import Order
+        today_orders = Order.query.filter(
+            Order.created_at >= today_start,
+            Order.created_at <= today_end
+        ).count()
+    except ImportError:
+        pass
 
     return api_response({
         'today_nursing_count': today_nursing_count,
         'today_completed_tasks': today_completed_tasks,
         'elder_count': elder_count,
         'staff_count': staff_count,
+        'family_count': family_count,
+        'today_orders': today_orders,
         'pending_tasks': pending_tasks
     })
 

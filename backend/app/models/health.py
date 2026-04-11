@@ -37,6 +37,7 @@ class HealthMetric(db.Model):
     def get_metric_type_display(self):
         type_map = {
             1: '体温', 2: '血压-收缩压', 3: '血压-舒张压',
-            4: '心率', 5: '血氧', 6: '血糖', 7: '体重', 8: '身高'
+            4: '心率', 5: '血氧', 6: '血糖', 7: '体重', 8: '身高',
+            9: '睡眠时长', 10: '今日步数'
         }
         return type_map.get(self.metric_type, '未知')

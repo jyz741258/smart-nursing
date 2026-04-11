@@ -164,14 +164,24 @@ const getElderList = async () => {
   try {
     const res: any = await api.get('/users/elder/list', {
       params: {
-        page: pagination.page,
-        page_size: pagination.page_size,
         ...searchForm
       }
     })
     if (res.code === 200) {
-      elderList.value = res.data || []
-      pagination.total = res.data?.length || 0
+      // 后端返回的是完整列表，前端进行本地分页
+      const allElders = res.data || []
+      // 根据搜索条件过滤
+      const filteredElders = allElders.filter((elder: any) => {
+        if (searchForm.name) {
+          return elder.name.includes(searchForm.name)
+        }
+        return true
+      })
+      // 计算分页
+      pagination.total = filteredElders.length
+      const start = (pagination.page - 1) * pagination.page_size
+      const end = start + pagination.page_size
+      elderList.value = filteredElders.slice(start, end)
     }
   } catch (error) {
     console.error('获取老人列表失败', error)

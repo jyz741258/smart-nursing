@@ -117,16 +117,31 @@ let nursingChart: echarts.ECharts | null = null
 let pieChart: echarts.ECharts | null = null
 
 const userName = ref('管理员')
-const stats = reactive({ elderCount: 45, nurseCount: 12, familyCount: 38, todayOrders: 28 })
+const stats = reactive({ elderCount: 0, nurseCount: 0, familyCount: 0, todayOrders: 0 })
 
 const pendingTasks = ref([
   { task_name: '日常护理', elder_name: '张三', nurse_name: '李护理', status: '待执行' },
   { task_name: '健康监测', elder_name: '李四', nurse_name: '王护理', status: '待执行' }
 ])
 
-const refreshData = () => {
-  ElMessage.success('数据已刷新')
+const getDashboardStats = async () => {
+  try {
+    const res: any = await api.get('/statistics/dashboard')
+    if (res.code === 200) {
+      stats.elderCount = res.data.elder_count || 0
+      stats.nurseCount = res.data.staff_count || 0
+      stats.familyCount = res.data.family_count || 0
+      stats.todayOrders = res.data.today_orders || 0
+    }
+  } catch (error) {
+    console.error('获取仪表盘数据失败', error)
+  }
+}
+
+const refreshData = async () => {
+  await getDashboardStats()
   updateCharts()
+  ElMessage.success('数据已刷新')
 }
 
 const updateCharts = () => {
@@ -164,7 +179,8 @@ const handleResize = () => {
   pieChart?.resize()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await getDashboardStats()
   updateCharts()
   window.addEventListener('resize', handleResize)
 })
