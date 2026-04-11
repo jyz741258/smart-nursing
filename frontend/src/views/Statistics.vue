@@ -135,9 +135,12 @@ const getHealthAlerts = async () => {
   }
 }
 
-const updatePieChart = (data: any[]) => {
+const updatePieChart = async (data: any[]) => {
   if (!nursingPieChartRef.value) return
 
+  // 确保DOM元素已经渲染完成
+  await new Promise(resolve => setTimeout(resolve, 100))
+  
   nursingPieChart = echarts.init(nursingPieChartRef.value)
   const values = new Array(7).fill(0)
 
@@ -162,9 +165,12 @@ const updatePieChart = (data: any[]) => {
   })
 }
 
-const updateWorkloadChart = (data: any[]) => {
+const updateWorkloadChart = async (data: any[]) => {
   if (!workloadChartRef.value) return
 
+  // 确保DOM元素已经渲染完成
+  await new Promise(resolve => setTimeout(resolve, 100))
+  
   workloadChart = echarts.init(workloadChartRef.value)
   const names = data.map((item: any) => item.staff_name)
   const counts = data.map((item: any) => item.record_count)
@@ -181,9 +187,12 @@ const updateWorkloadChart = (data: any[]) => {
   })
 }
 
-const updateTrendChart = () => {
+const updateTrendChart = async () => {
   if (!nursingTrendChartRef.value) return
 
+  // 确保DOM元素已经渲染完成
+  await new Promise(resolve => setTimeout(resolve, 100))
+  
   nursingTrendChart = echarts.init(nursingTrendChartRef.value)
   const dates = []
   const now = new Date()
@@ -209,11 +218,11 @@ const updateTrendChart = () => {
   })
 }
 
-const handleDateChange = () => {
+const handleDateChange = async () => {
   getNursingSummary()
   getWorkload()
   getHealthAlerts()
-  updateTrendChart()
+  await updateTrendChart()
 }
 
 const handleResize = () => {
@@ -222,12 +231,12 @@ const handleResize = () => {
   workloadChart?.resize()
 }
 
-onMounted(() => {
+onMounted(async () => {
   getNursingSummary()
   getWorkload()
   getPlanProgress()
   getHealthAlerts()
-  updateTrendChart()
+  await updateTrendChart()
   window.addEventListener('resize', handleResize)
 })
 

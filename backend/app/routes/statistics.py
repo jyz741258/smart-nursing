@@ -128,21 +128,25 @@ def get_staff_workload(current_user):
 
     workload = db.session.query(
         NursingRecord.staff_id,
-        User.name,
         func.count(NursingRecord.id).label('record_count')
-    ).join(
-        User, User.id == NursingRecord.staff_id
     ).filter(
-        NursingRecord.created_at >= start_date
+        NursingRecord.created_at >= start_date,
+        NursingRecord.staff_id.isnot(None)
     ).group_by(
-        NursingRecord.staff_id, User.name
+        NursingRecord.staff_id
     ).all()
+    
+    # 为每个工作量添加护理人员姓名
+    workload_with_names = []
+    for w in workload:
+        staff = User.query.get(w[0])
+        workload_with_names.append({
+            'staff_id': w[0],
+            'staff_name': staff.name if staff else '未知',
+            'record_count': w[1]
+        })
 
-    return api_response([{
-        'staff_id': w[0],
-        'staff_name': w[1],
-        'record_count': w[2]
-    } for w in workload])
+    return api_response(workload_with_names)
 
 
 @statistics_bp.route('/alerts', methods=['GET'])

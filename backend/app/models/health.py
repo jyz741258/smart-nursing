@@ -20,6 +20,7 @@ class HealthMetric(db.Model):
 
     # 关系（使用 primaryjoin 指定连接条件，因为没有外键）
     recorder = db.relationship('User', primaryjoin='HealthMetric.recorded_by == User.id', foreign_keys=[recorded_by], viewonly=True)
+    elder = db.relationship('User', primaryjoin='HealthMetric.elder_id == User.id', foreign_keys=[elder_id], viewonly=True)
 
     def to_dict(self):
         return {
