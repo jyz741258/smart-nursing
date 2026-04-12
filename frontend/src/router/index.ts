@@ -90,6 +90,24 @@ const routes: RouteRecordRaw[] = [
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
         meta: { title: '个人中心' }
+      },
+      {
+        path: 'services',
+        name: 'Services',
+        component: () => import('@/views/Services.vue'),
+        meta: { title: '服务列表' }
+      },
+      {
+        path: 'service-management',
+        name: 'ServiceManagement',
+        component: () => import('@/views/ServiceManagement.vue'),
+        meta: { title: '服务管理', roles: [3] }
+      },
+      {
+        path: 'accounting',
+        name: 'Accounting',
+        component: () => import('@/views/Accounting.vue'),
+        meta: { title: '账目管理', roles: [3] }
       }
     ]
   }

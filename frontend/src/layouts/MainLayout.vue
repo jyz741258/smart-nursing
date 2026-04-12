@@ -26,6 +26,7 @@
               <el-icon><User /></el-icon>
               <span>我的服务</span>
             </template>
+            <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
           </el-sub-menu>
@@ -38,6 +39,7 @@
               <el-icon><FirstAidKit /></el-icon>
               <span>护理工作</span>
             </template>
+            <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
           </el-sub-menu>
@@ -50,6 +52,7 @@
               <el-icon><House /></el-icon>
               <span>家属服务</span>
             </template>
+            <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
@@ -61,6 +64,8 @@
           <el-menu-item index="/elders"><el-icon><User /></el-icon>老人管理</el-menu-item>
           <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
           <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+          <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
+          <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
           <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
         </template>
 
