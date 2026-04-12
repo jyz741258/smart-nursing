@@ -36,7 +36,11 @@ def get_notifications(current_user):
     page_size = request.args.get('page_size', 10, type=int)
     is_read = request.args.get('is_read')
 
-    query = Notification.query.filter_by(user_id=current_user.id)
+    # 管理员可以看到所有通知，普通用户只能看到自己的通知
+    if current_user.user_type == 3:  # 管理员
+        query = Notification.query
+    else:
+        query = Notification.query.filter_by(user_id=current_user.id)
 
     if is_read is not None:
         query = query.filter_by(is_read=is_read.lower() == 'true')
@@ -65,7 +69,8 @@ def mark_as_read(current_user, notification_id):
     """标记通知已读"""
     notification = Notification.query.get_or_404(notification_id)
 
-    if notification.user_id != current_user.id:
+    # 管理员可以标记任何通知为已读，普通用户只能标记自己的通知为已读
+    if current_user.user_type != 3 and notification.user_id != current_user.id:
         return api_error('无权限', 403)
 
     notification.is_read = True
@@ -79,10 +84,16 @@ def mark_as_read(current_user, notification_id):
 @require_token
 def mark_all_as_read(current_user):
     """标记所有通知已读"""
-    Notification.query.filter_by(
-        user_id=current_user.id,
-        is_read=False
-    ).update({
+    # 管理员可以标记所有通知为已读，普通用户只能标记自己的通知为已读
+    if current_user.user_type == 3:  # 管理员
+        query = Notification.query.filter_by(is_read=False)
+    else:
+        query = Notification.query.filter_by(
+            user_id=current_user.id,
+            is_read=False
+        )
+    
+    query.update({
         'is_read': True,
         'read_at': datetime.utcnow()
     })
@@ -95,10 +106,14 @@ def mark_all_as_read(current_user):
 @require_token
 def get_unread_count(current_user):
     """获取未读通知数量"""
-    count = Notification.query.filter_by(
-        user_id=current_user.id,
-        is_read=False
-    ).count()
+    # 管理员可以看到所有未读通知的数量，普通用户只能看到自己的未读通知数量
+    if current_user.user_type == 3:  # 管理员
+        count = Notification.query.filter_by(is_read=False).count()
+    else:
+        count = Notification.query.filter_by(
+            user_id=current_user.id,
+            is_read=False
+        ).count()
 
     return api_response({'count': count})
 

@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import api from '@/store/auth'
 
@@ -88,7 +88,7 @@ const getNursingSummary = async () => {
       params: { days: dateRange.value }
     })
     if (res.code === 200) {
-      updatePieChart(res.data)
+      await updatePieChart(res.data)
     }
   } catch (error) {
     console.error('获取护理统计失败', error)
@@ -101,7 +101,7 @@ const getWorkload = async () => {
       params: { days: dateRange.value }
     })
     if (res.code === 200) {
-      updateWorkloadChart(res.data)
+      await updateWorkloadChart(res.data)
     }
   } catch (error) {
     console.error('获取工作量失败', error)
@@ -138,8 +138,15 @@ const getHealthAlerts = async () => {
 const updatePieChart = async (data: any[]) => {
   if (!nursingPieChartRef.value) return
 
-  // 确保DOM元素已经渲染完成
-  await new Promise(resolve => setTimeout(resolve, 100))
+  // 确保DOM元素已经完全渲染
+  await nextTick()
+  
+  // 检查DOM元素的尺寸
+  const rect = nursingPieChartRef.value.getBoundingClientRect()
+  if (rect.width === 0 || rect.height === 0) {
+    // 如果尺寸为0，再等待一段时间
+    await new Promise(resolve => setTimeout(resolve, 200))
+  }
   
   nursingPieChart = echarts.init(nursingPieChartRef.value)
   const values = new Array(7).fill(0)
@@ -190,8 +197,15 @@ const updateWorkloadChart = async (data: any[]) => {
 const updateTrendChart = async () => {
   if (!nursingTrendChartRef.value) return
 
-  // 确保DOM元素已经渲染完成
-  await new Promise(resolve => setTimeout(resolve, 100))
+  // 确保DOM元素已经完全渲染
+  await nextTick()
+  
+  // 检查DOM元素的尺寸
+  const rect = nursingTrendChartRef.value.getBoundingClientRect()
+  if (rect.width === 0 || rect.height === 0) {
+    // 如果尺寸为0，再等待一段时间
+    await new Promise(resolve => setTimeout(resolve, 200))
+  }
   
   nursingTrendChart = echarts.init(nursingTrendChartRef.value)
   const dates = []
@@ -219,8 +233,8 @@ const updateTrendChart = async () => {
 }
 
 const handleDateChange = async () => {
-  getNursingSummary()
-  getWorkload()
+  await getNursingSummary()
+  await getWorkload()
   getHealthAlerts()
   await updateTrendChart()
 }
@@ -232,8 +246,8 @@ const handleResize = () => {
 }
 
 onMounted(async () => {
-  getNursingSummary()
-  getWorkload()
+  await getNursingSummary()
+  await getWorkload()
   getPlanProgress()
   getHealthAlerts()
   await updateTrendChart()

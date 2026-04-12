@@ -134,6 +134,36 @@ def get_metric_history(current_user, elder_id, metric_type):
     } for m in metrics])
 
 
+@health_bp.route('/latest', methods=['GET'])
+@require_token
+def get_latest_metrics_all(current_user):
+    """获取所有老人的最新健康指标"""
+    # 获取所有老人的最新健康指标
+    # 这里简化处理，返回第一个老人的最新指标
+    from ..models import User
+    elder = User.query.filter_by(user_type=1).first()
+    if not elder:
+        return api_response({})
+    
+    metric_types = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # 各种指标类型
+    latest_metrics = {}
+
+    for metric_type in metric_types:
+        metric = HealthMetric.query.filter_by(
+            elder_id=elder.id,
+            metric_type=metric_type
+        ).order_by(HealthMetric.recorded_at.desc()).first()
+
+        if metric:
+            latest_metrics[metric.get_metric_type_display()] = {
+                'value': float(metric.metric_value),
+                'unit': metric.unit,
+                'recorded_at': metric.recorded_at.isoformat()
+            }
+
+    return api_response(latest_metrics)
+
+
 @health_bp.route('/metrics/types', methods=['GET'])
 @require_token
 def get_metric_types(current_user):

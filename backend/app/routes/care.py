@@ -175,3 +175,29 @@ def get_today_tasks(current_user):
         'status': t.status,
         'status_name': t.get_status_display()
     } for t in tasks])
+
+
+@care_bp.route('/plans/<int:plan_id>/tasks', methods=['POST'])
+@require_token
+def create_care_task_for_plan(current_user, plan_id):
+    """为护理计划添加任务"""
+    # 验证护理计划是否存在
+    plan = CarePlan.query.get_or_404(plan_id)
+    
+    data = request.get_json()
+
+    task = CareTask(
+        care_plan_id=plan_id,
+        task_name=data.get('task_name'),
+        task_type=data.get('task_type'),
+        description=data.get('description'),
+        frequency=data.get('frequency'),
+        scheduled_time=datetime.fromisoformat(data['scheduled_time']) if data.get('scheduled_time') else None,
+        status=1,
+        notes=data.get('notes')
+    )
+
+    db.session.add(task)
+    db.session.commit()
+
+    return api_response({'id': task.id}, '护理任务添加成功')

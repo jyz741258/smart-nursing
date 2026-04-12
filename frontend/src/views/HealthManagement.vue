@@ -2,10 +2,20 @@
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">健康管理与护理计划</h2>
-      <el-button type="primary" @click="handleAdd">
-        <el-icon><Plus /></el-icon>
-        新增记录
-      </el-button>
+      <div class="header-buttons">
+        <el-button type="primary" @click="handleAdd">
+          <el-icon><Plus /></el-icon>
+          新增记录
+        </el-button>
+        <el-button type="success" @click="exportCSV">
+          <el-icon><Download /></el-icon>
+          导出CSV
+        </el-button>
+        <el-button @click="showChartDialog = true">
+          <el-icon><DataAnalysis /></el-icon>
+          可视化图表
+        </el-button>
+      </div>
     </div>
 
     <el-tabs v-model="activeTab" class="main-tabs">
@@ -212,13 +222,37 @@
         <el-button type="primary" @click="submitTask">添加</el-button>
       </template>
     </el-dialog>
+
+    <!-- 可视化图表对话框 -->
+    <el-dialog v-model="showChartDialog" title="健康数据可视化" width="800px">
+      <div class="chart-container">
+        <el-select v-model="chartElderId" placeholder="选择老人" style="width: 200px; margin-bottom: 20px">
+          <el-option v-for="elder in elders" :key="elder.id" :label="elder.name" :value="elder.id" />
+        </el-select>
+        <el-select v-model="chartMetricType" placeholder="选择指标类型" style="width: 200px; margin-left: 10px; margin-bottom: 20px">
+          <el-option label="体温" :value="1" />
+          <el-option label="血压-收缩压" :value="2" />
+          <el-option label="血压-舒张压" :value="3" />
+          <el-option label="心率" :value="4" />
+          <el-option label="血氧" :value="5" />
+          <el-option label="血糖" :value="6" />
+          <el-option label="体重" :value="7" />
+          <el-option label="身高" :value="8" />
+          <el-option label="睡眠时长" :value="9" />
+          <el-option label="今日步数" :value="10" />
+        </el-select>
+        <el-button type="primary" @click="updateChart" style="margin-left: 10px">生成图表</el-button>
+        <div ref="chartRef" style="height: 400px"></div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Download, DataAnalysis } from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
 import type { FormInstance } from 'element-plus'
 import api from '@/store/auth'
 
@@ -242,11 +276,18 @@ const planPagination = reactive({ page: 1, page_size: 10, total: 0 })
 const showPlanDialog = ref(false)
 const showDetailDialog = ref(false)
 const showTaskDialog = ref(false)
+const showChartDialog = ref(false)
 const planFormRef = ref<FormInstance>()
 const taskFormRef = ref<FormInstance>()
 const currentPlan = ref<any>({})
 const planForm = reactive({ title: '', elder_id: '', start_date: '', end_date: '', description: '' })
 const taskForm = reactive({ task_name: '', task_type: null, scheduled_time: '', notes: '' })
+
+// 图表相关
+const chartRef = ref<HTMLElement>()
+const chartElderId = ref('')
+const chartMetricType = ref('')
+let healthChart: echarts.ECharts | null = null
 
 const getElders = async () => {
   try {
@@ -266,7 +307,7 @@ const getMetrics = async () => {
 
     const res: any = await api.get('/health/metrics', { params })
     if (res.code === 200) {
-      metrics.value = res.data.list || []
+      metrics.value = res.data.items || []
       healthPagination.total = res.data.total || 0
     }
   } catch (error) {
@@ -311,7 +352,7 @@ const getPlans = async () => {
   try {
     const res: any = await api.get('/care/plans', { params: { page: planPagination.page, page_size: planPagination.page_size } })
     if (res.code === 200) {
-      plans.value = res.data.list || []
+      plans.value = res.data.items || []
       planPagination.total = res.data.total || 0
     }
   } catch (error) {
@@ -365,6 +406,84 @@ const submitTask = async () => {
 const getStatusType = (status: number) => ({ 1: 'success', 2: 'warning', 3: 'info' }[status] || 'info')
 const getTaskStatusType = (status: number) => ({ 1: 'warning', 2: 'success', 3: 'info' }[status] || 'info')
 
+// 导出CSV
+const exportCSV = () => {
+  if (metrics.value.length === 0) {
+    ElMessage.warning('没有数据可导出')
+    return
+  }
+
+  // 生成CSV内容
+  const headers = ['ID', '老人', '指标类型', '数值', '单位', '记录时间', '备注']
+  const rows = metrics.value.map(metric => [
+    metric.id,
+    metric.elder_name,
+    metric.metric_type_name,
+    metric.metric_value,
+    metric.unit,
+    metric.recorded_at,
+    metric.notes || ''
+  ])
+
+  // 组合CSV内容
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.join(','))
+  ].join('\n')
+
+  // 创建下载链接
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `健康指标_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+// 更新图表
+const updateChart = async () => {
+  if (!chartElderId.value || !chartMetricType.value) {
+    ElMessage.warning('请选择老人和指标类型')
+    return
+  }
+
+  try {
+    const res: any = await api.get(`/health/metrics/history/${chartElderId.value}/${chartMetricType.value}`, {
+      params: { days: 30 }
+    })
+
+    if (res.code === 200) {
+      await nextTick()
+      if (!chartRef.value) return
+
+      healthChart = echarts.init(chartRef.value)
+      const data = res.data || []
+      const dates = data.map((item: any) => item.recorded_at.split('T')[0])
+      const values = data.map((item: any) => item.value)
+
+      healthChart.setOption({
+        title: { text: '健康指标趋势', left: 'center' },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: dates, axisLabel: { rotate: 45 } },
+        yAxis: { type: 'value' },
+        series: [{
+          name: '指标值',
+          type: 'line',
+          data: values,
+          smooth: true,
+          itemStyle: { color: '#409eff' }
+        }]
+      })
+    }
+  } catch (error) {
+    console.error('获取健康指标历史失败', error)
+    ElMessage.error('获取数据失败')
+  }
+}
+
 const handleAdd = () => {
   if (activeTab.value === 'health') {
     healthFormRef.value?.resetFields()
@@ -396,6 +515,11 @@ onMounted(() => {
     font-size: 20px;
     font-weight: 600;
     color: #303133;
+  }
+
+  .header-buttons {
+    display: flex;
+    gap: 10px;
   }
 }
 
