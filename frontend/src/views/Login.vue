@@ -61,6 +61,25 @@
         </el-form-item>
       </el-form>
 
+      <!-- 样例账号快速登录 -->
+      <div class="demo-login">
+        <div class="demo-divider">
+          <span>或选择以下样例账号快速登录</span>
+        </div>
+        <div class="demo-users">
+          <div
+            v-for="user in demoUsers"
+            :key="user.id"
+            class="demo-user-item"
+            :class="user.role"
+            @click="quickLogin(user)"
+          >
+            <span class="demo-role">{{ user.roleName }}</span>
+            <span class="demo-phone">{{ user.phone }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="login-footer">
         <p>还没有账号？<el-link type="primary" @click="$router.push('/register')">立即注册</el-link></p>
         <div class="back-home" @click="$router.push('/')">
@@ -78,6 +97,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage } from 'element-plus'
 import { Iphone, Lock, FirstAidKit, House } from '@element-plus/icons-vue'
+import api from '@/store/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -90,6 +110,14 @@ const form = reactive({
   password: ''
 })
 
+// 样例账号列表
+const demoUsers = [
+  { id: 1, role: 'elder', roleName: '老人', phone: '13900001001', password: '123456' },
+  { id: 4, role: 'family', roleName: '家属', phone: '13900001004', password: '123456' },
+  { id: 2, role: 'nurse', roleName: '护理员', phone: '13900001002', password: '123456' },
+  { id: 3, role: 'admin', roleName: '管理员', phone: '13800138000', password: 'admin123' }
+]
+
 const rules = {
   phone: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
@@ -99,6 +127,53 @@ const rules = {
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
   ]
+}
+
+// 样例账号快速登录
+const quickLogin = async (user: any) => {
+  loading.value = true
+  try {
+    const res: any = await api.post('/users/login', {
+      phone: user.phone,
+      password: user.password
+    })
+    if (res.code === 200) {
+      const loginData = res.data || {}
+
+      const roleMap: Record<string, number> = {
+        elder: 1,
+        nurse: 2,
+        admin: 3,
+        family: 4
+      }
+      const userType = loginData.user_type || roleMap[user.role] || 3
+
+      const userInfo = {
+        id: loginData.user_id || loginData.id || 0,
+        user_type: userType,
+        name: loginData.name || user.roleName,
+        phone: user.phone
+      }
+      localStorage.setItem('token', loginData.token || '')
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
+
+      ElMessage.success(`以${user.roleName}身份登录成功`)
+
+      const routeMap: Record<number, string> = {
+        1: '/elder-dashboard',
+        2: '/nurse-dashboard',
+        3: '/admin-dashboard',
+        4: '/family-dashboard'
+      }
+      router.push(routeMap[userType] || '/admin-dashboard')
+    } else {
+      ElMessage.error(res.message || '登录失败')
+    }
+  } catch (error) {
+    ElMessage.error('登录失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleLogin = async () => {
@@ -285,6 +360,91 @@ const handleLogin = async () => {
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+  }
+}
+
+// 样例登录区域
+.demo-login {
+  margin-top: 20px;
+
+  .demo-divider {
+    text-align: center;
+    position: relative;
+    margin-bottom: 15px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e4e7ed;
+    }
+
+    span {
+      position: relative;
+      background: #fff;
+      padding: 0 15px;
+      color: #909399;
+      font-size: 12px;
+    }
+  }
+
+  .demo-users {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .demo-user-item {
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    .demo-role {
+      font-size: 13px;
+      font-weight: 600;
+      color: #303133;
+    }
+
+    .demo-phone {
+      font-size: 11px;
+      color: #909399;
+    }
+
+    &.elder {
+      background: rgba(103, 194, 58, 0.1);
+      border: 1px solid rgba(103, 194, 58, 0.3);
+      &:hover { background: rgba(103, 194, 58, 0.2); }
+    }
+
+    &.nurse {
+      background: rgba(64, 158, 255, 0.1);
+      border: 1px solid rgba(64, 158, 255, 0.3);
+      &:hover { background: rgba(64, 158, 255, 0.2); }
+    }
+
+    &.admin {
+      background: rgba(230, 162, 60, 0.1);
+      border: 1px solid rgba(230, 162, 60, 0.3);
+      &:hover { background: rgba(230, 162, 60, 0.2); }
+    }
+
+    &.family {
+      background: rgba(245, 108, 108, 0.1);
+      border: 1px solid rgba(245, 108, 108, 0.3);
+      &:hover { background: rgba(245, 108, 108, 0.2); }
     }
   }
 }
