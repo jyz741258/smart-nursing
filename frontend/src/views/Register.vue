@@ -111,6 +111,18 @@
           </div>
         </el-form-item>
 
+        <!-- 验证码显示区域 -->
+        <div v-if="showCodeDisplay" class="code-display">
+          <div class="code-box">
+            <div class="code-label">
+              <el-icon><Key /></el-icon>
+              <span>您的验证码</span>
+            </div>
+            <div class="code-value">{{ displayCode }}</div>
+            <div class="code-tips">请在下方输入此验证码</div>
+          </div>
+        </div>
+
         <!-- 密码 -->
         <el-form-item prop="password">
           <div class="input-wrapper">
@@ -221,7 +233,8 @@ import {
   User,
   Document,
   ArrowLeft,
-  FirstAidKit
+  FirstAidKit,
+  Key
 } from '@element-plus/icons-vue'
 import api from '@/store/auth'
 
@@ -230,6 +243,8 @@ const formRef = ref()
 const loading = ref(false)
 const smsSending = ref(false)
 const countdown = ref(0)
+const showCodeDisplay = ref(false)
+const displayCode = ref('')
 
 const form = reactive({
   user_type: 1,
@@ -283,7 +298,7 @@ const rules = {
   ],
   phone: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入11位有效手机号', trigger: 'blur' }
   ],
   sms_code: [
     { required: true, message: '请输入验证码', trigger: 'blur' },
@@ -314,6 +329,11 @@ const sendSms = async () => {
 
     if (res.code === 200) {
       ElMessage.success('验证码已发送')
+      // 显示验证码供用户查看
+      if (res.data && res.data.code) {
+        displayCode.value = res.data.code
+        showCodeDisplay.value = true
+      }
       startCountdown()
     } else {
       ElMessage.error(res.message || '发送失败')
@@ -593,6 +613,56 @@ const handleRegister = async () => {
       box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
     }
   }
+}
+
+.code-display {
+  margin-bottom: 20px;
+  animation: fadeIn 0.3s ease;
+
+  .code-box {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border: 2px dashed #409eff;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+
+    .code-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #409eff;
+      font-size: 14px;
+      margin-bottom: 10px;
+
+      .el-icon {
+        font-size: 18px;
+      }
+    }
+
+    .code-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1565c0;
+      letter-spacing: 8px;
+      font-family: 'Courier New', monospace;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .code-tips {
+      font-size: 12px;
+      color: #64b5f6;
+      margin-top: 10px;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .register-footer {

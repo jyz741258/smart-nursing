@@ -19,7 +19,11 @@ def send_sms():
 
     code = generate_sms_code()
     send_sms_code(phone, code)
-    return api_response(message='验证码已发送')
+    # 返回验证码给前端显示（实际项目中应通过其他方式如邮件推送等）
+    return api_response({
+        'code': code,
+        'message': '验证码已发送，请在页面查看'
+    }, '验证码已发送')
 
 
 @user_bp.route('/register', methods=['POST'])
