@@ -23,6 +23,10 @@ class Config:
     # 短信验证码配置
     SMS_CODE_EXPIRES = 300  # 5分钟
 
+    # 管理员注册验证密钥
+    # 注意：在生产环境中应该通过环境变量设置，并确保安全
+    ADMIN_REGISTRATION_KEY = os.environ.get('ADMIN_REGISTRATION_KEY') or 'ADMIN_REGISTER_2024_SECRET'
+
     # 文件上传配置
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB

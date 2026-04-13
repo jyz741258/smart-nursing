@@ -23,7 +23,7 @@
           </div>
         </div>
         <div class="service-footer">
-          <el-button type="primary" size="small" @click.stop="orderService(service)">立即预约</el-button>
+          <el-button type="primary" size="small" @click.stop="orderService(service)" v-if="authStore.userInfo && authStore.userInfo.user_type !== 2">立即预约</el-button>
         </div>
       </el-card>
     </div>
@@ -55,7 +55,7 @@
       </div>
       <template #footer>
         <el-button @click="showDetailDialog = false">关闭</el-button>
-        <el-button type="primary" @click="orderService(currentService)">立即预约</el-button>
+        <el-button type="primary" @click="orderService(currentService)" v-if="authStore.userInfo && authStore.userInfo.user_type !== 2">立即预约</el-button>
       </template>
     </el-dialog>
 
@@ -87,6 +87,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
+import { useAuthStore } from '@/store/auth'
 
 const loading = ref(false)
 const services = ref<any[]>([])
@@ -96,6 +97,7 @@ const showDetailDialog = ref(false)
 const showOrderDialog = ref(false)
 const currentService = ref<any>({})
 const orderFormRef = ref()
+const authStore = useAuthStore()
 
 const pagination = reactive({
   page: 1,

@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, current_app
 from . import user_bp
 from ..models import User
 from ..extensions import db
@@ -30,6 +30,7 @@ def register():
     password = data.get('password')
     sms_code = data.get('sms_code')
     user_type = data.get('user_type', 1)
+    admin_verify_code = data.get('admin_verify_code')  # 管理员注册验证码
 
     # 验证手机号
     valid, msg = validate_phone(phone)
@@ -48,6 +49,13 @@ def register():
     # 检查用户是否已存在
     if User.query.filter_by(phone=phone).first():
         return api_error('该手机号已注册')
+
+    # 管理员注册需要额外验证
+    if user_type == 3:
+        # 验证管理员注册密钥
+        admin_key = current_app.config.get('ADMIN_REGISTRATION_KEY')
+        if not admin_verify_code or admin_verify_code != admin_key:
+            return api_error('管理员注册需要正确的验证密钥')
 
     # 创建用户
     user = User(
