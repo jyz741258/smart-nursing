@@ -11,6 +11,10 @@ from ..utils import require_token
 @require_token
 def create_nursing_record(current_user):
     """创建护理记录"""
+    # 只有护理人员(2)和管理员(3)可以创建护理记录
+    if current_user.user_type not in [2, 3]:
+        return api_error('无权限创建护理记录', 403)
+
     data = request.get_json()
 
     record = NursingRecord(

@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">消息通知</h2>
-      <el-button @click="markAllRead" :disabled="unreadCount === 0">
+      <el-button @click="markAllRead" :disabled="unreadCount === 0" v-if="!isElder">
         全部已读
       </el-button>
     </div>
@@ -10,7 +10,10 @@
     <div class="card-container">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="全部" name="all">
-          <el-table :data="notifications" v-loading="loading" @row-click="handleRowClick">
+          <div v-if="notifications.length === 0 && !loading" class="empty-state">
+            <el-empty description="暂无通知" />
+          </div>
+          <el-table v-else :data="notifications" v-loading="loading" @row-click="handleRowClick">
             <el-table-column width="50">
               <template #default="{ row }">
                 <el-badge is-dot :hidden="row.is_read" />
@@ -29,7 +32,10 @@
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="未读" name="unread">
-          <el-table :data="unreadNotifications" v-loading="loading" @row-click="handleRowClick">
+          <div v-if="unreadNotifications.length === 0 && !loading" class="empty-state">
+            <el-empty description="暂无未读通知" />
+          </div>
+          <el-table v-else :data="unreadNotifications" v-loading="loading" @row-click="handleRowClick">
             <el-table-column width="50">
               <template #default="{ row }">
                 <el-badge is-dot :hidden="row.is_read" />
@@ -43,6 +49,7 @@
       </el-tabs>
 
       <el-pagination
+        v-if="notifications.length > 0"
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.page_size"
         :total="pagination.total"
@@ -94,6 +101,14 @@ const pagination = reactive({
 const unreadNotifications = computed(() =>
   notifications.value.filter(n => !n.is_read)
 )
+
+// 获取用户信息判断是否为老人
+const userInfo = computed(() => {
+  const info = localStorage.getItem('userInfo')
+  return info ? JSON.parse(info) : null
+})
+
+const isElder = computed(() => userInfo.value?.user_type === 1)
 
 const getNotifications = async () => {
   loading.value = true

@@ -7,26 +7,48 @@
 
     <div class="welcome-banner">
       <div class="banner-content">
-        <h1>您好，家人</h1>
-        <p>您关心的老人健康状况一切正常</p>
+        <h1>您好，{{ familyName }}</h1>
+        <p v-if="bindingElder">您关心的 {{ bindingElder.name }} 健康状况一切正常</p>
+        <p v-else>请先绑定要关心的老人</p>
       </div>
       <div class="elder-select">
-        <el-select v-model="selectedElder" placeholder="选择老人" size="large">
-          <el-option label="张三 (父亲)" value="1" />
+        <el-select
+          v-if="bindingElder"
+          v-model="selectedElderId"
+          placeholder="选择老人"
+          size="large"
+          @change="onElderChange"
+        >
+          <el-option :label="bindingElder.name" :value="bindingElder.id" />
         </el-select>
+        <el-button v-else type="primary" size="large" @click="showBindDialog = true">
+          绑定老人
+        </el-button>
       </div>
     </div>
 
-    <div class="family-content">
+    <!-- 未绑定时显示绑定引导 -->
+    <div v-if="!bindingElder" class="bind-guide">
+      <el-empty description="您还没有绑定老人" :image-size="100">
+        <el-button type="primary" @click="showBindDialog = true">
+          立即绑定
+        </el-button>
+      </el-empty>
+    </div>
+
+    <div v-else class="family-content">
       <el-row :gutter="20">
         <el-col :span="16">
           <div class="main-section">
             <div class="section-header">
-              <span class="section-title">{{ elderName }}的健康状况</span>
-              <el-button type="primary" link @click="refreshData">
-                <el-icon><Refresh /></el-icon>
-                刷新
-              </el-button>
+              <span class="section-title">{{ bindingElder.name }}的健康状况</span>
+              <div class="header-actions">
+                <el-button type="danger" size="small" link @click="unbindElder">解除绑定</el-button>
+                <el-button type="primary" link @click="refreshData">
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </el-button>
+              </div>
             </div>
 
             <el-row :gutter="15" class="health-cards">
@@ -147,30 +169,64 @@
         </el-col>
       </el-row>
     </div>
+
+    <!-- 绑定老人对话框 -->
+    <el-dialog v-model="showBindDialog" title="绑定老人" width="500px">
+      <el-form :model="bindForm" label-width="80px">
+        <el-form-item label="选择老人">
+          <el-select v-model="bindForm.elder_id" placeholder="请选择老人" style="width: 100%">
+            <el-option
+              v-for="elder in elderList"
+              :key="elder.id"
+              :label="`${elder.name} ${elder.age ? '(' + elder.age + '岁)' : ''}`"
+              :value="elder.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showBindDialog = false">取消</el-button>
+        <el-button type="primary" @click="confirmBind" :loading="binding">确定绑定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/store/auth'
+import type { Elder } from '@/types'
 
-const selectedElder = ref('1')
-const elderName = ref('张三')
-
-const healthData = reactive({
-  heartRate: '72',
-  bloodPressure: '145/92',
-  bloodStatus: 'warning',
-  sleepHours: '7.5',
-  steps: '3200'
+// 家属名称
+const familyName = computed(() => {
+  const info = localStorage.getItem('userInfo')
+  return info ? JSON.parse(info).name || '家人' : '家人'
 })
 
-const nursingRecords = ref([
-  { id: 1, time: '今天 10:30', title: '日常护理服务', content: '协助进行日常清洁，照料起居', nurse: '李护理', color: '#67c23a' },
-  { id: 2, time: '昨天 15:00', title: '健康监测', content: '血压偏高，已提醒按时服药', nurse: '王护理', color: '#409eff' },
-  { id: 3, time: '昨天 09:00', title: '康复训练', content: '协助进行肢体康复训练30分钟', nurse: '李护理', color: '#67c23a' }
-])
+// 绑定的老人信息
+const bindingElder = ref<Elder | null>(null)
+const selectedElderId = ref<number | null>(null)
+
+// 老人列表
+const elderList = ref<Elder[]>([])
+
+// 绑定对话框
+const showBindDialog = ref(false)
+const binding = ref(false)
+const bindForm = reactive({
+  elder_id: null as number | null
+})
+
+const healthData = reactive({
+  heartRate: '--',
+  bloodPressure: '--/--',
+  bloodStatus: 'normal',
+  sleepHours: '--',
+  steps: '--'
+})
+
+const nursingRecords = ref<any[]>([])
 
 const weeklyPlans = ref([
   { id: 1, day: '11', week: '周六', name: '日常护理', time: '09:00-11:00', nurse: '李护理' },
@@ -180,25 +236,100 @@ const weeklyPlans = ref([
 
 const alerts = ref<any[]>([])
 
-const getHealthData = async () => {
+// 加载绑定的老人信息
+const loadBindingElder = async () => {
+  console.log('开始加载绑定老人信息...')
   try {
-    const res: any = await api.get(`/health/metrics/latest/${selectedElder.value}`)
-    if (res.code === 200 && res.data) {
-      healthData.heartRate = res.data.心率?.value || '72'
-      healthData.bloodPressure = `${res.data['血压-收缩压']?.value || '--'}/${res.data['血压-舒张压']?.value || '--'}`
-      healthData.sleepHours = res.data.睡眠时长?.value || '7.5'
-      healthData.steps = res.data.今日步数?.value || '3200'
+    const res: any = await api.get('/users/binding-elder')
+    console.log('绑定老人API响应:', res)
+
+    if (res.code === 200) {
+      bindingElder.value = res.data
+      if (res.data) {
+        selectedElderId.value = res.data.id
+        console.log('已绑定老人信息:', res.data)
+      } else {
+        console.log('当前用户未绑定任何老人')
+      }
+    } else {
+      console.error('获取绑定老人信息失败:', res.message)
+    }
+  } catch (error: any) {
+    console.error('获取绑定老人信息失败', error)
+    if (error.response) {
+      console.error('错误状态码:', error.response.status)
+      console.error('错误数据:', error.response.data)
+    }
+  }
+}
+
+// 加载老人列表
+const loadElderList = async () => {
+  try {
+    const res: any = await api.get('/users/elder/list')
+    if (res.code === 200) {
+      elderList.value = res.data
     }
   } catch (error) {
+    console.error('获取老人列表失败', error)
+  }
+}
+
+const getHealthData = async () => {
+  if (!bindingElder.value) {
+    console.warn('未绑定老人，跳过获取健康数据')
+    return
+  }
+
+  const elderId = bindingElder.value.id
+  console.log('正在获取老人健康数据, elderId:', elderId)
+
+  try {
+    const res: any = await api.get(`/health/metrics/latest/${elderId}`)
+    console.log('健康数据API响应:', res)
+
+    if (res.code === 200 && res.data) {
+      console.log('健康数据内容:', res.data)
+
+      // 检查数据类型，处理可能的单位转换
+      const heartRate = res.data['心率']
+      const systolic = res.data['血压-收缩压']
+      const diastolic = res.data['血压-舒张压']
+      const sleepHours = res.data['睡眠时长']
+      const steps = res.data['今日步数']
+
+      healthData.heartRate = heartRate?.value !== undefined ? String(heartRate.value) : '--'
+      healthData.bloodPressure = `${systolic?.value !== undefined ? systolic.value : '--'}/${diastolic?.value !== undefined ? diastolic.value : '--'}`
+      healthData.sleepHours = sleepHours?.value !== undefined ? String(sleepHours.value) : '--'
+      healthData.steps = steps?.value !== undefined ? String(Math.round(steps.value)) : '--'
+
+      console.log('解析后的健康数据:', healthData)
+    } else {
+      console.warn('API返回数据为空或格式错误')
+    }
+  } catch (error: any) {
     console.error('获取健康数据失败', error)
+    if (error.response) {
+      console.error('错误状态码:', error.response.status)
+      console.error('错误数据:', error.response.data)
+    }
   }
 }
 
 const getNursingRecords = async () => {
+  if (!bindingElder.value) return
+
   try {
-    const res: any = await api.get(`/nursing/records?elder_id=${selectedElder.value}`)
+    const res: any = await api.get(`/nursing/records?elder_id=${bindingElder.value.id}&page_size=5`)
     if (res.code === 200) {
-      nursingRecords.value = res.data || []
+      nursingRecords.value = (res.data.items || []).map((record: any) => ({
+        id: record.id,
+        time: new Date(record.created_at).toLocaleString(),
+        title: record.nursing_type_name,
+        content: record.description,
+        nurse: record.staff_name || '未知',
+        color: '#409eff'
+      }))
     }
   } catch (error) {
     console.error('获取护理记录失败', error)
@@ -215,9 +346,81 @@ const contactNurse = () => {
   ElMessage.info('联系护理员功能开发中')
 }
 
-onMounted(() => {
+// 切换绑定的老人（如果有多绑定功能）
+const onElderChange = (value: number) => {
+  // 重新加载数据
+  selectedElderId.value = value
+  // 重新加载健康数据和护理记录
+  bindingElder.value = elderList.value.find(e => e.id === value) || null
   getHealthData()
   getNursingRecords()
+}
+
+// 绑定老人
+const confirmBind = async () => {
+  if (!bindForm.elder_id) {
+    ElMessage.warning('请选择老人')
+    return
+  }
+
+  binding.value = true
+  try {
+    const res: any = await api.post('/users/binding-elder', {
+      elder_id: bindForm.elder_id
+    })
+    if (res.code === 200) {
+      ElMessage.success('绑定成功')
+      showBindDialog.value = false
+      // 重新加载绑定信息和数据
+      await loadBindingElder()
+      await getHealthData()
+      await getNursingRecords()
+    } else {
+      ElMessage.error(res.message || '绑定失败')
+    }
+  } catch (error) {
+    console.error('绑定失败', error)
+  } finally {
+    binding.value = false
+  }
+}
+
+// 解绑老人
+const unbindElder = () => {
+  ElMessageBox.confirm('确定要解除与当前老人的绑定吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      const res: any = await api.delete('/users/binding-elder')
+      if (res.code === 200) {
+        ElMessage.success('解绑成功')
+        bindingElder.value = null
+        selectedElderId.value = null
+        // 清空数据
+        healthData.heartRate = '--'
+        healthData.bloodPressure = '--/--'
+        healthData.sleepHours = '--'
+        healthData.steps = '--'
+        nursingRecords.value = []
+        alerts.value = []
+      } else {
+        ElMessage.error(res.message || '解绑失败')
+      }
+    } catch (error) {
+      console.error('解绑失败', error)
+    }
+  }).catch(() => {})
+}
+
+onMounted(async () => {
+  await loadElderList()
+  await loadBindingElder()
+  if (bindingElder.value) {
+    getHealthData()
+    getNursingRecords()
+  }
 })
 </script>
 
@@ -494,5 +697,20 @@ onMounted(() => {
       justify-content: flex-start;
     }
   }
+}
+
+.bind-guide {
+  background: #fff;
+  border-radius: 16px;
+  padding: 60px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 </style>

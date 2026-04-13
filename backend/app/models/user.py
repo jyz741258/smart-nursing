@@ -36,6 +36,7 @@ class User(db.Model):
     emergency_phone = db.Column(db.String(20), comment='紧急联系电话')
     status = db.Column(db.SmallInteger, default=1, comment='状态: 0-禁用, 1-正常')
     user_type = db.Column(db.SmallInteger, default=1, comment='用户类型: 1-老人, 2-护理人员, 3-管理员, 4-家属')
+    binding_elder_id = db.Column(db.Integer, db.ForeignKey('users.id'), comment='绑定的老人ID(家属用)')
     created_at = db.Column(db.DateTime, default=datetime.now, comment='创建时间')
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
     last_login = db.Column(db.DateTime, comment='最后登录时间')
@@ -47,6 +48,8 @@ class User(db.Model):
     nurse_orders = db.relationship('Order', foreign_keys='Order.nurse_id', backref='nurse', lazy='dynamic')
     evaluations = db.relationship('Evaluation', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     complaints = db.relationship('Complaint', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    # 家属绑定的老人
+    binding_elder = db.relationship('User', remote_side=[id], foreign_keys=[binding_elder_id], backref='binded_families')
 
     def to_dict(self):
         """转换为字典"""

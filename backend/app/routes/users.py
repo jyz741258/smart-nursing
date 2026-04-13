@@ -185,3 +185,73 @@ def get_elder_list(current_user):
         'address': elder.address,
         'avatar': elder.avatar
     } for elder in elders])
+
+
+@user_bp.route('/binding-elder', methods=['GET'])
+@require_token
+def get_binding_elder(current_user):
+    """获取家属绑定的老人信息"""
+    if current_user.user_type != 4:  # 家属
+        return api_error('仅家属用户可以查看绑定信息', 403)
+
+    if current_user.binding_elder_id:
+        elder = User.query.get(current_user.binding_elder_id)
+        if elder:
+            return api_response({
+                'id': elder.id,
+                'name': elder.name,
+                'gender': elder.gender,
+                'age': elder.age,
+                'address': elder.address,
+                'avatar': elder.avatar,
+                'phone': elder.phone
+            })
+        else:
+            return api_error('绑定的老人不存在', 404)
+    else:
+        return api_response(None)
+
+
+@user_bp.route('/binding-elder', methods=['POST'])
+@require_token
+def bind_elder(current_user):
+    """家属绑定老人"""
+    if current_user.user_type != 4:  # 家属
+        return api_error('仅家属用户可以绑定老人', 403)
+
+    data = request.get_json()
+    elder_id = data.get('elder_id')
+
+    if not elder_id:
+        return api_error('请选择要绑定的老人')
+
+    # 检查老人是否存在且确实是老人类型
+    elder = User.query.filter_by(id=elder_id, user_type=1).first()
+    if not elder:
+        return api_error('老人不存在或用户类型不正确')
+
+    # 检查是否已经绑定
+    if current_user.binding_elder_id:
+        return api_error('您已经绑定了老人，请先解绑')
+
+    # 绑定老人
+    current_user.binding_elder_id = elder_id
+    db.session.commit()
+
+    return api_response(message='绑定成功')
+
+
+@user_bp.route('/binding-elder', methods=['DELETE'])
+@require_token
+def unbind_elder(current_user):
+    """家属解绑老人"""
+    if current_user.user_type != 4:  # 家属
+        return api_error('仅家属用户可以解绑', 403)
+
+    if not current_user.binding_elder_id:
+        return api_error('您尚未绑定老人')
+
+    current_user.binding_elder_id = None
+    db.session.commit()
+
+    return api_response(message='解绑成功')

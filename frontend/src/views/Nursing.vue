@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">护理记录</h2>
-      <el-button type="primary" @click="showAddDialog = true">
+      <el-button v-if="canAddRecord" type="primary" @click="showAddDialog = true">
         <el-icon><Plus /></el-icon>
         添加记录
       </el-button>
@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import type { NursingRecord, Elder } from '@/types'
@@ -120,6 +120,21 @@ const showDetailDialog = ref(false)
 const records = ref<NursingRecord[]>([])
 const elders = ref<Elder[]>([])
 const currentRecord = ref<any>({})
+
+// 用户类型判断
+const userInfo = computed(() => {
+  const info = localStorage.getItem('userInfo')
+  return info ? JSON.parse(info) : null
+})
+
+// 只有护理人员(2)和管理员(3)可以添加记录
+const canAddRecord = computed(() => {
+  const type = userInfo.value?.user_type
+  return type === 2 || type === 3
+})
+
+// 老人只能查看自己的记录
+const elderId = computed(() => userInfo.value?.user_type === 1 ? userInfo.value?.id : null)
 
 const searchForm = reactive({
   nursing_type: null as number | null
@@ -140,13 +155,18 @@ const recordForm = reactive({
 const getNursingRecords = async () => {
   loading.value = true
   try {
-    const res: any = await api.get('/nursing/records', {
-      params: {
-        page: pagination.page,
-        page_size: pagination.page_size,
-        ...searchForm
-      }
-    })
+    const params: any = {
+      page: pagination.page,
+      page_size: pagination.page_size,
+      ...searchForm
+    }
+
+    // 如果是老人，只能查看自己的记录
+    if (isElder.value && elderId.value) {
+      params.elder_id = elderId.value
+    }
+
+    const res: any = await api.get('/nursing/records', { params })
     if (res.code === 200) {
       records.value = res.data.items
       pagination.total = res.data.total
@@ -225,6 +245,9 @@ const submitForm = async () => {
 
 onMounted(() => {
   getNursingRecords()
-  getElders()
+  // 只有护理人员和管理员需要获取老人列表用于添加记录
+  if (canAddRecord.value) {
+    getElders()
+  }
 })
 </script>
