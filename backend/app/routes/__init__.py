@@ -9,6 +9,11 @@ notification_bp = Blueprint('notification', __name__, url_prefix='/api/notificat
 statistics_bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
 service_bp = Blueprint('service', __name__, url_prefix='/api/services')
 order_bp = Blueprint('order', __name__, url_prefix='/api/orders')
+evaluation_bp = Blueprint('evaluation', __name__, url_prefix='/api/evaluations')
 
 # 导入路由
 from . import users, nursing, health, care, notifications, statistics, service, order
+try:
+    from . import worker_evaluation
+except ImportError:
+    pass

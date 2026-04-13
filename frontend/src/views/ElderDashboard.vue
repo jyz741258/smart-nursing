@@ -95,6 +95,10 @@
                   <el-icon :size="28"><Phone /></el-icon>
                   <span>护理记录</span>
                 </div>
+                <div class="action-btn evaluate" @click="showEvaluateDialog = true">
+                  <el-icon :size="28"><Star /></el-icon>
+                  <span>评价护工</span>
+                </div>
               </div>
             </div>
 
@@ -129,6 +133,70 @@
         <el-button @click="emergencyDialog = false">取消呼叫</el-button>
       </template>
     </el-dialog>
+
+    <!-- 评价护工对话框 -->
+    <el-dialog v-model="showEvaluateDialog" title="评价护工服务" width="600px">
+      <el-form :model="evaluateForm" label-width="90px">
+        <el-form-item label="选择护工">
+          <el-select v-model="evaluateForm.worker_id" placeholder="请选择要评价的护工" style="width: 100%">
+            <el-option
+              v-for="worker in workerList"
+              :key="worker.id"
+              :label="worker.name"
+              :value="worker.id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="总体评分">
+          <el-rate v-model="evaluateForm.overall_rating" show-text :texts="['很差', '较差', '一般', '满意', '非常满意']" />
+        </el-form-item>
+
+        <el-form-item label="专业程度">
+          <el-rate v-model="evaluateForm.professionalism_rating" />
+        </el-form-item>
+
+        <el-form-item label="服务态度">
+          <el-rate v-model="evaluateForm.attitude_rating" />
+        </el-form-item>
+
+        <el-form-item label="准时性">
+          <el-rate v-model="evaluateForm.punctuality_rating" />
+        </el-form-item>
+
+        <el-form-item label="技能水平">
+          <el-rate v-model="evaluateForm.skill_rating" />
+        </el-form-item>
+
+        <el-form-item label="评价内容">
+          <el-input
+            v-model="evaluateForm.content"
+            type="textarea"
+            :rows="3"
+            placeholder="请分享您的服务体验..."
+          />
+        </el-form-item>
+
+        <el-form-item label="评价标签">
+          <el-checkbox-group v-model="evaluateForm.selectedTags">
+            <el-checkbox label="专业">专业</el-checkbox>
+            <el-checkbox label="耐心">耐心</el-checkbox>
+            <el-checkbox label="细心">细心</el-checkbox>
+            <el-checkbox label="热情">热情</el-checkbox>
+            <el-checkbox label="准时">准时</el-checkbox>
+            <el-checkbox label="负责">负责</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+
+        <el-form-item label="匿名评价">
+          <el-switch v-model="evaluateForm.isAnonymous" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEvaluateDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitEvaluation" :loading="evaluating">提交评价</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -140,7 +208,11 @@ import { useAuthStore } from '@/store/auth'
 
 const emergencyDialog = ref(false)
 const authStore = useAuthStore()
-const elderId = ref('1') // 这里应该从用户信息中获取老人ID
+
+// 从用户信息中获取老人ID
+const elderId = computed(() => {
+  return authStore.userInfo?.id || null
+})
 
 const currentDate = computed(() => {
   const now = new Date()
@@ -162,7 +234,86 @@ const notices = ref([
   { id: 3, type: 'system', content: '系统升级通知', time: '昨天' }
 ])
 
+// 评价护工
+const showEvaluateDialog = ref(false)
+const evaluating = ref(false)
+const workerList = ref<any[]>([])
+const evaluateForm = reactive({
+  worker_id: null as number | null,
+  overall_rating: 5,
+  professionalism_rating: 5,
+  attitude_rating: 5,
+  punctuality_rating: 5,
+  skill_rating: 5,
+  content: '',
+  selectedTags: [] as string[],
+  isAnonymous: false
+})
+
+// 加载护工列表
+const loadWorkerList = async () => {
+  try {
+    const res: any = await api.get('/users/workers')
+    if (res.code === 200) {
+      workerList.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取护工列表失败', error)
+  }
+}
+
+// 提交评价
+const submitEvaluation = async () => {
+  if (!elderId.value) {
+    ElMessage.warning('未获取到用户信息')
+    return
+  }
+  if (!evaluateForm.worker_id) {
+    ElMessage.warning('请选择要评价的护工')
+    return
+  }
+
+  evaluating.value = true
+  try {
+    const res: any = await api.post('/evaluations/worker', {
+      elder_id: elderId.value,
+      worker_id: evaluateForm.worker_id,
+      overall_rating: evaluateForm.overall_rating,
+      professionalism_rating: evaluateForm.professionalism_rating,
+      attitude_rating: evaluateForm.attitude_rating,
+      punctuality_rating: evaluateForm.punctuality_rating,
+      skill_rating: evaluateForm.skill_rating,
+      content: evaluateForm.content,
+      tags: JSON.stringify(evaluateForm.selectedTags),
+      is_anonymous: evaluateForm.isAnonymous ? 1 : 0
+    })
+
+    if (res.code === 200) {
+      ElMessage.success('评价提交成功，感谢您的反馈！')
+      showEvaluateDialog.value = false
+      // 重置表单
+      evaluateForm.worker_id = null
+      evaluateForm.overall_rating = 5
+      evaluateForm.professionalism_rating = 5
+      evaluateForm.attitude_rating = 5
+      evaluateForm.punctuality_rating = 5
+      evaluateForm.skill_rating = 5
+      evaluateForm.content = ''
+      evaluateForm.selectedTags = []
+      evaluateForm.isAnonymous = false
+    } else {
+      ElMessage.error(res.message || '评价提交失败')
+    }
+  } catch (error) {
+    console.error('评价提交失败', error)
+    ElMessage.error('评价提交失败，请稍后重试')
+  } finally {
+    evaluating.value = false
+  }
+}
+
 const getHealthData = async () => {
+  if (!elderId.value) return
   try {
     const res: any = await api.get(`/health/metrics/latest/${elderId.value}`)
     if (res.code === 200 && res.data) {
@@ -195,9 +346,11 @@ const showContact = () => {
   ElMessage.info('联系家属功能开发中')
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await authStore.getProfile()
   getHealthData()
   getTodayPlans()
+  loadWorkerList()
 })
 </script>
 
@@ -391,6 +544,10 @@ onMounted(() => {
 
       &.contact {
         background: linear-gradient(135deg, #e6a23c, #f3d19e);
+      }
+
+      &.evaluate {
+        background: linear-gradient(135deg, #909399, #c0c4cc);
       }
 
       &:hover {

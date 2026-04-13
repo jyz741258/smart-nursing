@@ -255,3 +255,18 @@ def unbind_elder(current_user):
     db.session.commit()
 
     return api_response(message='解绑成功')
+
+
+@user_bp.route('/workers', methods=['GET'])
+@require_token
+def get_worker_list(current_user):
+    """获取护工列表"""
+    workers = User.query.filter_by(user_type=2).all()
+    return api_response([{
+        'id': worker.id,
+        'name': worker.name,
+        'gender': worker.gender,
+        'age': worker.age,
+        'avatar': worker.avatar,
+        'phone': worker.phone
+    } for worker in workers])
