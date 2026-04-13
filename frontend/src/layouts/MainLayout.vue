@@ -1,7 +1,7 @@
 <template>
   <el-container class="layout-container">
-    <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar">
+    <!-- 侧边栏（桌面端） -->
+    <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar" v-show="!isMobile">
       <div class="logo">
         <el-icon v-if="isCollapse"><UserFilled /></el-icon>
         <span v-else>智慧养老系统</span>
@@ -80,7 +80,12 @@
       <!-- 顶部导航 -->
       <el-header class="header">
         <div class="header-left">
-          <el-icon class="collapse-btn" @click="isCollapse = !isCollapse">
+          <!-- 移动端菜单按钮 -->
+          <el-icon class="menu-btn" @click="showMobileMenu = !showMobileMenu" v-show="isMobile">
+            <Menu />
+          </el-icon>
+          <!-- 桌面端折叠按钮 -->
+          <el-icon class="collapse-btn" @click="isCollapse = !isCollapse" v-show="!isMobile">
             <Expand v-if="isCollapse" />
             <Fold v-else />
           </el-icon>
@@ -95,7 +100,7 @@
               <Bell />
             </el-icon>
           </el-badge>
-          <div class="user-type-badge" :class="'type-' + userType">
+          <div class="user-type-badge" :class="'type-' + userType" v-show="!isMobile">
             {{ userTypeName }}
           </div>
           <el-dropdown @command="handleCommand">
@@ -103,7 +108,7 @@
               <el-avatar :size="32" :src="userInfo?.avatar || ''">
                 {{ userInfo?.name?.charAt(0) || 'U' }}
               </el-avatar>
-              <span class="username">{{ userInfo?.name || '用户' }}</span>
+              <span class="username" v-show="!isMobile">{{ userInfo?.name || '用户' }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -124,17 +129,100 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- 移动端菜单 -->
+    <el-drawer
+      v-model="showMobileMenu"
+      direction="ltr"
+      size="80%"
+      v-show="isMobile"
+    >
+      <div class="mobile-menu">
+        <div class="mobile-logo">
+          <el-icon><UserFilled /></el-icon>
+          <span>智慧养老系统</span>
+        </div>
+        <el-menu
+          :default-active="route.path"
+          router
+          background-color="#304156"
+          text-color="#bfcbd9"
+          active-text-color="#409eff"
+          @select="showMobileMenu = false"
+        >
+          <el-menu-item :index="dashboardPath">
+            <el-icon><component :is="dashboardIcon" /></el-icon>
+            <template #title>{{ dashboardTitle }}</template>
+          </el-menu-item>
+
+          <!-- 老人用户菜单 -->
+          <template v-if="userType === 1">
+            <el-sub-menu index="elder">
+              <template #title>
+                <el-icon><User /></el-icon>
+                <span>我的服务</span>
+              </template>
+              <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
+              <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+              <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
+            </el-sub-menu>
+          </template>
+
+          <!-- 护理人员菜单 -->
+          <template v-if="userType === 2">
+            <el-sub-menu index="nurse">
+              <template #title>
+                <el-icon><FirstAidKit /></el-icon>
+                <span>护理工作</span>
+              </template>
+              <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
+              <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
+              <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+            </el-sub-menu>
+          </template>
+
+          <!-- 家属菜单 -->
+          <template v-if="userType === 4">
+            <el-sub-menu index="family">
+              <template #title>
+                <el-icon><House /></el-icon>
+                <span>家属服务</span>
+              </template>
+              <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
+              <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+              <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
+              <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
+            </el-sub-menu>
+          </template>
+
+          <!-- 管理员菜单 -->
+          <template v-if="userType === 3">
+            <el-menu-item index="/elders"><el-icon><User /></el-icon>老人管理</el-menu-item>
+            <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
+            <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+            <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
+            <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
+            <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
+          </template>
+
+          <el-menu-item index="/notifications">
+            <el-icon><Bell /></el-icon>
+            <template #title>消息通知</template>
+          </el-menu-item>
+        </el-menu>
+      </div>
+    </el-drawer>
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onMounted as onMountedRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import api from '@/store/auth'
 import {
   DataAnalysis, User, Document, TrendCharts, Collection, Bell, PieChart,
-  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny
+  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -144,6 +232,8 @@ const authStore = useAuthStore()
 const isCollapse = ref(false)
 const unreadCount = ref(0)
 const userType = ref(3)
+const isMobile = ref(false)
+const showMobileMenu = ref(false)
 
 const dashboardPath = computed(() => {
   const paths: Record<number, string> = { 1: '/elder-dashboard', 2: '/nurse-dashboard', 3: '/admin-dashboard', 4: '/family-dashboard' }
@@ -205,10 +295,22 @@ const getUnreadCount = async () => {
   }
 }
 
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
 onMounted(() => {
   authStore.getProfile()
   getUserType()
   getUnreadCount()
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+// 组件卸载时移除事件监听器
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
@@ -248,6 +350,12 @@ onMounted(() => {
     gap: 15px;
 
     .collapse-btn {
+      font-size: 20px;
+      cursor: pointer;
+      color: #606266;
+    }
+
+    .menu-btn {
       font-size: 20px;
       cursor: pointer;
       color: #606266;
@@ -298,5 +406,51 @@ onMounted(() => {
 .main-content {
   background-color: #f5f7fa;
   overflow-y: auto;
+}
+
+/* 移动端菜单样式 */
+.mobile-menu {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .mobile-logo {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #2b3a4d;
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-menu) {
+    flex: 1;
+  }
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 10px;
+  }
+
+  .header-left {
+    gap: 10px;
+  }
+
+  .header-right {
+    gap: 10px;
+  }
+
+  .el-breadcrumb {
+    display: none;
+  }
+
+  .main-content {
+    padding: 10px;
+  }
 }
 </style>

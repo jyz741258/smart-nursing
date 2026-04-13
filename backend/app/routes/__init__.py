@@ -7,6 +7,8 @@ health_bp = Blueprint('health', __name__, url_prefix='/api/health')
 care_bp = Blueprint('care', __name__, url_prefix='/api/care')
 notification_bp = Blueprint('notification', __name__, url_prefix='/api/notifications')
 statistics_bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
+service_bp = Blueprint('service', __name__, url_prefix='/api/services')
+order_bp = Blueprint('order', __name__, url_prefix='/api/orders')
 
 # 导入路由
-from . import users, nursing, health, care, notifications, statistics
+from . import users, nursing, health, care, notifications, statistics, service, order

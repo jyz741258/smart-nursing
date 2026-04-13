@@ -42,7 +42,9 @@ class User(db.Model):
 
     # 关系
     addresses = db.relationship('Address', backref='user', lazy='dynamic', cascade='all, delete-orphan')
-    orders = db.relationship('Order', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    orders = db.relationship('Order', foreign_keys='Order.user_id', backref='order_user', lazy='dynamic', cascade='all, delete-orphan')
+    elder_orders = db.relationship('Order', foreign_keys='Order.elder_id', backref='elder', lazy='dynamic')
+    nurse_orders = db.relationship('Order', foreign_keys='Order.nurse_id', backref='nurse', lazy='dynamic')
     evaluations = db.relationship('Evaluation', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     complaints = db.relationship('Complaint', backref='user', lazy='dynamic', cascade='all, delete-orphan')
 

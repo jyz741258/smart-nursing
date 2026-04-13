@@ -7,9 +7,8 @@ from ..utils import require_token
 
 
 @service_bp.route('/', methods=['GET'])
-@require_token
-def get_services(current_user):
-    """获取服务列表"""
+def get_services():
+    """获取服务列表（公开接口）"""
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 10, type=int)
     category = request.args.get('category')
@@ -34,17 +33,15 @@ def get_services(current_user):
 
 
 @service_bp.route('/<int:service_id>', methods=['GET'])
-@require_token
-def get_service_detail(current_user, service_id):
-    """获取服务详情"""
+def get_service_detail(service_id):
+    """获取服务详情（公开接口）"""
     service = Service.query.get_or_404(service_id)
     return api_response(service.to_dict())
 
 
 @service_bp.route('/categories', methods=['GET'])
-@require_token
-def get_service_categories(current_user):
-    """获取服务类别列表"""
+def get_service_categories():
+    """获取服务类别列表（公开接口）"""
     categories = db.session.query(Service.category).distinct().all()
     categories = [c[0] for c in categories]
     return api_response(categories)

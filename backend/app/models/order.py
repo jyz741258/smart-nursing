@@ -8,8 +8,10 @@ class Order(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     order_no = db.Column(db.String(32), unique=True, nullable=False, index=True, comment='订单编号')
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, comment='用户ID')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, comment='用户ID(下单者)')
     service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False, comment='服务ID')
+    elder_id = db.Column(db.Integer, db.ForeignKey('users.id'), comment='老人ID(服务对象)')
+    nurse_id = db.Column(db.Integer, db.ForeignKey('users.id'), comment='护理人员ID')
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), comment='地址ID')
 
     # 订单金额信息
@@ -28,7 +30,10 @@ class Order(db.Model):
     # 预约信息
     appointment_date = db.Column(db.Date, comment='预约日期')
     appointment_time = db.Column(db.String(20), comment='预约时间段')
+    order_time = db.Column(db.DateTime, comment='下单时间')
     remark = db.Column(db.String(500), comment='备注')
+    notes = db.Column(db.String(500), comment='订单备注')
+    created_by = db.Column(db.Integer, comment='创建人ID')
 
     # 订单状态: 0-已取消, 1-待支付, 2-已支付/待服务, 3-服务中, 4-已完成, 5-已退款
     status = db.Column(db.SmallInteger, default=1, comment='订单状态')
@@ -60,7 +65,12 @@ class Order(db.Model):
             'orderNo': self.order_no,
             'userId': self.user_id,
             'serviceId': self.service_id,
+            'elderId': self.elder_id,
+            'nurseId': self.nurse_id,
             'addressId': self.address_id,
+            'orderTime': self.order_time.strftime('%Y-%m-%d %H:%M:%S') if self.order_time else None,
+            'notes': self.notes,
+            'createdBy': self.created_by,
             'totalAmount': float(self.total_amount) if self.total_amount else 0,
             'discountAmount': float(self.discount_amount) if self.discount_amount else 0,
             'actualAmount': float(self.actual_amount) if self.actual_amount else 0,

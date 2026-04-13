@@ -52,18 +52,23 @@
 
     <el-table :data="orders" v-loading="loading" style="margin-top: 20px">
       <el-table-column prop="id" label="订单ID" width="100" />
-      <el-table-column prop="service_name" label="服务名称" />
-      <el-table-column prop="elder_name" label="老人姓名" width="120" />
-      <el-table-column prop="price" label="价格" width="100">
-        <template #default="{ row }">¥{{ row.price }}</template>
+      <el-table-column prop="serviceName" label="服务名称" />
+      <el-table-column prop="elderName" label="老人姓名" width="120" />
+      <el-table-column prop="actualAmount" label="价格" width="100">
+        <template #default="{ row }">¥{{ row.actualAmount }}</template>
       </el-table-column>
-      <el-table-column prop="order_time" label="订单时间" width="180" />
-      <el-table-column prop="service_time" label="服务时间" width="180" />
-      <el-table-column prop="status_name" label="状态" width="100">
+      <el-table-column prop="orderTime" label="订单时间" width="180" />
+      <el-table-column label="预约服务时间" width="180">
         <template #default="{ row }">
-          <el-tag v-if="row.status === 1" type="warning">{{ row.status_name }}</el-tag>
-          <el-tag v-else-if="row.status === 2" type="success">{{ row.status_name }}</el-tag>
-          <el-tag v-else type="info">{{ row.status_name }}</el-tag>
+          {{ row.appointmentDate }} {{ row.appointmentTime }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="statusName" label="状态" width="100">
+        <template #default="{ row }">
+          <el-tag v-if="row.status === 1" type="warning">{{ row.statusName }}</el-tag>
+          <el-tag v-else-if="row.status === 2" type="primary">{{ row.statusName }}</el-tag>
+          <el-tag v-else-if="row.status === 4" type="success">{{ row.statusName }}</el-tag>
+          <el-tag v-else type="info">{{ row.statusName }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="notes" label="备注" show-overflow-tooltip />
@@ -99,9 +104,11 @@ const pagination = reactive({
   total: 0
 })
 
-const totalOrders = computed(() => orders.value.length)
+const totalOrders = computed(() => pagination.total)
 const totalSales = computed(() => {
-  return orders.value.reduce((sum, order) => sum + order.price, 0).toFixed(2)
+  // 计算当前页订单的总金额
+  const total = orders.value.reduce((sum, order) => sum + (order.actualAmount || order.totalAmount || 0), 0)
+  return total.toFixed(2)
 })
 const completedOrders = computed(() => {
   return orders.value.filter(order => order.status === 2).length
@@ -140,15 +147,15 @@ const exportCSV = () => {
   }
 
   // 生成CSV内容
-  const headers = ['订单ID', '服务名称', '老人姓名', '价格', '订单时间', '服务时间', '状态', '备注']
+  const headers = ['订单ID', '服务名称', '老人姓名', '价格', '订单时间', '预约服务时间', '状态', '备注']
   const rows = orders.value.map(order => [
     order.id,
-    order.service_name,
-    order.elder_name,
-    order.price,
-    order.order_time,
-    order.service_time,
-    order.status_name,
+    order.serviceName,
+    order.elderName,
+    order.actualAmount || order.totalAmount,
+    order.orderTime,
+    (order.appointmentDate || '') + ' ' + (order.appointmentTime || ''),
+    order.statusName,
     order.notes || ''
   ])
 

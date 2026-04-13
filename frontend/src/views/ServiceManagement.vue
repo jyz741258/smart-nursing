@@ -163,10 +163,14 @@ const getServices = async () => {
     if (searchForm.name) params.name = searchForm.name
     if (searchForm.category) params.category = searchForm.category
     if (searchForm.status) params.status = searchForm.status
+    console.log('请求参数:', params)
     const res: any = await api.get('/services', { params })
+    console.log('API响应:', res)
     if (res.code === 200) {
       services.value = res.data.items
       pagination.total = res.data.total
+      console.log('服务数据:', services.value)
+      console.log('总条数:', pagination.total)
     }
   } catch (error) {
     console.error('获取服务列表失败', error)
