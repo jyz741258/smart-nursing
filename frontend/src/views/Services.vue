@@ -12,7 +12,8 @@
         <template #header>
           <div class="service-header">
             <span class="service-name">{{ service.name }}</span>
-            <span class="service-price">¥{{ service.price }}/{{ service.unit }}</span>
+            <span v-if="!isNurse" class="service-price">¥{{ service.price }}/{{ service.unit }}</span>
+            <span v-else class="service-requirements-tag">服务要求</span>
           </div>
         </template>
         <div class="service-body">
@@ -20,6 +21,10 @@
           <div class="service-info">
             <span class="service-category">{{ service.category }}</span>
             <span class="service-duration" v-if="service.duration">预计{{ service.duration }}分钟</span>
+          </div>
+          <!-- 护理人员看到服务要求 -->
+          <div v-if="isNurse && service.requirements" class="service-requirements">
+            <strong>服务要求：</strong>{{ service.requirements }}
           </div>
         </div>
         <div class="service-footer">
@@ -43,14 +48,17 @@
     <el-dialog v-model="showDetailDialog" title="服务详情" width="600px">
       <div class="service-detail">
         <h3>{{ currentService.name }}</h3>
-        <div class="detail-price">¥{{ currentService.price }}/{{ currentService.unit }}</div>
+        <div v-if="!isNurse" class="detail-price">¥{{ currentService.price }}/{{ currentService.unit }}</div>
+        <div v-else class="detail-requirements">
+          <el-tag type="warning">服务要求</el-tag>
+          <p>{{ currentService.requirements || '暂无具体要求' }}</p>
+        </div>
         <div class="detail-info">
           <p><strong>服务类别：</strong>{{ currentService.category }}</p>
           <p><strong>预计时长：</strong>{{ currentService.duration }}分钟</p>
           <p><strong>服务描述：</strong>{{ currentService.description }}</p>
           <p><strong>详细说明：</strong>{{ currentService.details }}</p>
           <p><strong>注意事项：</strong>{{ currentService.precautions }}</p>
-          <p><strong>服务要求：</strong>{{ currentService.requirements }}</p>
         </div>
       </div>
       <template #footer>
@@ -65,7 +73,7 @@
         <el-form-item label="服务名称">
           <el-input v-model="orderForm.service_name" disabled />
         </el-form-item>
-        <el-form-item label="服务价格">
+        <el-form-item v-if="!isNurse" label="服务价格">
           <el-input v-model="orderForm.price" disabled />
         </el-form-item>
         <el-form-item label="服务时间">
@@ -84,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import { useAuthStore } from '@/store/auth'
@@ -98,6 +106,11 @@ const showOrderDialog = ref(false)
 const currentService = ref<any>({})
 const orderFormRef = ref()
 const authStore = useAuthStore()
+
+// 判断是否为护理人员
+const isNurse = computed(() => {
+  return authStore.userInfo?.user_type === 2
+})
 
 const pagination = reactive({
   page: 1,
@@ -120,7 +133,7 @@ const getServices = async () => {
     if (selectedCategory.value) {
       params.category = selectedCategory.value
     }
-    const res: any = await api.get('/services', { params })
+    const res: any = await api.get('/services/', { params })
     if (res.code === 200) {
       services.value = res.data.items
       pagination.total = res.data.total
@@ -149,6 +162,11 @@ const viewService = (service: any) => {
 }
 
 const orderService = (service: any) => {
+  // 护理人员不能预约服务
+  if (isNurse.value) {
+    ElMessage.warning('护理人员不能预约服务')
+    return
+  }
   currentService.value = service
   orderForm.service_id = service.id
   orderForm.service_name = service.name
@@ -262,6 +280,45 @@ onMounted(() => {
   .service-footer {
     margin-top: 20px;
     text-align: right;
+  }
+}
+
+.service-requirements-tag {
+  color: #67c23a;
+  font-weight: 600;
+  font-size: 12px;
+  background: #f0f9eb;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.service-requirements {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f4f4f5;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #606266;
+  
+  strong {
+    color: #303133;
+    margin-right: 5px;
+  }
+}
+
+.detail-requirements {
+  color: #67c23a;
+  font-weight: 600;
+  font-size: 16px;
+  margin: 10px 0;
+  padding: 10px;
+  background: #f0f9eb;
+  border-radius: 4px;
+  
+  p {
+    margin: 10px 0 0 0;
+    font-weight: normal;
+    color: #606266;
   }
 }
 

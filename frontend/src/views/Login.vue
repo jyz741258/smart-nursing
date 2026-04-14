@@ -156,6 +156,10 @@ const quickLogin = async (user: any) => {
       }
       localStorage.setItem('token', loginData.token || '')
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      
+      // 同时更新authStore
+      authStore.userInfo = userInfo
+      authStore.token = loginData.token || ''
 
       ElMessage.success(`以${user.roleName}身份登录成功`)
 

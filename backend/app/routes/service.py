@@ -7,8 +7,9 @@ from ..utils import require_token
 
 
 @service_bp.route('/', methods=['GET'])
-def get_services():
-    """获取服务列表（公开接口）"""
+@require_token
+def get_services(current_user):
+    """获取服务列表（需要登录）"""
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 10, type=int)
     category = request.args.get('category')
@@ -27,15 +28,73 @@ def get_services():
     query = query.order_by(Service.sort_order.asc(), Service.id.asc())
 
     pagination = query.paginate(page=page, per_page=page_size, error_out=False)
-    services = [s.to_dict() for s in pagination.items]
+
+    # 根据用户类型返回不同字段
+    is_nurse = current_user.user_type == 2  # 护理人员
+    services = []
+    for s in pagination.items:
+        if is_nurse:
+            # 护理人员看不到价格，但能看到服务要求
+            services.append({
+                'id': s.id,
+                'name': s.name,
+                'category': s.category,
+                'description': s.description,
+                'unit': s.unit,
+                'duration': s.duration,
+                'imageUrl': s.image_url,
+                'icons': s.icons,
+                'details': s.details,
+                'precautions': s.precautions,
+                'requirements': s.requirements,
+                'stock': s.stock,
+                'salesCount': s.sales_count,
+                'rating': float(s.rating) if s.rating else 5.0,
+                'evaluationCount': s.evaluation_count,
+                'status': s.status,
+                'isRecommended': s.is_recommended,
+                'sortOrder': s.sort_order,
+                'createdAt': s.created_at.strftime('%Y-%m-%d %H:%M:%S') if s.created_at else None
+            })
+        else:
+            services.append(s.to_dict())
 
     return page_response(services, pagination.total, page, page_size)
 
 
 @service_bp.route('/<int:service_id>', methods=['GET'])
-def get_service_detail(service_id):
-    """获取服务详情（公开接口）"""
+@require_token
+def get_service_detail(current_user, service_id):
+    """获取服务详情（需要登录）"""
     service = Service.query.get_or_404(service_id)
+
+    # 根据用户类型返回不同字段
+    is_nurse = current_user.user_type == 2  # 护理人员
+    if is_nurse:
+        # 护理人员看不到价格，但能看到服务要求
+        data = {
+            'id': service.id,
+            'name': service.name,
+            'category': service.category,
+            'description': service.description,
+            'unit': service.unit,
+            'duration': service.duration,
+            'imageUrl': service.image_url,
+            'icons': service.icons,
+            'details': service.details,
+            'precautions': service.precautions,
+            'requirements': service.requirements,
+            'stock': service.stock,
+            'salesCount': service.sales_count,
+            'rating': float(service.rating) if service.rating else 5.0,
+            'evaluationCount': service.evaluation_count,
+            'status': service.status,
+            'isRecommended': service.is_recommended,
+            'sortOrder': service.sort_order,
+            'createdAt': service.created_at.strftime('%Y-%m-%d %H:%M:%S') if service.created_at else None
+        }
+        return api_response(data)
+
     return api_response(service.to_dict())
 
 

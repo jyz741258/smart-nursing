@@ -164,7 +164,7 @@ const getServices = async () => {
     if (searchForm.category) params.category = searchForm.category
     if (searchForm.status) params.status = searchForm.status
     console.log('请求参数:', params)
-    const res: any = await api.get('/services', { params })
+    const res: any = await api.get('/services/', { params })
     console.log('API响应:', res)
     if (res.code === 200) {
       services.value = res.data.items
@@ -235,7 +235,7 @@ const handleDelete = async (id: number) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    const res: any = await api.delete(`/services/${id}`)
+    const res: any = await api.delete(`/services/${id}/`)
     if (res.code === 200) {
       ElMessage.success('删除成功')
       getServices()
