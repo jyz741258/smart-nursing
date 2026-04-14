@@ -30,6 +30,7 @@
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
         </template>
 
         <!-- 护理人员菜单 -->
@@ -43,6 +44,7 @@
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
         </template>
 
         <!-- 家属菜单 -->
@@ -57,6 +59,7 @@
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
         </template>
 
         <!-- 管理员菜单 -->
@@ -67,6 +70,7 @@
           <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
           <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
           <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
+          <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
         </template>
 
         <el-menu-item index="/notifications">
@@ -166,6 +170,7 @@
               <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
               <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
             </el-sub-menu>
+            <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
           </template>
 
           <!-- 护理人员菜单 -->
@@ -179,6 +184,7 @@
               <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
               <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
             </el-sub-menu>
+            <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
           </template>
 
           <!-- 家属菜单 -->
@@ -193,6 +199,7 @@
               <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
               <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
             </el-sub-menu>
+            <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
           </template>
 
           <!-- 管理员菜单 -->
@@ -203,6 +210,7 @@
             <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
             <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
             <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
+            <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
           </template>
 
           <el-menu-item index="/notifications">
@@ -222,7 +230,7 @@ import { useAuthStore } from '@/store/auth'
 import api from '@/store/auth'
 import {
   DataAnalysis, User, Document, TrendCharts, Collection, Bell, PieChart,
-  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu
+  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu, ChatDotRound
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

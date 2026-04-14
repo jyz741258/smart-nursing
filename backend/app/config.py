@@ -39,6 +39,7 @@ class Config:
     XFYUN_APPID = os.environ.get('XFYUN_APPID') or ''
     XFYUN_API_KEY = os.environ.get('XFYUN_API_KEY') or ''
     XFYUN_API_SECRET = os.environ.get('XFYUN_API_SECRET') or ''
+    XFYUN_HTTP_PASSWORD = os.environ.get('XFYUN_HTTP_PASSWORD') or ''
 
 
 class DevelopmentConfig(Config):

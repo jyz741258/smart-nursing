@@ -99,6 +99,10 @@
                   <el-icon :size="28"><Star /></el-icon>
                   <span>评价护工</span>
                 </div>
+                <div class="action-btn ai" @click="$router.push('/ai-chat')">
+                  <el-icon :size="28"><ChatDotRound /></el-icon>
+                  <span>AI助手</span>
+                </div>
               </div>
             </div>
 
@@ -548,6 +552,10 @@ onMounted(async () => {
 
       &.evaluate {
         background: linear-gradient(135deg, #909399, #c0c4cc);
+      }
+
+      &.ai {
+        background: linear-gradient(135deg, #9c27b0, #ba68c8);
       }
 
       &:hover {

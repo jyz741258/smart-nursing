@@ -167,6 +167,10 @@
                   <el-icon><Star /></el-icon>
                   评价护工
                 </el-button>
+                <el-button type="info" @click="$router.push('/ai-chat')">
+                  <el-icon><ChatDotRound /></el-icon>
+                  AI助手
+                </el-button>
               </div>
             </div>
           </div>

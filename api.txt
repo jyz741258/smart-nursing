@@ -1,0 +1,13 @@
+Websocket服务接口认证信息
+鉴权信息
+APPID
+10b602f2
+APISecret
+YzhhZTFjMjcxZGVlMzM0NzI4MmU2MzEw
+APIKey
+6bd825ec32372edb8d788cad5e9d4127
+
+系统默认
+pYt****DvP（pYthWynjfxzBcOgUxZIs:LCgshXZZkRbzUspAYDvP）
+2026-04-14 11:07:11
+pYthWynjfxzBcOgUxZIs:LCgshXZZkRbzUspAYDvP

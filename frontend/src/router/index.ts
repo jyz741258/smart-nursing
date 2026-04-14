@@ -114,6 +114,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Accounting',
         component: () => import('@/views/Accounting.vue'),
         meta: { title: '账目管理', roles: [3] }
+      },
+      {
+        path: 'ai-chat',
+        name: 'AIChat',
+        component: () => import('@/views/AIChat.vue'),
+        meta: { title: 'AI健康助手' }
       }
     ]
   }

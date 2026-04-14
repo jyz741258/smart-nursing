@@ -1,14 +1,6 @@
 from flask import request, current_app
 import json
-import hashlib
-import hmac
-import base64
-import uuid
-import asyncio
-from datetime import datetime
-from threading import Thread
-from queue import Queue, Empty
-from urllib.parse import urlencode, quote
+import requests
 from . import ai_bp
 from ..utils.response import api_response, api_error
 from ..utils.auth import require_token
@@ -31,137 +23,83 @@ def get_system_prompt():
 - 你应该以关心、耐心、专业的态度回应用户"""
 
 
-def generate_auth_url():
-    """生成讯飞星火v2.1 API鉴权后的WebSocket URL"""
+def call_xfyun_http(message):
+    """通过HTTP接口调用讯飞星火API - 使用APIPassword认证"""
     config = current_app.config
-    host = 'wss://spark-api.xf-yun.com'
-    path = '/v2.1/chat'
 
-    appid = config.get('XFYUN_APPID', '')
-    api_key = config.get('XFYUN_API_KEY', '')
-    api_secret = config.get('XFYUN_API_SECRET', '')
+    # HTTP接口使用APIPassword（不是APIKey/APISecret）
+    api_password = config.get('XFYUN_HTTP_PASSWORD', '')
 
-    now = datetime.utcnow()
-    date = now.strftime('%a, %d %b %Y %H:%M:%S GMT')
+    if not api_password:
+        # 尝试使用旧的API Key（兼容）
+        api_key = config.get('XFYUN_API_KEY', '')
+        if api_key:
+            api_password = api_key
+        else:
+            return None, "讯飞星火API未配置，请检查.env中的XFYUN_HTTP_PASSWORD"
 
-    signature_origin = f"host: spark-api.xf-yun.com\ndate: {date}\nGET {path} HTTP/1.1"
-
-    signature_sha = hmac.new(
-        api_secret.encode('utf-8'),
-        signature_origin.encode('utf-8'),
-        digestmod=hashlib.sha256
-    ).digest()
-    signature_sha_base64 = base64.b64encode(signature_sha).decode('utf-8')
-
-    authorization_origin = (
-        f'api_key="{api_key}", algorithm="hmac-sha256", '
-        f'headers="host date request-line", signature="{signature_sha_base64}"'
-    )
-    authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode('utf-8')
-
-    # 正确编码所有参数
-    encoded_date = quote(date, safe='')
-    encoded_signature = quote(signature_sha_base64, safe='')
-
-    url = f"{host}{path}?appid={appid}&signature={encoded_signature}&date={encoded_date}&host=spark-api.xf-yun.com"
-
-    return url
-
-
-def call_xfyun_ws(message):
-    """通过WebSocket调用讯飞星火API"""
     try:
-        import websocket
-    except ImportError:
-        return None, "缺少 websocket-client 库，请运行: pip install websocket-client"
+        # HTTP接口地址
+        url = "https://spark-api-open.xf-yun.com/v1/chat/completions"
 
-    config = current_app.config
-    appid = config.get('XFYUN_APPID', '')
-    api_key = config.get('XFYUN_API_KEY', '')
-    api_secret = config.get('XFYUN_API_SECRET', '')
-
-    if not api_key or not api_secret or not appid:
-        return None, "讯飞星火API未配置完整，请检查APPID、APIKey和APISecret"
-
-    url = generate_auth_url()
-    
-    result_text = []
-    response_queue = Queue()
-    
-    def on_message(ws, message):
-        try:
-            data = json.loads(message)
-            if 'payload' in data and 'choices' in data['payload']:
-                content = data['payload']['choices']['text'][0]['content']
-                result_text.append(content)
-            if data.get('header', {}).get('code') == 0 and data.get('payload', {}).get('choices', {}).get('status') == 2:
-                response_queue.put('done')
-                ws.close()
-        except Exception as e:
-            pass
-    
-    def on_error(ws, error):
-        response_queue.put(f'error:{str(error)}')
-    
-    def on_close(ws, close_status_code, close_msg):
-        if not response_queue.full():
-            response_queue.put('closed')
-
-    def on_open(ws):
-        payload = {
-            "header": {
-                "app_id": appid,
-                "uid": str(uuid.uuid4())
-            },
-            "parameter": {
-                "chat": {
-                    "domain": "generalv2",
-                    "temperature": 0.5,
-                    "max_tokens": 2048,
-                    "auditing": ""
-                }
-            },
-            "payload": {
-                "message": {
-                    "text": [
-                        {"role": "system", "content": get_system_prompt()},
-                        {"role": "user", "content": message}
-                    ]
-                }
-            }
+        # 请求头 - 使用APIPassword作为Bearer Token
+        headers = {
+            "Authorization": f"Bearer {api_password}",
+            "Content-Type": "application/json"
         }
-        ws.send(json.dumps(payload))
 
-    try:
-        ws = websocket.WebSocketApp(
+        # 请求体 - Spark Lite
+        payload = {
+            "model": "lite",
+            "messages": [
+                {"role": "system", "content": get_system_prompt()},
+                {"role": "user", "content": message}
+            ],
+            "temperature": 0.5,
+            "max_tokens": 2048
+        }
+
+        current_app.logger.info(f"调用讯飞星火HTTP API")
+
+        response = requests.post(
             url,
-            on_message=on_message,
-            on_error=on_error,
-            on_close=on_close
+            headers=headers,
+            json=payload,
+            timeout=30
         )
-        ws.on_open = on_open
-        
-        # 运行WebSocket，5秒超时
-        import time
-        ws.run_forever(ping_timeout=10)
-        
-        # 等待结果
-        try:
-            result = response_queue.get(timeout=15)
-            if result.startswith('error:'):
-                return None, result[6:]
-            if result == 'closed' and result_text:
-                return ''.join(result_text), None
-        except Empty:
-            pass
-        
-        if result_text:
-            return ''.join(result_text), None
-        
-        return None, "未收到响应"
-        
+
+        current_app.logger.info(f"讯飞API响应状态: {response.status_code}")
+
+        if response.status_code == 200:
+            result = response.json()
+            current_app.logger.info(f"讯飞API响应成功")
+
+            # 提取回复内容
+            if 'choices' in result and len(result['choices']) > 0:
+                content = result['choices'][0]['message']['content']
+                return content, None
+            elif 'text' in result:
+                return result['text'], None
+            else:
+                return None, f"API返回格式异常"
+
+        elif response.status_code == 401:
+            return None, "API认证失败(401)，请检查APIPassword是否正确，或是否已开通HTTP接口权限"
+        elif response.status_code == 403:
+            return None, "API访问被拒绝(403)，请确认应用已开通星火大模型能力"
+        elif response.status_code == 429:
+            return None, "API调用频率超限，请稍后再试"
+        else:
+            error_detail = response.text[:200] if response.text else "无详细信息"
+            return None, f"HTTP {response.status_code}: {error_detail}"
+
+    except requests.exceptions.Timeout:
+        return None, "API调用超时，请检查网络连接"
+    except requests.exceptions.ConnectionError as e:
+        return None, f"网络连接失败: {str(e)}"
     except Exception as e:
-        return None, f"WebSocket错误: {str(e)}"
+        current_app.logger.error(f"讯飞API异常: {str(e)}")
+        return None, f"API调用异常: {str(e)}"
 
 
 @ai_bp.route('/chat', methods=['POST'])
@@ -175,10 +113,10 @@ def ai_chat(current_user):
         return api_error('请输入消息内容')
 
     config = current_app.config
-    if not config.get('XFYUN_API_KEY'):
+    if not config.get('XFYUN_HTTP_PASSWORD') and not config.get('XFYUN_API_KEY'):
         return api_error('AI服务未配置，请联系管理员设置讯飞星火API密钥')
 
-    response, error = call_xfyun_ws(message)
+    response, error = call_xfyun_http(message)
 
     if error:
         return api_error(error)
@@ -194,13 +132,13 @@ def ai_health_check():
     """AI服务健康检查"""
     config = current_app.config
 
-    if not config.get('XFYUN_API_KEY'):
+    if not config.get('XFYUN_HTTP_PASSWORD') and not config.get('XFYUN_API_KEY'):
         return api_response({
             'status': 'not_configured',
             'message': '讯飞星火API未配置'
         })
 
-    response, error = call_xfyun_ws("你好")
+    response, error = call_xfyun_http("你好")
 
     if error:
         return api_response({
@@ -219,8 +157,7 @@ def ai_health_check():
 def list_models():
     """获取支持的模型列表"""
     return api_response([
-        {"id": "generalv2", "name": "讯飞星火 v2 (Lite)", "provider": "讯飞"},
-        {"id": "general", "name": "讯飞星火 v3", "provider": "讯飞"}
+        {"id": "lite", "name": "讯飞星火 Lite", "provider": "讯飞", "version": "v1"}
     ])
 
 
@@ -234,10 +171,9 @@ def get_ai_config(current_user):
     config = current_app.config
     return api_response({
         'provider': 'xfyun',
-        'appid_configured': bool(config.get('XFYUN_APPID')),
+        'http_password_configured': bool(config.get('XFYUN_HTTP_PASSWORD')),
         'api_key_configured': bool(config.get('XFYUN_API_KEY')),
-        'api_secret_configured': bool(config.get('XFYUN_API_SECRET')),
-        'model': 'generalv2'
+        'model': 'lite'
     })
 
 
@@ -251,11 +187,9 @@ def update_ai_config(current_user):
     data = request.get_json()
     config = current_app.config
 
+    if 'http_password' in data:
+        config['XFYUN_HTTP_PASSWORD'] = data['http_password']
     if 'appid' in data:
         config['XFYUN_APPID'] = data['appid']
-    if 'api_key' in data:
-        config['XFYUN_API_KEY'] = data['api_key']
-    if 'api_secret' in data:
-        config['XFYUN_API_SECRET'] = data['api_secret']
 
     return api_response(message='配置更新成功')

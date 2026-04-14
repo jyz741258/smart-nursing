@@ -98,6 +98,7 @@
             <div class="link-item" @click="$router.push('/nursing')"><el-icon><Document /></el-icon><span>护理记录</span></div>
             <div class="link-item" @click="$router.push('/care-plan')"><el-icon><Calendar /></el-icon><span>护理计划</span></div>
             <div class="link-item" @click="showEvaluationDialog = true"><el-icon><Star /></el-icon><span>护工评价</span></div>
+            <div class="link-item" @click="$router.push('/ai-chat')"><el-icon><ChatDotRound /></el-icon><span>AI助手</span></div>
           </div>
         </div>
       </el-col>
