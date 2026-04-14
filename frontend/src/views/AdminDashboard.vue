@@ -218,7 +218,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import api from '@/store/auth'
@@ -251,6 +251,41 @@ const getDashboardStats = async () => {
   }
 }
 
+// 获取本周护理记录统计数据
+const getWeeklyNursingData = async () => {
+  try {
+    const res: any = await api.get('/statistics/weekly-nursing')
+    if (res.code === 200 && nursingChartRef.value) {
+      const weekData = res.data || []
+      const days = weekData.map((d: any) => d.day)
+      const counts = weekData.map((d: any) => d.count)
+      nursingChart.setOption({
+        xAxis: { type: 'category', data: days },
+        series: [{ data: counts }]
+      })
+    }
+  } catch (error) {
+    console.error('获取本周护理记录数据失败', error)
+  }
+}
+
+// 获取服务类型分布数据
+const getServiceDistribution = async () => {
+  try {
+    const res: any = await api.get('/statistics/service-distribution')
+    if (res.code === 200 && pieChartRef.value) {
+      const serviceData = res.data || []
+      pieChart.setOption({
+        series: [{
+          data: serviceData
+        }]
+      })
+    }
+  } catch (error) {
+    console.error('获取服务类型分布数据失败', error)
+  }
+}
+
 const refreshData = async () => {
   await getDashboardStats()
   updateCharts()
@@ -264,8 +299,9 @@ const updateCharts = () => {
       tooltip: { trigger: 'axis' },
       xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
       yAxis: { type: 'value' },
-      series: [{ type: 'bar', data: [12, 15, 10, 18, 14, 8, 6], itemStyle: { color: '#409eff' } }]
+      series: [{ type: 'bar', data: [], itemStyle: { color: '#409eff' } }]
     })
+    getWeeklyNursingData()
   }
 
   if (pieChartRef.value) {
@@ -276,16 +312,17 @@ const updateCharts = () => {
       series: [{
         type: 'pie',
         radius: ['40%', '70%'],
-        data: [
-          { value: 45, name: '日常照护' },
-          { value: 25, name: '医疗护理' },
-          { value: 15, name: '康复训练' },
-          { value: 15, name: '健康监测' }
-        ]
+        data: []
       }]
     })
+    getServiceDistribution()
   }
 }
+
+// 监听周期切换
+watch(chartPeriod, () => {
+  getWeeklyNursingData()
+})
 
 const handleResize = () => {
   nursingChart?.resize()
@@ -354,7 +391,6 @@ const loadWorkerStats = async () => {
 }
 
 // 监听对话框打开，加载护工列表
-import { watch } from 'vue'
 watch(showEvaluationDialog, (val) => {
   if (val) {
     loadWorkerList()

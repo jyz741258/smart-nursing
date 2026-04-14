@@ -198,3 +198,62 @@ def get_care_plan_progress(current_user):
         })
 
     return api_response(progress)
+
+
+@statistics_bp.route('/weekly-nursing', methods=['GET'])
+@require_token
+def get_weekly_nursing(current_user):
+    """获取本周护理记录统计（每日数量）"""
+    today = datetime.utcnow().date()
+    weekday = today.weekday()
+    week_start = today - timedelta(days=weekday)
+
+    week_data = []
+    day_names = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+
+    for i in range(7):
+        day = week_start + timedelta(days=i)
+        cursor = db.session.query(func.count(NursingRecord.id)).filter(
+            db.func.date(NursingRecord.created_at) == day
+        ).scalar()
+        week_data.append({
+            'day': day_names[i],
+            'date': day.strftime('%Y-%m-%d'),
+            'count': cursor or 0
+        })
+
+    return api_response(week_data)
+
+
+@statistics_bp.route('/service-distribution', methods=['GET'])
+@require_token
+def get_service_distribution(current_user):
+    """获取服务类型分布"""
+    from ..models import Service
+
+    distribution = db.session.query(
+        Service.category,
+        func.count(Service.id).label('count')
+    ).group_by(Service.category).all()
+
+    # 护理类型映射
+    nursing_type_names = {
+        1: '日常照护',
+        2: '医疗护理',
+        3: '康复训练',
+        4: '心理疏导',
+        5: '饮食护理',
+        6: '清洁护理',
+        7: '安全护理'
+    }
+
+    data = []
+    for d in distribution:
+        category = d[0] or '其他'
+        count = d[1]
+        data.append({
+            'name': category,
+            'value': count
+        })
+
+    return api_response(data)

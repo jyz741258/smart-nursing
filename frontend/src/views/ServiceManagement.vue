@@ -248,14 +248,14 @@ const handleDelete = async (id: number) => {
 const submitForm = async () => {
   try {
     if (isEditing.value) {
-      const res: any = await api.put(`/services/${serviceForm.id}`, serviceForm)
+      const res: any = await api.put(`/services/${serviceForm.id}/`, serviceForm)
       if (res.code === 200) {
         ElMessage.success('更新成功')
         showEditDialog.value = false
         getServices()
       }
     } else {
-      const res: any = await api.post('/services', serviceForm)
+      const res: any = await api.post('/services/', serviceForm)
       if (res.code === 200) {
         ElMessage.success('创建成功')
         showEditDialog.value = false
