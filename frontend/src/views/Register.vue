@@ -40,62 +40,31 @@
                 label="老人"
               />
               <el-option
-                :value="2"
-                label="护理人员"
-              />
-              <el-option
                 :value="4"
                 label="家属"
-              />
-              <el-option
-                v-if="showAdminOption"
-                :value="3"
-                label="管理员"
               />
             </el-select>
           </div>
         </el-form-item>
 
-        <!-- 管理员注册验证（当选择管理员时显示） -->
-        <div v-if="form.user_type === 3" class="admin-validation">
-          <el-alert
-            title="管理员注册需要验证权限"
-            type="warning"
-            :closable="false"
-            show-icon
-          />
-          <el-form-item prop="admin_password">
-            <div class="input-wrapper">
-              <el-icon class="input-icon"><Lock /></el-icon>
-              <el-input
-                v-model="form.admin_password"
-                type="password"
-                placeholder="请输入管理员密码进行验证"
-                size="large"
-                show-password
-              />
-            </div>
-          </el-form-item>
-        </div>
-
-        <!-- 基本信息 -->
-        <el-form-item prop="phone">
+        <!-- 邮箱 -->
+        <el-form-item prop="email">
           <div class="input-wrapper">
-            <el-icon class="input-icon"><Iphone /></el-icon>
+            <el-icon class="input-icon"><Message /></el-icon>
             <el-input
-              v-model="form.phone"
-              placeholder="请输入手机号"
+              v-model="form.email"
+              placeholder="请输入邮箱地址"
               size="large"
             />
           </div>
         </el-form-item>
 
-        <!-- 短信验证码 -->
-        <el-form-item prop="sms_code">
+        <!-- 邮箱验证码 -->
+        <el-form-item prop="email_code">
           <div class="input-wrapper sms-wrapper">
-            <el-icon class="input-icon"><Message /></el-icon>
+            <el-icon class="input-icon"><Key /></el-icon>
             <el-input
-              v-model="form.sms_code"
+              v-model="form.email_code"
               placeholder="请输入验证码"
               size="large"
               class="sms-input"
@@ -103,7 +72,7 @@
             <el-button
               size="large"
               :disabled="smsSending || countdown > 0"
-              @click="sendSms"
+              @click="sendEmailCode"
               class="sms-btn"
             >
               {{ countdown > 0 ? `${countdown}秒后重发` : '获取验证码' }}
@@ -187,12 +156,42 @@
 
           <el-form-item prop="age">
             <el-input
-              v-model="form.age"
-              placeholder="年龄（可选）"
+              v-model.number="form.age"
+              placeholder="年龄（必须大于0）"
               size="large"
               class="half-input"
               type="number"
+              min="1"
             />
+          </el-form-item>
+        </div>
+
+        <!-- 家属与老人关系（仅家属显示） -->
+        <div v-if="form.user_type === 4" class="relation-section">
+          <el-alert
+            title="请选择与老人的关系"
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 15px"
+          />
+          <el-form-item prop="relation_with_elder">
+            <div class="input-wrapper">
+              <el-icon class="input-icon"><User /></el-icon>
+              <el-select
+                v-model="form.relation_with_elder"
+                placeholder="请选择与老人的关系"
+                size="large"
+                class="full-width"
+              >
+                <el-option :value="1" label="子女" />
+                <el-option :value="2" label="配偶" />
+                <el-option :value="3" label="兄弟姐妹" />
+                <el-option :value="4" label="孙子女" />
+                <el-option :value="5" label="其他亲属" />
+                <el-option :value="6" label="朋友/邻居" />
+              </el-select>
+            </div>
           </el-form-item>
         </div>
 
@@ -249,24 +248,16 @@ const displayCode = ref('')
 const form = reactive({
   user_type: 1,
   phone: '',
-  sms_code: '',
+  email: '',
+  email_code: '',
   password: '',
   confirm_password: '',
   name: '',
   id_card: '',
   gender: null as number | null,
   age: null as number | null,
-  admin_password: '' // 管理员注册验证密码
+  relation_with_elder: null as number | null
 })
-
-// 管理员注册专用密码验证API密钥（仅后端知晓，前端传递用于验证）
-// 在实际应用中，应该由已登录的管理员通过界面创建新管理员
-// 这里为简化实现，使用一个预设的管理员密码进行验证
-const ADMIN_REGISTRATION_KEY = 'ADMIN_REGISTER_2024'
-
-// 是否显示管理员选项（默认隐藏，需要通过特定方式显示）
-// 为了演示，我们始终显示，但需要密码验证
-const showAdminOption = ref(true)
 
 // 验证确认密码
 const validateConfirmPassword = (rule: any, value: string, callback: any) => {
@@ -279,15 +270,35 @@ const validateConfirmPassword = (rule: any, value: string, callback: any) => {
   callback()
 }
 
-// 验证管理员密码（仅当选择管理员类型时）
-const validateAdminPassword = (rule: any, value: string, callback: any) => {
-  if (form.user_type === 3) {
-    if (!value) {
-      return callback(new Error('管理员注册需要验证密码'))
+// 验证邮箱格式
+const validateEmail = (rule: any, value: string, callback: any) => {
+  if (!value) {
+    return callback(new Error('请输入邮箱地址'))
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(value)) {
+    return callback(new Error('请输入有效的邮箱地址'))
+  }
+  callback()
+}
+
+// 验证年龄为正数
+const validateAge = (rule: any, value: number | null, callback: any) => {
+  if (value !== null && value !== undefined) {
+    if (value <= 0) {
+      return callback(new Error('年龄必须大于0'))
     }
-    if (value !== ADMIN_REGISTRATION_KEY) {
-      return callback(new Error('管理员验证密码错误'))
+    if (value > 150) {
+      return callback(new Error('年龄不能超过150岁'))
     }
+  }
+  callback()
+}
+
+// 验证家属与老人关系
+const validateRelation = (rule: any, value: number | null, callback: any) => {
+  if (form.user_type === 4 && !value) {
+    return callback(new Error('请选择与老人的关系'))
   }
   callback()
 }
@@ -300,7 +311,10 @@ const rules = {
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入11位有效手机号', trigger: 'blur' }
   ],
-  sms_code: [
+  email: [
+    { required: true, validator: validateEmail, trigger: 'blur' }
+  ],
+  email_code: [
     { required: true, message: '请输入验证码', trigger: 'blur' },
     { len: 6, message: '验证码为6位数字', trigger: 'blur' }
   ],
@@ -312,24 +326,26 @@ const rules = {
   confirm_password: [
     { required: true, validator: validateConfirmPassword, trigger: 'blur' }
   ],
-  admin_password: [
-    { validator: validateAdminPassword, trigger: 'blur' }
+  age: [
+    { validator: validateAge, trigger: 'blur' }
+  ],
+  relation_with_elder: [
+    { validator: validateRelation, trigger: 'change' }
   ]
 }
 
-// 发送短信验证码
-const sendSms = async () => {
+// 发送邮箱验证码
+const sendEmailCode = async () => {
   try {
-    await formRef.value.validateField('phone')
+    await formRef.value.validateField('email')
     smsSending.value = true
 
-    const res: any = await api.post('/users/send-sms', {
-      phone: form.phone
+    const res: any = await api.post('/users/send-email-code', {
+      email: form.email
     })
 
     if (res.code === 200) {
-      ElMessage.success('验证码已发送')
-      // 显示验证码供用户查看
+      ElMessage.success('验证码已发送至邮箱')
       if (res.data && res.data.code) {
         displayCode.value = res.data.code
         showCodeDisplay.value = true
@@ -362,25 +378,23 @@ const handleRegister = async () => {
   try {
     await formRef.value.validate()
 
-    // 管理员类型需要额外的验证（已经在validator中验证admin_password）
-    // 但为了安全，后端也需要验证
-
     loading.value = true
 
-    const registerData = {
+    const registerData: any = {
       phone: form.phone,
       password: form.password,
-      sms_code: form.sms_code,
+      email_code: form.email_code,
       user_type: form.user_type,
       name: form.name || null,
       id_card: form.id_card || null,
       gender: form.gender || 0,
-      age: form.age || null
+      age: form.age || null,
+      email: form.email
     }
 
-    // 如果是管理员注册，传递验证密码
-    if (form.user_type === 3) {
-      registerData.admin_verify_code = form.admin_password
+    // 如果是家属注册，添加关系字段
+    if (form.user_type === 4) {
+      registerData.relation_with_elder = form.relation_with_elder
     }
 
     const res: any = await api.post('/users/register', registerData)
@@ -388,7 +402,6 @@ const handleRegister = async () => {
     if (res.code === 200) {
       ElMessage.success('注册成功，请登录')
 
-      // 保存登录信息
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('userInfo', JSON.stringify({
         id: res.data.user_id,
@@ -397,14 +410,11 @@ const handleRegister = async () => {
         phone: form.phone
       }))
 
-      // 跳转到对应仪表盘
       const routeMap: Record<number, string> = {
         1: '/elder-dashboard',
-        2: '/nurse-dashboard',
-        3: '/admin-dashboard',
         4: '/family-dashboard'
       }
-      router.push(routeMap[form.user_type] || '/admin-dashboard')
+      router.push(routeMap[form.user_type] || '/login')
     } else {
       ElMessage.error(res.message || '注册失败')
     }
@@ -595,6 +605,18 @@ const handleRegister = async () => {
     border-radius: 12px;
     margin-bottom: 10px;
     border: 1px solid rgba(230, 162, 60, 0.3);
+  }
+
+  .relation-section {
+    background: rgba(64, 158, 255, 0.08);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(64, 158, 255, 0.3);
+  }
+
+  .full-width {
+    width: 100%;
   }
 
   .register-btn {

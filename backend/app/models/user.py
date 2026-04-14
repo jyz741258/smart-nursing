@@ -50,6 +50,8 @@ class User(db.Model):
     complaints = db.relationship('Complaint', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     # 家属绑定的老人
     binding_elder = db.relationship('User', remote_side=[id], foreign_keys=[binding_elder_id], backref='binded_families')
+    # 家属与老人的关系（1-子女, 2-配偶, 3-兄弟姐妹, 4-孙子女, 5-其他亲属, 6-朋友/邻居）
+    relation_with_elder = db.Column(db.SmallInteger, comment='与老人关系')
 
     def to_dict(self):
         """转换为字典"""

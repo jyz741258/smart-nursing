@@ -2,9 +2,32 @@ from flask import request, current_app
 from . import user_bp
 from ..models import User
 from ..extensions import db
-from ..utils.auth import generate_token, generate_sms_code, send_sms_code, verify_sms_code, require_token
+from ..utils.auth import generate_token, generate_sms_code, send_sms_code, verify_sms_code, send_email_code, verify_email_code, require_token
 from ..utils.response import api_response, api_error
 from ..utils.validators import validate_phone, validate_password, validate_id_card
+
+
+@user_bp.route('/send-email-code', methods=['POST'])
+def send_email_code_api():
+    """发送邮箱验证码"""
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return api_error('请输入邮箱地址')
+
+    # 验证邮箱格式
+    import re
+    email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not re.match(email_regex, email):
+        return api_error('邮箱格式不正确')
+
+    code = generate_sms_code()
+    send_email_code(email, code)
+    return api_response({
+        'code': code,
+        'message': '验证码已发送'
+    }, '验证码已发送至邮箱')
 
 
 @user_bp.route('/send-sms', methods=['POST'])
@@ -19,7 +42,6 @@ def send_sms():
 
     code = generate_sms_code()
     send_sms_code(phone, code)
-    # 返回验证码给前端显示（实际项目中应通过其他方式如邮件推送等）
     return api_response({
         'code': code,
         'message': '验证码已发送，请在页面查看'
@@ -32,9 +54,12 @@ def register():
     data = request.get_json()
     phone = data.get('phone')
     password = data.get('password')
-    sms_code = data.get('sms_code')
+    email_code = data.get('email_code')
     user_type = data.get('user_type', 1)
-    admin_verify_code = data.get('admin_verify_code')  # 管理员注册验证码
+
+    # 限制只能注册老人(1)或家属(4)
+    if user_type not in [1, 4]:
+        return api_error('仅允许注册老人或家属账号')
 
     # 验证手机号
     valid, msg = validate_phone(phone)
@@ -46,31 +71,31 @@ def register():
     if not valid:
         return api_error(msg)
 
-    # 验证短信验证码
-    if not verify_sms_code(phone, sms_code):
+    # 验证邮箱验证码
+    email = data.get('email')
+    if not email_code:
+        return api_error('请输入验证码')
+    if not verify_email_code(email, email_code):
         return api_error('验证码错误或已过期')
 
     # 检查用户是否已存在
     if User.query.filter_by(phone=phone).first():
         return api_error('该手机号已注册')
 
-    # 管理员注册需要额外验证
-    if user_type == 3:
-        # 验证管理员注册密钥
-        admin_key = current_app.config.get('ADMIN_REGISTRATION_KEY')
-        if not admin_verify_code or admin_verify_code != admin_key:
-            return api_error('管理员注册需要正确的验证密钥')
-
     # 创建用户
     user = User(
         phone=phone,
-        username=phone,  # 默认用户名使用手机号
+        username=phone,
         user_type=user_type,
         real_name=data.get('name'),
         gender=data.get('gender'),
         age=data.get('age'),
-        id_card=data.get('id_card')
+        id_card=data.get('id_card'),
+        email=email
     )
+    # 如果是家属，保存与老人的关系
+    if user_type == 4:
+        user.relation_with_elder = data.get('relation_with_elder')
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
@@ -111,9 +136,10 @@ def login():
 @require_token
 def get_profile(current_user):
     """获取用户资料"""
-    return api_response({
+    profile_data = {
         'id': current_user.id,
         'phone': current_user.phone,
+        'email': current_user.email,
         'name': current_user.name,
         'gender': current_user.gender,
         'age': current_user.age,
@@ -123,7 +149,11 @@ def get_profile(current_user):
         'emergency_contact': current_user.emergency_contact,
         'emergency_phone': current_user.emergency_phone,
         'user_type': current_user.user_type
-    })
+    }
+    # 如果是家属，添加与老人的关系
+    if current_user.user_type == 4:
+        profile_data['relation_with_elder'] = current_user.relation_with_elder
+    return api_response(profile_data)
 
 
 @user_bp.route('/profile', methods=['PUT'])
@@ -137,7 +167,11 @@ def update_profile(current_user):
     if 'gender' in data:
         current_user.gender = data['gender']
     if 'age' in data:
-        current_user.age = data['age']
+        age = data['age']
+        if age is not None:
+            if not isinstance(age, int) or age <= 0 or age > 150:
+                return api_error('年龄必须为1-150之间的整数')
+        current_user.age = age
     if 'id_card' in data:
         valid, msg = validate_id_card(data['id_card'])
         if not valid:

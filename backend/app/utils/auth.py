@@ -95,3 +95,31 @@ def verify_sms_code(phone, code):
         redis.delete(key)
         return True
     return False
+
+
+def send_email_code(email, code):
+    """发送邮箱验证码（模拟，实际项目中需要接入邮件服务）"""
+    redis = get_redis()
+    if redis is None:
+        # 无Redis时，仅打印验证码（用于测试）
+        print(f"[模拟邮箱] 向邮箱 {email} 发送验证码: {code} (Redis未连接，仅显示)")
+        return True
+    key = f'email_code:{email}'
+    redis.setex(key, current_app.config.get('SMS_CODE_EXPIRES', 300), code)
+    print(f"[模拟邮箱] 向邮箱 {email} 发送验证码: {code}")
+    return True
+
+
+def verify_email_code(email, code):
+    """验证邮箱验证码"""
+    redis = get_redis()
+    if redis is None:
+        # 无Redis时，验证码通过（用于测试）
+        print(f"[模拟验证] 邮箱验证码 {code} 验证通过 (Redis未连接)")
+        return True
+    key = f'email_code:{email}'
+    stored_code = redis.get(key)
+    if stored_code and stored_code == code:
+        redis.delete(key)
+        return True
+    return False
