@@ -1,0 +1,215 @@
+// ============================================
+// 表格和数据列表加载动画
+// ============================================
+
+// 表格骨架屏 - 行闪烁
+@keyframes tableRowShimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.table-skeleton {
+  .el-table__body-wrapper {
+    .el-table__row {
+      background: linear-gradient(
+        90deg,
+        #f5f7fa 25%,
+        #e4e7ed 50%,
+        #f5f7fa 75%
+      );
+      background-size: 200% 100%;
+      animation: tableRowShimmer 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+// 表格行悬停效果
+.el-table {
+  .el-table__row {
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: #f5f7fa !important;
+      transform: scale(1.005);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  // 斑马纹 - 更加柔和
+  .el-table__row--striped {
+    background-color: rgba(102, 126, 234, 0.04);
+  }
+}
+
+// 列表项加载占位
+.list-skeleton-item {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: tableRowShimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+// 卡片列表加载
+.card-list-enter-active,
+.card-list-leave-active {
+  transition: all 0.4s ease;
+}
+
+.card-list-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.card-list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+// 列表项依次显示动画
+.list-stagger-enter-active {
+  animation: listSlideIn 0.5s ease-out both;
+}
+
+.list-stagger-1 { animation-delay: 0.05s; }
+.list-stagger-2 { animation-delay: 0.1s; }
+.list-stagger-3 { animation-delay: 0.15s; }
+.list-stagger-4 { animation-delay: 0.2s; }
+.list-stagger-5 { animation-delay: 0.25s; }
+.list-stagger-6 { animation-delay: 0.3s; }
+.list-stagger-7 { animation-delay: 0.35s; }
+.list-stagger-8 { animation-delay: 0.4s; }
+
+@keyframes listSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 数据统计卡片数字滚动效果
+@keyframes countUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.count-up {
+  animation: countUp 0.6s ease-out both;
+}
+
+// 进度条动画
+@keyframes progressGrow {
+  from {
+    width: 0;
+  }
+}
+
+.progress-bar-grow {
+  animation: progressGrow 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+// 通知列表进入动画
+.notification-enter-active {
+  animation: slideInRight 0.4s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// 标签页切换动画
+.tab-enter-active,
+.tab-leave-active {
+  transition: all 0.3s ease;
+}
+
+.tab-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.tab-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+// 统计数字脉冲效果（用于强调重要数据）
+@keyframes numberPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.number-pulse {
+  animation: numberPulse 2s ease-in-out infinite;
+}
+
+// 表格空状态 - 添加呼吸动画
+.el-empty__description {
+  animation: fadeIn 0.5s ease;
+}
+
+// 下拉菜单进入动画
+.dropdown-enter-active {
+  animation: dropdownFadeIn 0.3s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 分页器悬停效果
+.el-pagination {
+  button:hover {
+    color: #667eea !important;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+  }
+
+  .el-pager li.is-active {
+    animation: activePagerPulse 0.3s ease;
+  }
+}
+
+@keyframes activePagerPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}

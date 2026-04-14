@@ -8,6 +8,12 @@ import router from './router'
 import App from './App.vue'
 import './styles/global.css'
 
+// 引入动画和动效样式
+import './styles/animations.scss'
+import './styles/buttons.scss'
+import './styles/tables.scss'
+import './styles/advanced-effects.scss'
+
 const app = createApp(App)
 
 // 注册所有图标

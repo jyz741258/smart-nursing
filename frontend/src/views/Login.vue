@@ -1,5 +1,14 @@
 <template>
   <div class="login-container">
+    <!-- 粒子背景 -->
+    <div class="particle-bg">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+
     <div class="login-background">
       <div class="bg-gradient"></div>
       <div class="bg-shapes">
@@ -222,6 +231,84 @@ const handleLogin = async () => {
   justify-content: center;
   position: relative;
   overflow: hidden;
+
+  // 粒子背景
+  .particle-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+      filter: blur(1px);
+
+      &:nth-child(1) {
+        width: 80px;
+        height: 80px;
+        top: 20%;
+        left: 10%;
+        animation: particleFloat 25s ease-in-out infinite;
+      }
+
+      &:nth-child(2) {
+        width: 60px;
+        height: 60px;
+        top: 60%;
+        right: 10%;
+        animation: particleFloat 30s ease-in-out infinite;
+        animation-delay: -5s;
+      }
+
+      &:nth-child(3) {
+        width: 100px;
+        height: 100px;
+        bottom: 20%;
+        left: 30%;
+        animation: particleFloat 28s ease-in-out infinite;
+        animation-delay: -10s;
+      }
+
+      &:nth-child(4) {
+        width: 40px;
+        height: 40px;
+        top: 10%;
+        right: 30%;
+        animation: particleFloat 22s ease-in-out infinite;
+        animation-delay: -15s;
+      }
+
+      &:nth-child(5) {
+        width: 70px;
+        height: 70px;
+        bottom: 10%;
+        right: 20%;
+        animation: particleFloat 26s ease-in-out infinite;
+        animation-delay: -8s;
+      }
+    }
+  }
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0.6;
+  }
+  33% {
+    transform: translateY(-80px) translateX(30px) rotate(120deg);
+    opacity: 0.3;
+  }
+  66% {
+    transform: translateY(-40px) translateX(-30px) rotate(240deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0) translateX(0) rotate(360deg);
+    opacity: 0.6;
+  }
 }
 
 .login-background {
@@ -280,6 +367,7 @@ const handleLogin = async () => {
   50% { transform: translateY(-30px) rotate(10deg); }
 }
 
+// 登录框入场动画
 .login-box {
   position: relative;
   z-index: 1;
@@ -289,24 +377,85 @@ const handleLogin = async () => {
   backdrop-filter: blur(20px);
   border-radius: 24px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  // 全息效果
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 50%, rgba(240, 147, 251, 0.2) 100%);
+    background-size: 200% 200%;
+    animation: holographicShift 3s ease-in-out infinite;
+    border-radius: 24px;
+  }
+
+  // 入场动画
+  animation: loginBoxSlideIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+  transform: translateY(40px) scale(0.95);
+}
+
+@keyframes loginBoxSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Logo 独立动画
+.login-header .logo {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin: 0 auto 20px;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  animation: logoFloat 3s ease-in-out infinite, logoAppear 0.8s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes logoAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-header {
   text-align: center;
   margin-bottom: 40px;
-
-  .logo {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    margin: 0 auto 20px;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-  }
+  animation: fadeInDown 0.6s ease-out 0.5s forwards;
+  opacity: 0;
 
   h1 {
     font-size: 28px;
@@ -340,6 +489,7 @@ const handleLogin = async () => {
       height: 48px;
       border-radius: 12px;
       box-shadow: 0 0 0 1px #dcdfe6;
+      transition: all 0.3s ease;
 
       &:hover, &.is-focus {
         box-shadow: 0 0 0 2px #667eea;
@@ -360,17 +510,102 @@ const handleLogin = async () => {
     background: linear-gradient(135deg, #667eea, #764ba2);
     border: none;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 
+    // 按钮悬停提升效果
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        animation: buttonShine 0.6s ease;
+      }
     }
+
+    &:active {
+      transform: translateY(-1px);
+    }
+
+    // 按钮点击波纹效果
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(0);
+      animation: rippleEffect 0.6s ease-out;
+      pointer-events: none;
+    }
+  }
+
+  // 输入框依次入场
+  .el-form-item {
+    animation: slideInUp 0.5s ease-out both;
+
+    &:nth-child(1) { animation-delay: 0.2s; }
+    &:nth-child(2) { animation-delay: 0.3s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes buttonShine {
+  from { left: -100%; }
+  to { left: 100%; }
+}
+
+@keyframes rippleEffect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rippleBtn {
+  to {
+    transform: translate(-50%, -50%) scale(4);
+    opacity: 0;
   }
 }
 
 // 样例登录区域
 .demo-login {
   margin-top: 20px;
+  animation: fadeIn 0.6s ease-out 0.6s forwards;
+  opacity: 0;
 
   .demo-divider {
     text-align: center;
@@ -403,52 +638,97 @@ const handleLogin = async () => {
   }
 
   .demo-user-item {
-    padding: 10px 15px;
-    border-radius: 8px;
+    padding: 12px 15px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    border: 1px solid transparent;
+    animation: fadeInUp 0.5s ease-out both;
+    position: relative;
+    overflow: hidden;
+
+    // 依次延迟显示
+    &:nth-child(1) { animation-delay: 0.6s; }
+    &:nth-child(2) { animation-delay: 0.7s; }
+    &:nth-child(3) { animation-delay: 0.8s; }
+    &:nth-child(4) { animation-delay: 0.9s; }
 
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    // 点击波纹
+    &:active .ripple-effect {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      animation: rippleBtn 0.6s ease-out;
+      pointer-events: none;
     }
 
     .demo-role {
       font-size: 13px;
       font-weight: 600;
       color: #303133;
+      position: relative;
+      z-index: 1;
     }
 
     .demo-phone {
       font-size: 11px;
       color: #909399;
+      font-family: 'Courier New', monospace;
+      position: relative;
+      z-index: 1;
     }
 
+    // 渐变背景
     &.elder {
-      background: rgba(103, 194, 58, 0.1);
-      border: 1px solid rgba(103, 194, 58, 0.3);
-      &:hover { background: rgba(103, 194, 58, 0.2); }
+      background: linear-gradient(135deg, rgba(103, 194, 58, 0.08), rgba(103, 194, 58, 0.02));
+      border-color: rgba(103, 194, 58, 0.3);
+      &:hover {
+        background: linear-gradient(135deg, rgba(103, 194, 58, 0.15), rgba(103, 194, 58, 0.08));
+        border-color: rgba(103, 194, 58, 0.5);
+        box-shadow: 0 12px 24px rgba(103, 194, 58, 0.2);
+      }
     }
 
     &.nurse {
-      background: rgba(64, 158, 255, 0.1);
-      border: 1px solid rgba(64, 158, 255, 0.3);
-      &:hover { background: rgba(64, 158, 255, 0.2); }
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.08), rgba(64, 158, 255, 0.02));
+      border-color: rgba(64, 158, 255, 0.3);
+      &:hover {
+        background: linear-gradient(135deg, rgba(64, 158, 255, 0.15), rgba(64, 158, 255, 0.08));
+        border-color: rgba(64, 158, 255, 0.5);
+        box-shadow: 0 12px 24px rgba(64, 158, 255, 0.2);
+      }
     }
 
     &.admin {
-      background: rgba(230, 162, 60, 0.1);
-      border: 1px solid rgba(230, 162, 60, 0.3);
-      &:hover { background: rgba(230, 162, 60, 0.2); }
+      background: linear-gradient(135deg, rgba(230, 162, 60, 0.08), rgba(230, 162, 60, 0.02));
+      border-color: rgba(230, 162, 60, 0.3);
+      &:hover {
+        background: linear-gradient(135deg, rgba(230, 162, 60, 0.15), rgba(230, 162, 60, 0.08));
+        border-color: rgba(230, 162, 60, 0.5);
+        box-shadow: 0 12px 24px rgba(230, 162, 60, 0.2);
+      }
     }
 
     &.family {
-      background: rgba(245, 108, 108, 0.1);
-      border: 1px solid rgba(245, 108, 108, 0.3);
-      &:hover { background: rgba(245, 108, 108, 0.2); }
+      background: linear-gradient(135deg, rgba(245, 108, 108, 0.08), rgba(245, 108, 108, 0.02));
+      border-color: rgba(245, 108, 108, 0.3);
+      &:hover {
+        background: linear-gradient(135deg, rgba(245, 108, 108, 0.15), rgba(245, 108, 108, 0.08));
+        border-color: rgba(245, 108, 108, 0.5);
+        box-shadow: 0 12px 24px rgba(245, 108, 108, 0.2);
+      }
     }
   }
 }
@@ -456,6 +736,8 @@ const handleLogin = async () => {
 .login-footer {
   text-align: center;
   margin-top: 30px;
+  animation: fadeIn 0.6s ease-out 0.7s forwards;
+  opacity: 0;
 
   p {
     color: #909399;
@@ -470,11 +752,17 @@ const handleLogin = async () => {
     color: #606266;
     cursor: pointer;
     font-size: 14px;
-    transition: color 0.3s;
+    transition: all 0.3s ease;
 
     &:hover {
       color: #667eea;
+      transform: translateX(4px);
     }
   }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>

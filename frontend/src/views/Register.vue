@@ -1,5 +1,14 @@
 <template>
   <div class="register-container">
+    <!-- 粒子背景 -->
+    <div class="particle-bg">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+
     <div class="register-background">
       <div class="bg-gradient"></div>
       <div class="bg-shapes">
@@ -80,17 +89,7 @@
           </div>
         </el-form-item>
 
-        <!-- 验证码显示区域 -->
-        <div v-if="showCodeDisplay" class="code-display">
-          <div class="code-box">
-            <div class="code-label">
-              <el-icon><Key /></el-icon>
-              <span>您的验证码</span>
-            </div>
-            <div class="code-value">{{ displayCode }}</div>
-            <div class="code-tips">请在下方输入此验证码</div>
-          </div>
-        </div>
+        <!-- 验证码显示区域 - 已移除（安全优化：验证码不在页面显示） -->
 
         <!-- 密码 -->
         <el-form-item prop="password">
@@ -242,8 +241,6 @@ const formRef = ref()
 const loading = ref(false)
 const smsSending = ref(false)
 const countdown = ref(0)
-const showCodeDisplay = ref(false)
-const displayCode = ref('')
 
 const form = reactive({
   user_type: 1,
@@ -345,11 +342,7 @@ const sendEmailCode = async () => {
     })
 
     if (res.code === 200) {
-      ElMessage.success('验证码已发送至邮箱')
-      if (res.data && res.data.code) {
-        displayCode.value = res.data.code
-        showCodeDisplay.value = true
-      }
+      ElMessage.success('验证码已发送至邮箱，请查收')
       startCountdown()
     } else {
       ElMessage.error(res.message || '发送失败')
@@ -436,6 +429,84 @@ const handleRegister = async () => {
   justify-content: center;
   position: relative;
   overflow: hidden;
+
+  // 粒子背景
+  .particle-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+      filter: blur(1px);
+
+      &:nth-child(1) {
+        width: 80px;
+        height: 80px;
+        top: 20%;
+        left: 10%;
+        animation: particleFloat 25s ease-in-out infinite;
+      }
+
+      &:nth-child(2) {
+        width: 60px;
+        height: 60px;
+        top: 60%;
+        right: 10%;
+        animation: particleFloat 30s ease-in-out infinite;
+        animation-delay: -5s;
+      }
+
+      &:nth-child(3) {
+        width: 100px;
+        height: 100px;
+        bottom: 20%;
+        left: 30%;
+        animation: particleFloat 28s ease-in-out infinite;
+        animation-delay: -10s;
+      }
+
+      &:nth-child(4) {
+        width: 40px;
+        height: 40px;
+        top: 10%;
+        right: 30%;
+        animation: particleFloat 22s ease-in-out infinite;
+        animation-delay: -15s;
+      }
+
+      &:nth-child(5) {
+        width: 70px;
+        height: 70px;
+        bottom: 10%;
+        right: 20%;
+        animation: particleFloat 26s ease-in-out infinite;
+        animation-delay: -8s;
+      }
+    }
+  }
+
+  @keyframes particleFloat {
+    0% {
+      transform: translateY(0) translateX(0) rotate(0deg);
+      opacity: 0.6;
+    }
+    33% {
+      transform: translateY(-80px) translateX(30px) rotate(120deg);
+      opacity: 0.3;
+    }
+    66% {
+      transform: translateY(-40px) translateX(-30px) rotate(240deg);
+      opacity: 0.5;
+    }
+    100% {
+      transform: translateY(0) translateX(0) rotate(360deg);
+      opacity: 0.6;
+    }
+  }
 }
 
 .register-background {
@@ -505,6 +576,19 @@ const handleRegister = async () => {
   backdrop-filter: blur(20px);
   border-radius: 24px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  // 全息渐变边框
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 50%, rgba(240, 147, 251, 0.2) 100%);
+    background-size: 200% 200%;
+    animation: holographicShift 3s ease-in-out infinite;
+    border-radius: 24px;
+  }
 }
 
 .register-header {
@@ -616,6 +700,22 @@ const handleRegister = async () => {
   }
 
   .full-width {
+    background: rgba(230, 162, 60, 0.08);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(230, 162, 60, 0.3);
+  }
+
+  .relation-section {
+    background: rgba(64, 158, 255, 0.08);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(64, 158, 255, 0.3);
+  }
+
+  .full-width {
     width: 100%;
   }
 
@@ -635,56 +735,6 @@ const handleRegister = async () => {
       box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
     }
   }
-}
-
-.code-display {
-  margin-bottom: 20px;
-  animation: fadeIn 0.3s ease;
-
-  .code-box {
-    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-    border: 2px dashed #409eff;
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-
-    .code-label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: #409eff;
-      font-size: 14px;
-      margin-bottom: 10px;
-
-      .el-icon {
-        font-size: 18px;
-      }
-    }
-
-    .code-value {
-      font-size: 36px;
-      font-weight: 700;
-      color: #1565c0;
-      letter-spacing: 8px;
-      font-family: 'Courier New', monospace;
-      padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 8px;
-      display: inline-block;
-    }
-
-    .code-tips {
-      font-size: 12px;
-      color: #64b5f6;
-      margin-top: 10px;
-    }
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .register-footer {

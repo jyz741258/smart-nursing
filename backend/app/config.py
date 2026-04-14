@@ -41,6 +41,14 @@ class Config:
     XFYUN_API_SECRET = os.environ.get('XFYUN_API_SECRET') or ''
     XFYUN_HTTP_PASSWORD = os.environ.get('XFYUN_HTTP_PASSWORD') or ''
 
+    # 邮件发送配置
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.qq.com'
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or ''
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or ''
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or ''
+
 
 class DevelopmentConfig(Config):
     """开发环境配置"""

@@ -19,31 +19,46 @@
       <el-row :gutter="20">
         <el-col :span="16">
           <div class="main-section">
-            <div class="section-title">我的健康</div>
+            <div class="section-title">
+              <span class="title-icon"><el-icon><HeartFilled /></el-icon></span>
+              我的健康
+            </div>
             <el-row :gutter="15" class="health-cards">
               <el-col :span="6">
-                <div class="health-card heart">
+                <div
+                  class="health-card heart"
+                  :class="{ 'card-loading': loading.heartRate }"
+                >
                   <div class="card-icon"><el-icon><HeartFilled /></el-icon></div>
                   <div class="card-value">{{ healthData.heartRate }}</div>
                   <div class="card-label">心率 BPM</div>
                 </div>
               </el-col>
               <el-col :span="6">
-                <div class="health-card blood">
+                <div
+                  class="health-card blood"
+                  :class="{ 'card-loading': loading.bloodPressure }"
+                >
                   <div class="card-icon"><el-icon><Sugar /></el-icon></div>
                   <div class="card-value">{{ healthData.bloodPressure }}</div>
                   <div class="card-label">血压 mmHg</div>
                 </div>
               </el-col>
               <el-col :span="6">
-                <div class="health-card sleep">
+                <div
+                  class="health-card sleep"
+                  :class="{ 'card-loading': loading.sleepHours }"
+                >
                   <div class="card-icon"><el-icon><Moon /></el-icon></div>
                   <div class="card-value">{{ healthData.sleepHours }}</div>
                   <div class="card-label">睡眠时长 h</div>
                 </div>
               </el-col>
               <el-col :span="6">
-                <div class="health-card step">
+                <div
+                  class="health-card step"
+                  :class="{ 'card-loading': loading.steps }"
+                >
                   <div class="card-icon"><el-icon><Footprinter /></el-icon></div>
                   <div class="card-value">{{ healthData.steps }}</div>
                   <div class="card-label">今日步数</div>
@@ -223,6 +238,13 @@ const currentDate = computed(() => {
   return `${now.getMonth() + 1}月${now.getDate()}日 周${['日', '一', '二', '三', '四', '五', '六'][now.getDay()]}`
 })
 
+const loading = reactive({
+  heartRate: false,
+  bloodPressure: false,
+  sleepHours: false,
+  steps: false
+})
+
 const healthData = reactive({
   heartRate: '--',
   bloodPressure: '--/--',
@@ -319,15 +341,33 @@ const submitEvaluation = async () => {
 const getHealthData = async () => {
   if (!elderId.value) return
   try {
+    // 开始加载
+    loading.heartRate = true
+    loading.bloodPressure = true
+    loading.sleepHours = true
+    loading.steps = true
+
     const res: any = await api.get(`/health/metrics/latest/${elderId.value}`)
     if (res.code === 200 && res.data) {
-      healthData.heartRate = res.data.心率?.value || '--'
-      healthData.bloodPressure = `${res.data['血压-收缩压']?.value || '--'}/${res.data['血压-舒张压']?.value || '--'}`
-      healthData.sleepHours = res.data.睡眠时长?.value || '--'
-      healthData.steps = res.data.今日步数?.value || '--'
+      const heartRate = res.data['心率']
+      const systolic = res.data['血压-收缩压']
+      const diastolic = res.data['血压-舒张压']
+      const sleepHours = res.data['睡眠时长']
+      const steps = res.data['今日步数']
+
+      healthData.heartRate = heartRate?.value !== undefined ? String(heartRate.value) : '--'
+      healthData.bloodPressure = `${systolic?.value !== undefined ? systolic.value : '--'}/${diastolic?.value !== undefined ? diastolic.value : '--'}`
+      healthData.sleepHours = sleepHours?.value !== undefined ? String(sleepHours.value) : '--'
+      healthData.steps = steps?.value !== undefined ? String(Math.round(steps.value)) : '--'
     }
   } catch (error) {
     console.error('获取健康数据失败', error)
+  } finally {
+    // 结束加载
+    loading.heartRate = false
+    loading.bloodPressure = false
+    loading.sleepHours = false
+    loading.steps = false
   }
 }
 
@@ -426,6 +466,52 @@ onMounted(async () => {
     padding: 20px;
     text-align: center;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);
+    animation: cardSlideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+
+    // 入场延迟 - 实现交错效果
+    &:nth-child(1) { animation-delay: 0.1s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
+    &:nth-child(4) { animation-delay: 0.4s; }
+
+    // 悬停效果
+    &:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    // 加载动画状态
+    &.card-loading {
+      .card-value {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+        border-radius: 4px;
+        color: transparent;
+      }
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes cardSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     .card-icon {
       width: 50px;
@@ -437,6 +523,12 @@ onMounted(async () => {
       margin: 0 auto 12px;
       font-size: 24px;
       color: #fff;
+      transition: transform 0.3s ease;
+
+      // 图标悬停放大
+      .elder-dashboard:hover & {
+        transform: scale(1.1);
+      }
     }
 
     .card-value {
@@ -444,6 +536,7 @@ onMounted(async () => {
       font-weight: 700;
       color: #303133;
       margin-bottom: 4px;
+      transition: all 0.3s ease;
     }
 
     .card-label {
