@@ -1,8 +1,16 @@
 from flask import Flask
 from flask_cors import CORS
 import redis
+from dotenv import load_dotenv
+import os
 from .config import config
 from .extensions import db
+
+# 加载 .env 文件
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
+print(f"加载环境配置文件: {env_path}")
+print(f"XFYUN_APPID: {'已设置' if os.getenv('XFYUN_APPID') else '未设置'}")
 redis_client = None
 
 
@@ -35,7 +43,7 @@ def create_app(config_name='default'):
         redis_client = None
 
     # 注册蓝图
-    from .routes import user_bp, nursing_bp, health_bp, care_bp, notification_bp, statistics_bp, service_bp, order_bp
+    from .routes import user_bp, nursing_bp, health_bp, care_bp, notification_bp, statistics_bp, service_bp, order_bp, ai_bp
 
     app.register_blueprint(user_bp)
     app.register_blueprint(nursing_bp)
@@ -45,6 +53,7 @@ def create_app(config_name='default'):
     app.register_blueprint(statistics_bp)
     app.register_blueprint(service_bp)
     app.register_blueprint(order_bp)
+    app.register_blueprint(ai_bp)
 
     # 创建数据库表
     with app.app_context():

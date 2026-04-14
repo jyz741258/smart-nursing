@@ -35,6 +35,11 @@ class Config:
     # CORS配置
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS') or '*'
 
+    # 讯飞星火AI配置
+    XFYUN_APPID = os.environ.get('XFYUN_APPID') or ''
+    XFYUN_API_KEY = os.environ.get('XFYUN_API_KEY') or ''
+    XFYUN_API_SECRET = os.environ.get('XFYUN_API_SECRET') or ''
+
 
 class DevelopmentConfig(Config):
     """开发环境配置"""
