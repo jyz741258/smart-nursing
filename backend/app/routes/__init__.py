@@ -11,10 +11,16 @@ service_bp = Blueprint('service', __name__, url_prefix='/api/services')
 order_bp = Blueprint('order', __name__, url_prefix='/api/orders')
 evaluation_bp = Blueprint('evaluation', __name__, url_prefix='/api/evaluations')
 ai_bp = Blueprint('ai', __name__, url_prefix='/api/ai')
+bigdata_bp = Blueprint('bigdata', __name__, url_prefix='/api/bigdata')
 
 # 导入路由
 from . import users, nursing, health, care, notifications, statistics, service, order, ai
 try:
     from . import worker_evaluation
+except ImportError:
+    pass
+
+try:
+    from . import bigdata
 except ImportError:
     pass
