@@ -70,6 +70,7 @@
           <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
           <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
           <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
+          <el-menu-item index="/bigdata"><el-icon><DataAnalysis /></el-icon>大数据分析</el-menu-item>
           <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
         </template>
 
@@ -325,10 +326,12 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .layout-container {
   height: 100vh;
+  background: transparent;
 }
 
 .sidebar {
-  background-color: #304156;
+  background-color: rgba(48, 65, 86, 0.85);
+  backdrop-filter: blur(10px);
   transition: width 0.3s;
   overflow: hidden;
 
@@ -340,17 +343,20 @@ onUnmounted(() => {
     color: #fff;
     font-size: 18px;
     font-weight: bold;
-    background-color: #2b3a4d;
+    background-color: rgba(43, 58, 77, 0.9);
+    backdrop-filter: blur(10px);
   }
 }
 
 .header {
-  background-color: #fff;
+  background-color: rgba(37, 45, 55, 0.85);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.3);
+  border-bottom: 1px solid var(--border-color);
 
   .header-left {
     display: flex;
@@ -360,13 +366,13 @@ onUnmounted(() => {
     .collapse-btn {
       font-size: 20px;
       cursor: pointer;
-      color: #606266;
+      color: var(--text-secondary);
     }
 
     .menu-btn {
       font-size: 20px;
       cursor: pointer;
-      color: #606266;
+      color: var(--text-secondary);
     }
   }
 
@@ -378,10 +384,10 @@ onUnmounted(() => {
     .header-icon {
       font-size: 20px;
       cursor: pointer;
-      color: #606266;
+      color: var(--text-secondary);
 
       &:hover {
-        color: #409eff;
+        color: var(--color-primary);
       }
     }
 
@@ -405,15 +411,51 @@ onUnmounted(() => {
       cursor: pointer;
 
       .username {
-        color: #606266;
+        color: var(--text-primary);
       }
     }
   }
 }
 
 .main-content {
-  background-color: #f5f7fa;
+  background-color: rgba(28, 33, 40, 0.7);
+  backdrop-filter: blur(5px);
   overflow-y: auto;
+}
+
+/* 下拉菜单样式 */
+:deep(.el-dropdown-menu) {
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-md) !important;
+
+  .el-dropdown-item {
+    color: var(--text-primary) !important;
+
+    &:hover {
+      background-color: var(--bg-hover) !important;
+      color: var(--color-primary) !important;
+    }
+
+    &.is-disabled {
+      color: var(--text-tertiary) !important;
+    }
+  }
+}
+
+/* 面包屑样式 */
+:deep(.el-breadcrumb__item) {
+  .el-breadcrumb__inner {
+    color: var(--text-secondary) !important;
+
+    &:hover {
+      color: var(--color-primary) !important;
+    }
+  }
+
+  .el-breadcrumb__separator {
+    color: var(--text-tertiary) !important;
+  }
 }
 
 /* 移动端菜单样式 */

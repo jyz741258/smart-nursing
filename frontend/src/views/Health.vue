@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">健康监测</h2>
-      <el-button type="primary" @click="showAddDialog = true">
+      <el-button v-if="isAdminOrNurse" type="primary" @click="showAddDialog = true">
         <el-icon><Plus /></el-icon>
         记录指标
       </el-button>
@@ -97,10 +97,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
+import { useAuthStore } from '@/store/auth'
 import type { HealthMetric, Elder } from '@/types'
+
+const authStore = useAuthStore()
+
+const isAdminOrNurse = computed(() => {
+  const userType = authStore.userInfo?.user_type
+  return userType === 2 || userType === 3
+})
 
 const loading = ref(false)
 const showAddDialog = ref(false)

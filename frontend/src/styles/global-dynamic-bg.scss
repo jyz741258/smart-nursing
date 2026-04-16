@@ -1,0 +1,345 @@
+// ============================================
+// 全局深色动态背景系统
+// 为所有页面添加电影级动态效果
+// ============================================
+
+// 动态渐变背景
+.dynamic-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+
+  // 多层渐变叠加
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(102, 126, 234, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(240, 147, 251, 0.06) 0%, transparent 70%),
+    var(--bg-primary);
+
+  animation: dynamicBgMove 30s ease-in-out infinite;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  // 顶部光晕
+  &::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(102, 126, 234, 0.03) 0%,
+      transparent 60%
+    );
+    animation: topGlow 8s ease-in-out infinite;
+  }
+
+  // 底部暗角
+  &::after {
+    background: radial-gradient(
+      ellipse at center bottom,
+      transparent 0%,
+      rgba(13, 17, 23, 0.4) 100%
+    );
+  }
+
+  @keyframes dynamicBgMove {
+    0%, 100% {
+      transform: scale(1) translateX(0);
+    }
+    33% {
+      transform: scale(1.05) translateX(2%);
+    }
+    66% {
+      transform: scale(1.1) translateX(-2%);
+    }
+  }
+
+  @keyframes topGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+  }
+}
+
+// 所有页面容器的深色背景覆盖
+.view-container,
+.page-container,
+.el-main,
+.main-content {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-primary) !important;
+  min-height: calc(100vh - 60px);
+}
+
+// 页面标题样式
+.page-header-section {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: var(--gradient-primary);
+    animation: titleUnderline 3s ease-in-out infinite;
+  }
+
+  @keyframes titleUnderline {
+    0%, 100% { transform: scaleX(1); opacity: 1; }
+    50% { transform: scaleX(0.8); opacity: 0.7; }
+  }
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .page-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+}
+
+// 卡片容器（所有页面通用）
+.content-card {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s var(--ease-smooth);
+
+  // 悬停发光
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+    transform: translateY(-4px);
+
+    // 顶部光效
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  // 顶部渐变条
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s var(--ease-smooth);
+    opacity: 0.7;
+  }
+}
+
+// 统计数字样式
+.stat-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--text-primary), var(--color-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(102, 126, 234, 0.3));
+  animation: statPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes statPulse {
+  0% { filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.2)); }
+  100% { filter: drop-shadow(0 0 16px rgba(102, 126, 234, 0.5)); }
+}
+
+// 列表项悬停效果
+.list-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--gradient-primary);
+    transform: scaleY(0);
+    transition: transform 0.3s var(--ease-smooth);
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--color-primary);
+    transform: translateX(8px);
+
+    &::before {
+      transform: scaleY(1);
+    }
+  }
+}
+
+// 按钮增强（全局）
+.btn-action {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// 状态指示灯（呼吸效果）
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+
+  &.online {
+    background: var(--color-success);
+    box-shadow: 0 0 8px var(--color-success);
+    animation: statusBreathe 2s ease-in-out infinite;
+  }
+
+  &.offline {
+    background: var(--text-tertiary);
+    animation: none;
+  }
+
+  &.busy {
+    background: var(--color-warning);
+    box-shadow: 0 0 8px var(--color-warning);
+    animation: statusBreathe 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes statusBreathe {
+  0%, 100% {
+    box-shadow: 0 0 4px currentColor;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 12px currentColor;
+    transform: scale(1.1);
+  }
+}
+
+// 标签页切换动画
+.tab-content {
+  animation: tabFadeIn 0.4s var(--ease-smooth);
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 空状态优化
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .empty-text {
+    font-size: 14px;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+// 加载骨架屏优化
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+// 响应式优化
+@media (max-width: 768px) {
+  .dynamic-bg {
+    animation: none;
+    background: var(--bg-primary);
+  }
+
+  .page-header-section {
+    .page-title {
+      font-size: 20px;
+    }
+  }
+
+  .content-card {
+    padding: 16px;
+  }
+}
+
+// 减少动态效果（无障碍）
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

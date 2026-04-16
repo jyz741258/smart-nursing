@@ -3,7 +3,7 @@
     <div class="page-header">
       <h2 class="page-title">健康管理与护理计划</h2>
       <div class="header-buttons">
-        <el-button type="primary" @click="handleAdd">
+        <el-button v-if="isAdminOrNurse" type="primary" @click="handleAdd">
           <el-icon><Plus /></el-icon>
           新增记录
         </el-button>
@@ -91,7 +91,7 @@
             <el-table-column label="操作" width="200">
               <template #default="{ row }">
                 <el-button type="primary" size="small" @click="viewPlan(row)">查看</el-button>
-                <el-button type="success" size="small" @click="addTask(row)">添加任务</el-button>
+                <el-button v-if="isAdminOrNurse" type="success" size="small" @click="addTask(row)">添加任务</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -249,14 +249,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Download, DataAnalysis } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import type { FormInstance } from 'element-plus'
 import api from '@/store/auth'
+import { useAuthStore } from '@/store/auth'
 
 const activeTab = ref('health')
+const authStore = useAuthStore()
+
+const isAdminOrNurse = computed(() => {
+  const userType = authStore.userInfo?.user_type
+  return userType === 2 || userType === 3
+})
 
 // 健康监测相关
 const healthSearch = reactive({ elder_id: '', metric_type: '' })

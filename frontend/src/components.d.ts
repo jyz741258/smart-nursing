@@ -8,6 +8,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIChat: typeof import('./components/AIChat.vue')['default']
+    Card3dEffect: typeof import('./components/Card3dEffect.vue')['default']
+    ChatMessage: typeof import('./components/ChatMessage.vue')['default']
+    CounterAnimation: typeof import('./components/CounterAnimation.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
@@ -57,8 +60,12 @@ declare module 'vue' {
     ElTag: typeof import('element-plus/es')['ElTag']
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+    EnhancedButton: typeof import('./components/EnhancedButton.vue')['default']
+    ImporterExporter: typeof import('./components/ImporterExporter.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SoundControl: typeof import('./components/SoundControl.vue')['default']
+    ThemeSwitcher: typeof import('./components/ThemeSwitcher.vue')['default']
   }
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

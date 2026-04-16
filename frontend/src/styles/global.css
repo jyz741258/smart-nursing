@@ -1,58 +1,217 @@
-:root {
-  --primary-color: #409eff;
-  --success-color: #67c23a;
-  --warning-color: #e6a23c;
-  --danger-color: #f56c6c;
-  --info-color: #909399;
-  --bg-color: #f5f7fa;
-  --text-primary: #303133;
-  --text-regular: #606266;
-  --text-secondary: #909399;
-  --border-color: #dcdfe6;
-}
+/* ============================================
+   智慧养老系统 - 全局样式
+   与深色主题系统集成
+   ============================================ */
 
+/* 引入主题变量系统 */
+@import './theme.scss';
+@import './global-dynamic-bg.scss';
+
+/* ========================
+   全局重置
+   ======================== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* ========================
+   基础样式
+   ======================== */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
+  line-height: 1.6;
   color: var(--text-primary);
-  background-color: var(--bg-color);
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(102, 126, 234, 0.15) 0%, transparent 55%),
+    radial-gradient(circle at 75% 75%, rgba(118, 75, 162, 0.15) 0%, transparent 55%),
+    radial-gradient(circle at 50% 50%, rgba(240, 147, 251, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, rgba(79, 209, 197, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 90% 10%, rgba(255, 119, 119, 0.1) 0%, transparent 50%);
+  background-attachment: fixed;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* 动态背景效果 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(240, 147, 251, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 60% 20%, rgba(79, 209, 197, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 30% 60%, rgba(255, 119, 119, 0.06) 0%, transparent 50%);
+  animation: bgFloat 25s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 额外的背景层，添加网格效果 */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 30s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes bgFloat {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(2%, -2%) rotate(1deg);
+  }
+  50% {
+    transform: translate(0, 3%) rotate(0deg);
+  }
+  75% {
+    transform: translate(-2%, 1%) rotate(-1deg);
+  }
+}
+
+@keyframes gridMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
 }
 
 #app {
   min-height: 100vh;
+  position: relative;
 }
 
-/* 通用样式 */
+/* ========================
+   全局元素样式
+   ======================== */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-primary-light);
+}
+
+/* ========================
+   滚动条样式（深色主题）
+   ======================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--bg-secondary);
+}
+
+/* ========================
+   通用容器
+   ======================== */
 .page-container {
-  padding: 20px;
+  padding: 24px;
+  min-height: calc(100vh - 60px);
+  background: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .page-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
+/* ========================
+   卡片容器
+   ======================== */
 .card-container {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: all 0.3s var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
 }
 
+.card-container:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.card-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-smooth);
+}
+
+.card-container:hover::before {
+  transform: scaleX(1);
+}
+
+/* ========================
+   搜索表单
+   ======================== */
 .search-form {
   display: flex;
   flex-wrap: wrap;
@@ -66,20 +225,44 @@ body {
   gap: 8px;
 }
 
+/* ========================
+   表格操作按钮
+   ======================== */
 .table-actions {
   display: flex;
   gap: 10px;
 }
 
-/* 统计卡片 */
+/* ========================
+   统计卡片
+   ======================== */
 .stats-card {
   display: flex;
   align-items: center;
   gap: 15px;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-lg);
   color: #fff;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .stats-card.success {
@@ -113,10 +296,77 @@ body {
   opacity: 0.9;
 }
 
-/* 响应式 */
+/* ========================
+   空状态样式
+   ======================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state .empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state .empty-text {
+  font-size: 14px;
+}
+
+/* ========================
+   加载状态
+   ======================== */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner-large {
+  width: 50px;
+  height: 50px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================
+   响应式布局
+   ======================== */
 @media (max-width: 768px) {
   .page-container {
-    padding: 10px;
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .card-container {
+    padding: 16px;
   }
 
   .stats-card {
@@ -126,4 +376,96 @@ body {
   .stats-value {
     font-size: 22px;
   }
+}
+
+/* ========================
+   聚焦样式（无障碍）
+   ======================== */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ========================
+   选中文本样式
+   ======================== */
+::selection {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ========================
+   全局工具类
+   ======================== */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.bg-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+/* 间距工具类 */
+.mt-1 {
+  margin-top: 4px;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
+
+.mt-3 {
+  margin-top: 12px;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.mb-1 {
+  margin-bottom: 4px;
+}
+
+.mb-2 {
+  margin-bottom: 8px;
+}
+
+.mb-3 {
+  margin-bottom: 12px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
 }

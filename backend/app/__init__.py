@@ -22,7 +22,13 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
 
     # 初始化CORS（允许跨域访问）
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": ["http://tf958e9b.natappfree.cc:3000", "http://tf958e9b.natappfree.cc", "*"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
 
     # 初始化数据库
     db.init_app(app)

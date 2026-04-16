@@ -319,7 +319,12 @@ const handleLogin = async () => {
   .bg-gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-color: var(--bg-primary);
+    background-image: 
+      radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(240, 147, 251, 0.05) 0%, transparent 50%);
+    background-attachment: fixed;
   }
 
   .bg-shapes {
@@ -336,7 +341,7 @@ const handleLogin = async () => {
     .shape-1 {
       width: 600px;
       height: 600px;
-      background: #fff;
+      background: var(--color-primary);
       top: -200px;
       right: -200px;
       animation: float 6s ease-in-out infinite;
@@ -345,7 +350,7 @@ const handleLogin = async () => {
     .shape-2 {
       width: 400px;
       height: 400px;
-      background: #fff;
+      background: var(--color-secondary);
       bottom: -150px;
       left: -100px;
       animation: float 8s ease-in-out infinite reverse;
@@ -354,7 +359,7 @@ const handleLogin = async () => {
     .shape-3 {
       width: 200px;
       height: 200px;
-      background: #fff;
+      background: var(--color-accent);
       top: 50%;
       left: 10%;
       animation: float 5s ease-in-out infinite;
@@ -373,22 +378,44 @@ const handleLogin = async () => {
   z-index: 1;
   width: 420px;
   padding: 50px 40px;
-  background: rgba(255, 255, 255, 0.95);
+  // 深色玻璃态背景
+  background: rgba(28, 33, 40, 0.92);
   backdrop-filter: blur(20px);
   border-radius: 24px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(102, 126, 234, 0.1);
 
   // 全息效果
   &::before {
     content: '';
     position: absolute;
-    inset: -1px;
+    inset: -2px;
     z-index: -1;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 50%, rgba(240, 147, 251, 0.2) 100%);
-    background-size: 200% 200%;
-    animation: holographicShift 3s ease-in-out infinite;
-    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3), rgba(240, 147, 251, 0.3));
+    background-size: 300% 300%;
+    animation: holographicShift 4s ease-in-out infinite;
+    border-radius: 26px;
+    filter: blur(8px);
+    opacity: 0.6;
+  }
+
+  // 顶部高光线
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: topShine 3s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  @keyframes topShine {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
   }
 
   // 入场动画
@@ -459,14 +486,18 @@ const handleLogin = async () => {
 
   h1 {
     font-size: 28px;
-    color: #303133;
+    color: var(--text-primary);
     margin-bottom: 8px;
     font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary), var(--color-primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   p {
     font-size: 14px;
-    color: #909399;
+    color: var(--text-secondary);
   }
 }
 
@@ -608,28 +639,28 @@ const handleLogin = async () => {
   opacity: 0;
 
   .demo-divider {
-    text-align: center;
-    position: relative;
-    margin-bottom: 15px;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: #e4e7ed;
-    }
-
-    span {
+      text-align: center;
       position: relative;
-      background: #fff;
-      padding: 0 15px;
-      color: #909399;
-      font-size: 12px;
+      margin-bottom: 15px;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border-color);
+      }
+
+      span {
+        position: relative;
+        background: rgba(28, 33, 40, 0.92);
+        padding: 0 15px;
+        color: var(--text-secondary);
+        font-size: 12px;
+      }
     }
-  }
 
   .demo-users {
     display: grid;
@@ -677,14 +708,14 @@ const handleLogin = async () => {
     .demo-role {
       font-size: 13px;
       font-weight: 600;
-      color: #303133;
+      color: var(--text-primary);
       position: relative;
       z-index: 1;
     }
 
     .demo-phone {
       font-size: 11px;
-      color: #909399;
+      color: var(--text-secondary);
       font-family: 'Courier New', monospace;
       position: relative;
       z-index: 1;

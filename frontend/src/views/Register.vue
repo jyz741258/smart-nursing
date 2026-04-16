@@ -572,22 +572,44 @@ const handleRegister = async () => {
   max-height: 90vh;
   overflow-y: auto;
   padding: 50px 40px;
-  background: rgba(255, 255, 255, 0.95);
+  // 深色玻璃态背景
+  background: rgba(28, 33, 40, 0.92);
   backdrop-filter: blur(20px);
   border-radius: 24px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(102, 126, 234, 0.1);
 
   // 全息渐变边框
   &::before {
     content: '';
     position: absolute;
-    inset: -1px;
+    inset: -2px;
     z-index: -1;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 50%, rgba(240, 147, 251, 0.2) 100%);
-    background-size: 200% 200%;
-    animation: holographicShift 3s ease-in-out infinite;
-    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3), rgba(240, 147, 251, 0.3));
+    background-size: 300% 300%;
+    animation: holographicShift 4s ease-in-out infinite;
+    border-radius: 26px;
+    filter: blur(8px);
+    opacity: 0.6;
+  }
+
+  // 顶部高光线
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: topShine 3s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+
+  @keyframes topShine {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
   }
 }
 
@@ -598,7 +620,7 @@ const handleRegister = async () => {
   .logo {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: var(--gradient-primary);
     border-radius: 20px;
     display: flex;
     align-items: center;
@@ -606,18 +628,28 @@ const handleRegister = async () => {
     color: #fff;
     margin: 0 auto 20px;
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    animation: logoFloat 3s ease-in-out infinite;
   }
 
   h1 {
     font-size: 28px;
-    color: #303133;
+    color: var(--text-primary);
     margin-bottom: 8px;
     font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary), var(--color-primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   p {
     font-size: 14px;
-    color: #909399;
+    color: var(--text-secondary);
+  }
+
+  @keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
   }
 }
 
@@ -631,23 +663,44 @@ const handleRegister = async () => {
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
-      color: #909399;
+      color: var(--text-tertiary);
       z-index: 1;
+      transition: color 0.3s ease;
     }
 
     :deep(.el-input__wrapper) {
       padding-left: 45px;
       height: 48px;
       border-radius: 12px;
-      box-shadow: 0 0 0 1px #dcdfe6;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      box-shadow: none !important;
+      transition: all 0.3s var(--ease-smooth);
 
-      &:hover, &.is-focus {
-        box-shadow: 0 0 0 2px #667eea;
+      &:hover {
+        border-color: var(--color-primary);
+        background: var(--bg-hover);
+      }
+
+      &.is-focus {
+        border-color: var(--color-primary);
+        background: var(--bg-tertiary);
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
       }
     }
 
     :deep(.el-input__inner) {
       height: 48px;
+      color: var(--text-primary);
+      background: transparent;
+
+      &::placeholder {
+        color: var(--text-tertiary);
+      }
+    }
+
+    &:hover .input-icon {
+      color: var(--color-primary);
     }
 
     &.sms-wrapper {
@@ -663,6 +716,20 @@ const handleRegister = async () => {
         height: 48px;
         border-radius: 12px;
         flex-shrink: 0;
+        background: var(--gradient-primary);
+        border: none;
+        color: white;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
       }
     }
 
@@ -725,14 +792,18 @@ const handleRegister = async () => {
     border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: var(--gradient-primary);
     border: none;
-    transition: all 0.3s ease;
+    transition: all 0.3s var(--ease-smooth);
     margin-top: 10px;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0);
     }
   }
 }
@@ -742,7 +813,7 @@ const handleRegister = async () => {
   margin-top: 25px;
 
   p {
-    color: #909399;
+    color: var(--text-secondary);
     font-size: 14px;
     margin-bottom: 15px;
   }
@@ -751,13 +822,22 @@ const handleRegister = async () => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #606266;
+    color: var(--color-primary);
     cursor: pointer;
     font-size: 14px;
-    transition: color 0.3s;
+    transition: all 0.3s var(--ease-smooth);
 
     &:hover {
-      color: #667eea;
+      color: var(--color-primary-light);
+      transform: translateX(4px);
+    }
+
+    svg {
+      transition: transform 0.3s ease;
+    }
+
+    &:hover svg {
+      transform: translateX(-2px);
     }
   }
 }

@@ -26,6 +26,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '.natappfree.cc',
+      'tf958e9b.natappfree.cc',
+      '.ngrok-free.app',
+      'af78-112-54-89-154.ngrok-free.app'
+    ],
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5000',

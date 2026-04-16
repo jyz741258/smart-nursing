@@ -13,6 +13,8 @@ import './styles/animations.scss'
 import './styles/buttons.scss'
 import './styles/tables.scss'
 import './styles/advanced-effects.scss'
+import './styles/theme.scss' // 深色主题样式
+import './styles/dark-theme-overrides.scss' // Element Plus 深色覆盖
 
 const app = createApp(App)
 
@@ -24,5 +26,17 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
+
+// 初始化音频管理器（需要用户交互后才能真正初始化）
+import { audioManager } from '@/utils/audioManager'
+
+// 全局挂载音频管理器，便于组件访问
+app.config.globalProperties.$audio = audioManager
+app.provide('audioManager', audioManager)
+
+// 页面加载完成后读取偏好
+window.addEventListener('load', () => {
+  audioManager.loadPreferences()
+})
 
 app.mount('#app')

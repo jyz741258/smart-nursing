@@ -1,0 +1,141 @@
+// ============================================
+// 深色主题全局覆盖 - Element Plus 组件适配
+// ============================================
+
+// 页面容器
+.page-container,
+.el-main,
+.view-container {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+// 卡片
+.el-card,
+.card-container {
+  background-color: var(--bg-elevated) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+// 表格
+.el-table {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+
+  tr,
+  .el-table__row {
+    background-color: var(--bg-secondary) !important;
+  }
+
+  th.el-table__cell {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  .el-table__cell {
+    border-color: var(--border-color) !important;
+  }
+}
+
+// 输入框
+.el-input__wrapper {
+  background-color: var(--bg-tertiary) !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+
+.el-input__inner {
+  color: var(--text-primary) !important;
+  &::placeholder { color: var(--text-tertiary) !important; }
+}
+
+// 下拉框
+.el-select-dropdown {
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+// 按钮
+.el-button {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+
+  &:hover {
+    background-color: var(--bg-hover) !important;
+    border-color: var(--color-primary) !important;
+  }
+
+  &.is-primary {
+    background: var(--gradient-primary) !important;
+    border: none !important;
+    color: white !important;
+  }
+}
+
+// 弹窗
+.el-dialog,
+.el-dropdown-menu,
+.el-popover,
+.el-message,
+.el-notification {
+  background-color: var(--bg-elevated) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+// 菜单
+.el-menu {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+// 标签
+.el-tag {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+// 分页
+.el-pagination {
+  .el-pager li {
+    background-color: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    &.is-active {
+      background-color: var(--color-primary) !important;
+      color: white !important;
+    }
+  }
+}
+
+// 开关
+.el-switch .el-switch__core {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+}
+
+// 滑块
+.el-slider__runway { background-color: var(--bg-tertiary) !important; }
+.el-slider__bar { background-color: var(--color-primary) !important; }
+
+// 进度条
+.el-progress-bar__outer { background-color: var(--bg-tertiary) !important; }
+.el-progress-bar__inner { background-color: var(--color-primary) !important; }
+
+// 日期选择器
+.el-date-editor {
+  background-color: var(--bg-tertiary) !important;
+}
+
+// 时间面板
+.el-time-panel,
+.el-calendar {
+  background-color: var(--bg-elevated) !important;
+  border-color: var(--border-color) !important;
+}
+
+// 全局平滑过渡
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}

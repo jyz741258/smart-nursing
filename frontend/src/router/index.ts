@@ -92,6 +92,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '数据统计' }
       },
       {
+        path: 'bigdata',
+        name: 'BigDataAnalytics',
+        component: () => import('@/views/BigDataAnalytics.vue'),
+        meta: { title: '大数据分析' }
+      },
+      {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
