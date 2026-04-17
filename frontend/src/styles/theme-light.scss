@@ -1,0 +1,243 @@
+// ============================================
+// 智慧养老系统 - 清新绿色浅色主题
+// 适合老人使用的明亮护眼配色
+// ============================================
+
+// --- CSS 变量定义（:root）---
+:root {
+  // 🎨 主色调 - 清新绿色系
+  --color-primary: #22c55e;
+  --color-primary-light: #4ade80;
+  --color-primary-dark: #16a34a;
+  --color-secondary: #0d9488;
+  --color-accent: #06b6d4;
+
+  // ☀️ 浅色模式背景色系（默认）
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: #ffffff;
+  --bg-hover: #e2e8f0;
+
+  // 📝 文字颜色
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #ffffff;
+
+  // 🎯 边框与分割线
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --divider: #e2e8f0;
+
+  // ✨ 阴影系统
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-glow-primary: 0 0 20px rgba(34, 197, 94, 0.15);
+  --shadow-glow-secondary: 0 0 20px rgba(13, 148, 136, 0.15);
+
+  // 🔔 状��色
+  --color-success: #22c55e;
+  --color-success-bg: rgba(34, 197, 94, 0.1);
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-error: #ef4444;
+  --color-error-bg: rgba(239, 68, 68, 0.1);
+  --color-info: #3b82f6;
+  --color-info-bg: rgba(59, 130, 246, 0.1);
+
+  // 🌈 渐变背景
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+  --gradient-dark: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+
+  // 📱 圆角系统
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  // ⏱ 动效时长
+  --duration-fast: 0.15s;
+  --duration-normal: 0.3s;
+  --duration-slow: 0.5s;
+  --duration-slower: 0.8s;
+
+  // 🎭 缓动函数
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+// --- 全局浅色主题样式 ---
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background-color var(--duration-normal) var(--ease-smooth),
+              color var(--duration-normal) var(--ease-smooth);
+}
+
+// --- Element Plus 浅色模式覆盖 ---
+.el-table {
+  background-color: #ffffff !important;
+  color: var(--text-primary) !important;
+
+  tr {
+    background-color: #ffffff !important;
+    &:hover {
+      background-color: var(--bg-hover) !important;
+    }
+  }
+
+  th.el-table__cell {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  .el-table__cell {
+    border-color: var(--border-color) !important;
+  }
+
+  .el-table__empty-block {
+    background-color: #ffffff !important;
+  }
+}
+
+.el-card {
+  background-color: #ffffff !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.el-menu {
+  background-color: #ffffff !important;
+  border-color: var(--border-color) !important;
+
+  .el-menu-item,
+  .el-sub-menu__title {
+    color: var(--text-secondary) !important;
+
+    &:hover {
+      background-color: var(--bg-hover) !important;
+    }
+
+    &.is-active {
+      color: var(--color-primary) !important;
+      background-color: var(--color-success-bg) !important;
+    }
+  }
+}
+
+.el-input__wrapper {
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+
+  input {
+    color: var(--text-primary) !important;
+    &::placeholder {
+      color: var(--text-tertiary) !important;
+    }
+  }
+}
+
+.el-textarea__inner {
+  background-color: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.el-button {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+
+  &:hover {
+    background-color: var(--bg-hover) !important;
+  }
+
+  &.el-button--primary {
+    background-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: white !important;
+  }
+}
+
+.el-dialog {
+  background-color: #ffffff !important;
+  .el-dialog__header {
+    background-color: #ffffff !important;
+  }
+}
+
+.el-dropdown-menu {
+  background-color: #ffffff !important;
+  .el-dropdown-menu__item {
+    color: var(--text-primary) !important;
+  }
+}
+
+.el-select-dropdown {
+  background-color: #ffffff !important;
+  .el-select-dropdown__item {
+    color: var(--text-primary) !important;
+    &.selected {
+      color: var(--color-primary) !important;
+    }
+  }
+}
+
+.el-popper {
+  background-color: #ffffff !important;
+  border-color: var(--border-color) !important;
+}
+
+.el-overlay {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+// 成功/错误/警告/信息状态
+.el-message {
+  --el-message-bg-color: var(--bg-elevated);
+  --el-message-border-color: var(--border-color);
+}
+
+.el-tag {
+  &.el-tag--success {
+    background-color: var(--color-success-bg);
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+  &.el-tag--danger {
+    background-color: var(--color-error-bg);
+    border-color: var(--color-error);
+    color: var(--color-error);
+  }
+  &.el-tag--warning {
+    background-color: var(--color-warning-bg);
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+  }
+  &.el-tag--info {
+    background-color: var(--color-info-bg);
+    border-color: var(--color-info);
+    color: var(--color-info);
+  }
+}
+
+// 进度条和滑块
+.el-slider__runway {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.el-progress-bar__outer {
+  background-color: var(--bg-tertiary) !important;
+}

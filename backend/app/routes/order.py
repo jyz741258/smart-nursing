@@ -108,66 +108,74 @@ def create_order(current_user):
     """创建订单"""
     from datetime import datetime
     import uuid
+    import traceback
 
-    data = request.get_json()
-    service_id = data.get('service_id')
-    elder_id = data.get('elder_id')
-    service_time = data.get('service_time')
-    notes = data.get('notes')
-    appointment_date = data.get('appointment_date')
-    appointment_time = data.get('appointment_time')
+    try:
+        data = request.get_json()
+        service_id = data.get('service_id')
+        elder_id = data.get('elder_id')
+        service_time = data.get('service_time')
+        notes = data.get('notes')
+        appointment_date = data.get('appointment_date')
+        appointment_time = data.get('appointment_time')
 
-    # 验证参数
-    if not service_id:
-        return api_error('缺少必要参数：service_id', 400)
+        # 验证参数
+        if not service_id:
+            return api_error('缺少必要参数：service_id', 400)
 
-    # 验证服务是否存在
-    service = Service.query.get(service_id)
-    if not service:
-        return api_error('服务不存在', 404)
+        # 验证服务是否存在
+        service = Service.query.get(service_id)
+        if not service:
+            return api_error('服务不存在', 404)
 
-    # 确定老人ID
-    if not elder_id:
-        if current_user.user_type == 1:
-            # 老人自己下单
-            elder_id = current_user.id
-        elif current_user.user_type == 4:
-            # 家属为老人下单，需要指定老人ID
-            return api_error('请指定老人ID', 400)
-        else:
-            elder_id = None
+        # 确定老人ID
+        if not elder_id:
+            if current_user.user_type == 1:
+                # 老人自己下单
+                elder_id = current_user.id
+            elif current_user.user_type == 4:
+                # 家属为老人下单，需要指定老人ID
+                return api_error('请指定老人ID', 400)
+            else:
+                elder_id = None
 
-    # 验证老人是否存在（如果指定了老人ID）
-    if elder_id:
-        elder = User.query.get(elder_id)
-        if not elder or elder.user_type != 1:
-            return api_error('老人不存在', 404)
+        # 验证老人是否存在（如果指定了老人ID）
+        if elder_id:
+            elder = User.query.get(elder_id)
+            if not elder or elder.user_type != 1:
+                return api_error('老人不存在', 404)
 
-    # 生成订单号
-    order_no = f"ORD{datetime.now().strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:6].upper()}"
+        # 生成订单号
+        order_no = f"ORD{datetime.now().strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:6].upper()}"
 
-    # 创建订单
-    order = Order(
-        order_no=order_no,
-        user_id=current_user.id,
-        service_id=service_id,
-        elder_id=elder_id,
-        order_time=datetime.now(),
-        notes=notes,
-        appointment_date=appointment_date,
-        appointment_time=appointment_time,
-        total_amount=service.price,
-        actual_amount=service.price,
-        service_name=service.name,
-        service_price=service.price,
-        status=1,  # 待支付
-        created_by=current_user.id
-    )
+        # 创建订单
+        order = Order(
+            order_no=order_no,
+            user_id=current_user.id,
+            service_id=service_id,
+            elder_id=elder_id,
+            order_time=datetime.now(),
+            remark=notes,
+            appointment_date=appointment_date,
+            appointment_time=appointment_time,
+            total_amount=service.price,
+            actual_amount=service.price,
+            service_name=service.name,
+            service_price=service.price,
+            status=1,  # 待支付
+            created_by=current_user.id
+        )
 
-    db.session.add(order)
-    db.session.commit()
+        db.session.add(order)
+        db.session.commit()
 
-    return api_response(order.to_dict(), '订单创建成功')
+        return api_response(order.to_dict(), '订单创建成功')
+    except Exception as e:
+        db.session.rollback()
+        error_trace = traceback.format_exc()
+        print(f"创建订单失败: {e}")
+        print(error_trace)
+        return api_error(f'创建订单失败: {str(e)}', 500)
 
 
 @order_bp.route('/<int:order_id>', methods=['PUT'])

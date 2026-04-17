@@ -232,7 +232,7 @@ const handleLogin = async () => {
   position: relative;
   overflow: hidden;
 
-  // 粒子背景
+  // 柔和的绿色粒子背景
   .particle-bg {
     position: absolute;
     inset: 0;
@@ -242,8 +242,8 @@ const handleLogin = async () => {
     .particle {
       position: absolute;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
-      filter: blur(1px);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(6, 182, 212, 0.3) 100%);
+      filter: blur(2px);
 
       &:nth-child(1) {
         width: 80px;
@@ -294,20 +294,20 @@ const handleLogin = async () => {
 
 @keyframes particleFloat {
   0% {
-    transform: translateY(0) translateX(0) rotate(0deg);
-    opacity: 0.6;
-  }
-  33% {
-    transform: translateY(-80px) translateX(30px) rotate(120deg);
+    transform: translateY(0) translateX(0);
     opacity: 0.3;
   }
+  33% {
+    transform: translateY(-30px) translateX(15px);
+    opacity: 0.2;
+  }
   66% {
-    transform: translateY(-40px) translateX(-30px) rotate(240deg);
-    opacity: 0.5;
+    transform: translateY(-15px) translateX(-15px);
+    opacity: 0.25;
   }
   100% {
-    transform: translateY(0) translateX(0) rotate(360deg);
-    opacity: 0.6;
+    transform: translateY(0) translateX(0);
+    opacity: 0.3;
   }
 }
 
@@ -319,12 +319,7 @@ const handleLogin = async () => {
   .bg-gradient {
     position: absolute;
     inset: 0;
-    background-color: var(--bg-primary);
-    background-image: 
-      radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 40% 80%, rgba(240, 147, 251, 0.05) 0%, transparent 50%);
-    background-attachment: fixed;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f0fdf4 100%);
   }
 
   .bg-shapes {
@@ -335,142 +330,70 @@ const handleLogin = async () => {
     .shape {
       position: absolute;
       border-radius: 50%;
-      opacity: 0.1;
+      opacity: 0.08;
     }
 
     .shape-1 {
       width: 600px;
       height: 600px;
-      background: var(--color-primary);
+      background: #22c55e;
       top: -200px;
       right: -200px;
-      animation: float 6s ease-in-out infinite;
     }
 
     .shape-2 {
       width: 400px;
       height: 400px;
-      background: var(--color-secondary);
+      background: #0d9488;
       bottom: -150px;
       left: -100px;
-      animation: float 8s ease-in-out infinite reverse;
     }
 
     .shape-3 {
       width: 200px;
       height: 200px;
-      background: var(--color-accent);
+      background: #06b6d4;
       top: 50%;
       left: 10%;
-      animation: float 5s ease-in-out infinite;
     }
   }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-30px) rotate(10deg); }
-}
-
-// 登录框入场动画
+// 登录框 - 浅色玻璃态
 .login-box {
   position: relative;
   z-index: 1;
   width: 420px;
   padding: 50px 40px;
-  // 深色玻璃态背景
-  background: rgba(28, 33, 40, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 24px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
-              0 0 0 1px rgba(102, 126, 234, 0.1);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
 
-  // 全息效果
+  // 绿色顶部边框
   &::before {
     content: '';
     position: absolute;
-    inset: -2px;
-    z-index: -1;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3), rgba(240, 147, 251, 0.3));
-    background-size: 300% 300%;
-    animation: holographicShift 4s ease-in-out infinite;
-    border-radius: 26px;
-    filter: blur(8px);
-    opacity: 0.6;
-  }
-
-  // 顶部高光线
-  &::after {
-    content: '';
-    position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    animation: topShine 3s ease-in-out infinite;
-    animation-delay: 1s;
-  }
-
-  @keyframes topShine {
-    0%, 100% { left: -100%; }
-    50% { left: 100%; }
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 4px;
+    background: linear-gradient(90deg, #22c55e, #0d9488);
+    border-radius: 0 0 4px 4px;
   }
 
   // 入场动画
-  animation: loginBoxSlideIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: loginBoxSlideIn 0.6s ease-out forwards;
   opacity: 0;
-  transform: translateY(40px) scale(0.95);
+  transform: translateY(30px);
 }
 
 @keyframes loginBoxSlideIn {
   from {
     opacity: 0;
-    transform: translateY(40px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-// Logo 独立动画
-.login-header .logo {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  margin: 0 auto 20px;
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-  animation: logoFloat 3s ease-in-out infinite, logoAppear 0.8s ease-out 0.3s forwards;
-  opacity: 0;
-}
-
-@keyframes logoAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.5) rotate(-10deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
-}
-
-@keyframes logoFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -478,26 +401,34 @@ const handleLogin = async () => {
   }
 }
 
+// Logo
+.login-header .logo {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin: 0 auto 20px;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+}
+
 .login-header {
   text-align: center;
   margin-bottom: 40px;
-  animation: fadeInDown 0.6s ease-out 0.5s forwards;
-  opacity: 0;
 
   h1 {
     font-size: 28px;
-    color: var(--text-primary);
+    color: #1e293b;
     margin-bottom: 8px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--text-primary), var(--color-primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   p {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: #64748b;
   }
 }
 
@@ -511,7 +442,7 @@ const handleLogin = async () => {
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
-      color: #909399;
+      color: #94a3b8;
       z-index: 1;
     }
 
@@ -519,16 +450,21 @@ const handleLogin = async () => {
       padding-left: 45px;
       height: 48px;
       border-radius: 12px;
-      box-shadow: 0 0 0 1px #dcdfe6;
+      box-shadow: 0 0 0 1px #e2e8f0;
+      background: #ffffff;
       transition: all 0.3s ease;
 
       &:hover, &.is-focus {
-        box-shadow: 0 0 0 2px #667eea;
+        box-shadow: 0 0 0 2px #22c55e;
       }
     }
 
     :deep(.el-input__inner) {
       height: 48px;
+      color: #1e293b;
+      &::placeholder {
+        color: #94a3b8;
+      }
     }
   }
 
@@ -538,83 +474,31 @@ const handleLogin = async () => {
     border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
     border: none;
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 
-    // 按钮悬停提升效果
     &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.2),
-          transparent
-        );
-        animation: buttonShine 0.6s ease;
-      }
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+      background: linear-gradient(135deg, #16a34a, #15803d);
     }
 
     &:active {
-      transform: translateY(-1px);
-    }
-
-    // 按钮点击波纹效果
-    .ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.4);
-      transform: scale(0);
-      animation: rippleEffect 0.6s ease-out;
-      pointer-events: none;
+      transform: translateY(0);
     }
   }
 
-  // 输入框依次入场
   .el-form-item {
     animation: slideInUp 0.5s ease-out both;
 
-    &:nth-child(1) { animation-delay: 0.2s; }
-    &:nth-child(2) { animation-delay: 0.3s; }
-    &:nth-child(3) { animation-delay: 0.4s; }
+    &:nth-child(1) { animation-delay: 0.1s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
   }
 }
 
 @keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes buttonShine {
-  from { left: -100%; }
-  to { left: 100%; }
-}
-
-@keyframes rippleEffect {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-@keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -625,42 +509,33 @@ const handleLogin = async () => {
   }
 }
 
-@keyframes rippleBtn {
-  to {
-    transform: translate(-50%, -50%) scale(4);
-    opacity: 0;
-  }
-}
-
 // 样例登录区域
 .demo-login {
   margin-top: 20px;
-  animation: fadeIn 0.6s ease-out 0.6s forwards;
-  opacity: 0;
 
   .demo-divider {
-      text-align: center;
-      position: relative;
-      margin-bottom: 15px;
+    text-align: center;
+    position: relative;
+    margin-bottom: 15px;
 
-      &::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: var(--border-color);
-      }
-
-      span {
-        position: relative;
-        background: rgba(28, 33, 40, 0.92);
-        padding: 0 15px;
-        color: var(--text-secondary);
-        font-size: 12px;
-      }
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e2e8f0;
     }
+
+    span {
+      position: relative;
+      background: #ffffff;
+      padding: 0 15px;
+      color: #64748b;
+      font-size: 12px;
+    }
+  }
 
   .demo-users {
     display: grid;
@@ -672,93 +547,60 @@ const handleLogin = async () => {
     padding: 12px 15px;
     border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    border: 1px solid transparent;
-    animation: fadeInUp 0.5s ease-out both;
-    position: relative;
-    overflow: hidden;
-
-    // 依次延迟显示
-    &:nth-child(1) { animation-delay: 0.6s; }
-    &:nth-child(2) { animation-delay: 0.7s; }
-    &:nth-child(3) { animation-delay: 0.8s; }
-    &:nth-child(4) { animation-delay: 0.9s; }
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
 
     &:hover {
-      transform: translateY(-5px) scale(1.02);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-    }
-
-    // 点击波纹
-    &:active .ripple-effect {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      animation: rippleBtn 0.6s ease-out;
-      pointer-events: none;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
     }
 
     .demo-role {
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-primary);
-      position: relative;
-      z-index: 1;
+      color: #1e293b;
     }
 
     .demo-phone {
       font-size: 11px;
-      color: var(--text-secondary);
+      color: #64748b;
       font-family: 'Courier New', monospace;
-      position: relative;
-      z-index: 1;
     }
 
-    // 渐变背景
     &.elder {
-      background: linear-gradient(135deg, rgba(103, 194, 58, 0.08), rgba(103, 194, 58, 0.02));
-      border-color: rgba(103, 194, 58, 0.3);
+      border-color: rgba(34, 197, 94, 0.3);
       &:hover {
-        background: linear-gradient(135deg, rgba(103, 194, 58, 0.15), rgba(103, 194, 58, 0.08));
-        border-color: rgba(103, 194, 58, 0.5);
-        box-shadow: 0 12px 24px rgba(103, 194, 58, 0.2);
+        border-color: #22c55e;
+        background: #f0fdf4;
       }
     }
 
     &.nurse {
-      background: linear-gradient(135deg, rgba(64, 158, 255, 0.08), rgba(64, 158, 255, 0.02));
-      border-color: rgba(64, 158, 255, 0.3);
+      border-color: rgba(59, 130, 246, 0.3);
       &:hover {
-        background: linear-gradient(135deg, rgba(64, 158, 255, 0.15), rgba(64, 158, 255, 0.08));
-        border-color: rgba(64, 158, 255, 0.5);
-        box-shadow: 0 12px 24px rgba(64, 158, 255, 0.2);
+        border-color: #3b82f6;
+        background: #eff6ff;
       }
     }
 
     &.admin {
-      background: linear-gradient(135deg, rgba(230, 162, 60, 0.08), rgba(230, 162, 60, 0.02));
-      border-color: rgba(230, 162, 60, 0.3);
+      border-color: rgba(245, 158, 11, 0.3);
       &:hover {
-        background: linear-gradient(135deg, rgba(230, 162, 60, 0.15), rgba(230, 162, 60, 0.08));
-        border-color: rgba(230, 162, 60, 0.5);
-        box-shadow: 0 12px 24px rgba(230, 162, 60, 0.2);
+        border-color: #f59e0b;
+        background: #fffbeb;
       }
     }
 
     &.family {
-      background: linear-gradient(135deg, rgba(245, 108, 108, 0.08), rgba(245, 108, 108, 0.02));
-      border-color: rgba(245, 108, 108, 0.3);
+      border-color: rgba(168, 85, 247, 0.3);
       &:hover {
-        background: linear-gradient(135deg, rgba(245, 108, 108, 0.15), rgba(245, 108, 108, 0.08));
-        border-color: rgba(245, 108, 108, 0.5);
-        box-shadow: 0 12px 24px rgba(245, 108, 108, 0.2);
+        border-color: #a855f7;
+        background: #faf5ff;
       }
     }
   }
@@ -767,11 +609,9 @@ const handleLogin = async () => {
 .login-footer {
   text-align: center;
   margin-top: 30px;
-  animation: fadeIn 0.6s ease-out 0.7s forwards;
-  opacity: 0;
 
   p {
-    color: #909399;
+    color: #64748b;
     font-size: 14px;
     margin-bottom: 15px;
   }
@@ -780,20 +620,15 @@ const handleLogin = async () => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #606266;
+    color: #64748b;
     cursor: pointer;
     font-size: 14px;
     transition: all 0.3s ease;
 
     &:hover {
-      color: #667eea;
+      color: #22c55e;
       transform: translateX(4px);
     }
   }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 </style>

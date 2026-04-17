@@ -10,9 +10,6 @@
         :default-active="route.path"
         :collapse="isCollapse"
         router
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409eff"
       >
         <el-menu-item :index="dashboardPath">
           <el-icon><component :is="dashboardIcon" /></el-icon>
@@ -150,9 +147,6 @@
         <el-menu
           :default-active="route.path"
           router
-          background-color="#304156"
-          text-color="#bfcbd9"
-          active-text-color="#409eff"
           @select="showMobileMenu = false"
         >
           <el-menu-item :index="dashboardPath">
@@ -326,12 +320,12 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .layout-container {
   height: 100vh;
-  background: transparent;
+  background: #f8fafc;
 }
 
 .sidebar {
-  background-color: rgba(48, 65, 86, 0.85);
-  backdrop-filter: blur(10px);
+  background-color: #ffffff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   transition: width 0.3s;
   overflow: hidden;
 
@@ -340,23 +334,46 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: #ffffff;
     font-size: 18px;
     font-weight: bold;
-    background-color: rgba(43, 58, 77, 0.9);
-    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+  }
+}
+
+// 侧边栏菜单浅色主题
+:deep(.el-menu) {
+  background-color: #ffffff !important;
+  border-right: none !important;
+
+  .el-menu-item,
+  .el-sub-menu__title {
+    color: #475569 !important;
+
+    &:hover {
+      background-color: #f0fdf4 !important;
+      color: #22c55e !important;
+    }
+
+    &.is-active {
+      background-color: #dcfce7 !important;
+      color: #22c55e !important;
+    }
+  }
+
+  .el-sub-menu .el-menu-item {
+    padding-left: 50px !important;
   }
 }
 
 .header {
-  background-color: rgba(37, 45, 55, 0.85);
-  backdrop-filter: blur(10px);
+  background-color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.3);
-  border-bottom: 1px solid var(--border-color);
 
   .header-left {
     display: flex;
@@ -366,13 +383,13 @@ onUnmounted(() => {
     .collapse-btn {
       font-size: 20px;
       cursor: pointer;
-      color: var(--text-secondary);
+      color: #64748b;
     }
 
     .menu-btn {
       font-size: 20px;
       cursor: pointer;
-      color: var(--text-secondary);
+      color: #64748b;
     }
   }
 
@@ -384,10 +401,10 @@ onUnmounted(() => {
     .header-icon {
       font-size: 20px;
       cursor: pointer;
-      color: var(--text-secondary);
+      color: #64748b;
 
       &:hover {
-        color: var(--color-primary);
+        color: #22c55e;
       }
     }
 
@@ -398,10 +415,10 @@ onUnmounted(() => {
       font-weight: 500;
       color: #fff;
 
-      &.type-1 { background: #67c23a; }
-      &.type-2 { background: #409eff; }
-      &.type-3 { background: #e6a23c; }
-      &.type-4 { background: #f56c6c; }
+      &.type-1 { background: #22c55e; }
+      &.type-2 { background: #3b82f6; }
+      &.type-3 { background: #f59e0b; }
+      &.type-4 { background: #8b5cf6; }
     }
 
     .user-info {
@@ -411,34 +428,29 @@ onUnmounted(() => {
       cursor: pointer;
 
       .username {
-        color: var(--text-primary);
+        color: #1e293b;
       }
     }
   }
 }
 
 .main-content {
-  background-color: rgba(28, 33, 40, 0.7);
-  backdrop-filter: blur(5px);
+  background-color: #f8fafc;
   overflow-y: auto;
 }
 
 /* 下拉菜单样式 */
 :deep(.el-dropdown-menu) {
-  background-color: var(--bg-elevated) !important;
-  border: 1px solid var(--border-color) !important;
-  box-shadow: var(--shadow-md) !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 
   .el-dropdown-item {
-    color: var(--text-primary) !important;
+    color: #1e293b !important;
 
     &:hover {
-      background-color: var(--bg-hover) !important;
-      color: var(--color-primary) !important;
-    }
-
-    &.is-disabled {
-      color: var(--text-tertiary) !important;
+      background-color: #f0fdf4 !important;
+      color: #22c55e !important;
     }
   }
 }
@@ -446,15 +458,15 @@ onUnmounted(() => {
 /* 面包屑样式 */
 :deep(.el-breadcrumb__item) {
   .el-breadcrumb__inner {
-    color: var(--text-secondary) !important;
+    color: #64748b !important;
 
     &:hover {
-      color: var(--color-primary) !important;
+      color: #22c55e !important;
     }
   }
 
   .el-breadcrumb__separator {
-    color: var(--text-tertiary) !important;
+    color: #94a3b8 !important;
   }
 }
 
@@ -469,15 +481,16 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: #ffffff;
     font-size: 18px;
     font-weight: bold;
-    background-color: #2b3a4d;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
     margin-bottom: 20px;
   }
 
   :deep(.el-menu) {
     flex: 1;
+    background-color: #ffffff !important;
   }
 }
 

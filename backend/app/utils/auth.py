@@ -103,28 +103,40 @@ def verify_sms_code(phone, code):
 def send_email_code(email, code):
     """发送邮箱验证码（使用SMTP发送真实邮件）"""
     redis = get_redis()
-    if redis is None:
-        # 无Redis时，仅打印验证码（用于测试）
-        print(f"[模拟邮箱] 向邮箱 {email} 发送验证码: {code} (Redis未连接，仅显示)")
-        return True
 
-    # 存储验证码到Redis
-    key = f'email_code:{email}'
-    redis.setex(key, current_app.config.get('SMS_CODE_EXPIRES', 300), code)
+    # 存储验证码到Redis（如果有Redis）
+    if redis:
+        try:
+            key = f'email_code:{email}'
+            redis.setex(key, current_app.config.get('SMS_CODE_EXPIRES', 300), code)
+            print(f"[Redis] 验证码 {code} 已存储到 Redis")
+        except Exception as e:
+            print(f"[Redis] 存储验证码失败: {e}")
 
     # 获取邮件配置
     mail_config = {
         'server': current_app.config.get('MAIL_SERVER'),
-        'port': current_app.config.get('MAIL_PORT', 587),
-        'use_tls': current_app.config.get('MAIL_USE_TLS', True),
+        'port': current_app.config.get('MAIL_PORT', 465),
+        'use_ssl': current_app.config.get('MAIL_USE_SSL', True),
         'username': current_app.config.get('MAIL_USERNAME'),
         'password': current_app.config.get('MAIL_PASSWORD'),
         'sender': current_app.config.get('MAIL_DEFAULT_SENDER')
     }
 
+    # 调试：打印邮件配置
+    print(f"[Email Config] server={mail_config['server']}, port={mail_config['port']}, use_ssl={mail_config['use_ssl']}")
+    print(f"[Email Config] username={mail_config['username']}, sender={mail_config['sender']}")
+    print(f"[Email Config] password_set={'Yes' if mail_config['password'] else 'No'}")
+
     # 检查邮件配置是否完整
-    if not all([mail_config['server'], mail_config['username'], mail_config['password'], mail_config['sender']]):
-        # 配置不完整，仅打印验证码
+    missing_fields = []
+    if not mail_config['server']: missing_fields.append('server')
+    if not mail_config['username']: missing_fields.append('username')
+    if not mail_config['password']: missing_fields.append('password')
+    if not mail_config['sender']: missing_fields.append('sender')
+
+    if missing_fields:
+        print(f"[Email Config] Missing fields: {missing_fields}")
         print(f"[模拟邮箱] 向邮箱 {email} 发送验证码: {code} (邮件配置不完整，仅显示)")
         return True
 
@@ -144,13 +156,13 @@ def send_email_code(email, code):
             <style>
                 body {{ font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f5f5; }}
                 .container {{ max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }}
-                .header {{ background: linear-gradient(135deg, #667eea, #764ba2); padding: 30px; text-align: center; color: white; }}
+                .header {{ background: linear-gradient(135deg, #22c55e, #16a34a); padding: 30px; text-align: center; color: white; }}
                 .header h1 {{ margin: 0; font-size: 24px; }}
                 .content {{ padding: 40px 30px; text-align: center; }}
-                .code-box {{ background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px dashed #409eff; border-radius: 16px; padding: 30px; margin: 20px 0; }}
-                .code {{ font-size: 42px; font-weight: bold; color: #1565c0; letter-spacing: 12px; font-family: 'Courier New', monospace; }}
+                .code-box {{ background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px dashed #22c55e; border-radius: 16px; padding: 30px; margin: 20px 0; }}
+                .code {{ font-size: 42px; font-weight: bold; color: #16a34a; letter-spacing: 12px; font-family: 'Courier New', monospace; }}
                 .tips {{ color: #666; font-size: 14px; margin-top: 20px; line-height: 1.6; }}
-                .warning {{ color: #f56c6c; font-size: 12px; margin-top: 30px; }}
+                .warning {{ color: #ef4444; font-size: 12px; margin-top: 30px; }}
                 .footer {{ background: #f9f9f9; padding: 20px; text-align: center; color: #999; font-size: 12px; }}
             </style>
         </head>
@@ -202,11 +214,14 @@ def send_email_code(email, code):
         msg.attach(MIMEText(text_content, 'plain', 'utf-8'))
         msg.attach(MIMEText(html_content, 'html', 'utf-8'))
 
-        # 发送邮件
-        server = smtplib.SMTP(mail_config['server'], mail_config['port'])
-        server.ehlo()
-
-        if mail_config['use_tls']:
+        # 发送邮件 - 使用 SSL 连接
+        if mail_config['use_ssl']:
+            # 使用 SSL 连接 (推荐使用 465 端口)
+            server = smtplib.SMTP_SSL(mail_config['server'], mail_config['port'])
+        else:
+            # 使用普通 SMTP + STARTTLS (端口 587)
+            server = smtplib.SMTP(mail_config['server'], mail_config['port'])
+            server.ehlo()
             server.starttls()
 
         server.login(mail_config['username'], mail_config['password'])

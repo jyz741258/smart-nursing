@@ -13,8 +13,7 @@ import './styles/animations.scss'
 import './styles/buttons.scss'
 import './styles/tables.scss'
 import './styles/advanced-effects.scss'
-import './styles/theme.scss' // 深色主题样式
-import './styles/dark-theme-overrides.scss' // Element Plus 深色覆盖
+import './styles/theme-light.scss' // 浅色绿色主题样式
 
 const app = createApp(App)
 

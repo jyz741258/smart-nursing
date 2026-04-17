@@ -403,10 +403,10 @@ onMounted(async () => {
   position: relative;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #0a0e14 0%, #121820 50%, #0d1117 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f0fdf4 100%);
   overflow: hidden;
 
-  // 动态渐变背景
+  // 柔和的绿色光晕背景
   &::before {
     content: '';
     position: fixed;
@@ -415,17 +415,10 @@ onMounted(async () => {
     width: 200%;
     height: 200%;
     background: 
-      radial-gradient(ellipse at 20% 20%, rgba(102, 126, 234, 0.15) 0%, transparent 40%),
-      radial-gradient(ellipse at 80% 80%, rgba(118, 75, 162, 0.12) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 50%, rgba(240, 147, 251, 0.08) 0%, transparent 50%);
-    animation: bgFloat 30s ease-in-out infinite;
+      radial-gradient(ellipse at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
     pointer-events: none;
     z-index: 0;
-  }
-
-  @keyframes bgFloat {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    50% { transform: translate(3%, -3%) rotate(2deg); }
   }
 
   .role-indicator {
@@ -441,11 +434,9 @@ onMounted(async () => {
     margin-bottom: 20px;
 
     &.elder {
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      background: linear-gradient(135deg, #22c55e, #16a34a);
       color: #ffffff;
-      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5), 0 0 0 2px rgba(102, 126, 234, 0.2);
-      animation: fadeInDown 0.6s var(--ease-bounce);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
     }
 
     .role-icon {
@@ -460,7 +451,7 @@ onMounted(async () => {
   .welcome-banner {
     position: relative;
     z-index: 1;
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     border-radius: 16px;
     padding: 30px;
     display: flex;
@@ -468,27 +459,7 @@ onMounted(async () => {
     align-items: center;
     margin-bottom: 24px;
     color: #fff;
-    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
-    overflow: hidden;
-    animation: fadeInUp 0.8s var(--ease-bounce) 0.2s both;
-
-    // 装饰性光晕
-    &::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-      border-radius: 50%;
-      animation: bannerOrb 20s ease-in-out infinite;
-    }
-
-    @keyframes bannerOrb {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-20px, 20px) scale(1.1); }
-    }
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.25);
 
     h1 {
       font-size: 28px;
@@ -502,18 +473,8 @@ onMounted(async () => {
     }
 
     .welcome-icon {
-      opacity: 0.15;
-      font-size: 120px;
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      animation: iconFloat 6s ease-in-out infinite;
-    }
-
-    @keyframes iconFloat {
-      0%, 100% { transform: translateY(-50%) rotate(0deg); }
-      50% { transform: translateY(-55%) rotate(5deg); }
+      opacity: 0.2;
+      font-size: 80px;
     }
   }
 
@@ -524,19 +485,17 @@ onMounted(async () => {
     .section-title {
       font-size: 20px;
       font-weight: 700;
-      color: #ffffff;
+      color: #1e293b;
       margin-bottom: 16px;
       padding-left: 12px;
-      border-left: 4px solid var(--color-primary);
+      border-left: 4px solid #22c55e;
       display: flex;
       align-items: center;
       gap: 10px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 
       .title-icon {
-        color: var(--color-primary);
+        color: #22c55e;
         font-size: 22px;
-        filter: drop-shadow(0 0 4px var(--color-primary));
       }
     }
   }
@@ -545,90 +504,34 @@ onMounted(async () => {
 // 健康卡片
 .health-cards {
   .health-card {
-    background: rgba(40, 50, 60, 0.95);
+    background: #ffffff;
     border-radius: 14px;
     padding: 24px 20px;
     text-align: center;
-    border: 1px solid rgba(102, 126, 234, 0.25);
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);
-    animation: cardSlideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-    position: relative;
-    overflow: hidden;
-
-    // 顶部渐变条
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--gradient-primary);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s ease;
-    }
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    animation: cardSlideIn 0.5s ease-out both;
 
     &:hover {
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: 0 16px 32px rgba(102, 126, 234, 0.25);
-      border-color: var(--color-primary);
-
-      &::before {
-        transform: scaleX(1);
-      }
-
-      .card-icon {
-        transform: scale(1.1) rotate(5deg);
-      }
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      border-color: #22c55e;
     }
 
-    // 入场延迟 - 实现交错效果
     &:nth-child(1) { animation-delay: 0.1s; }
     &:nth-child(2) { animation-delay: 0.2s; }
     &:nth-child(3) { animation-delay: 0.3s; }
     &:nth-child(4) { animation-delay: 0.4s; }
 
-    // 悬停效果
-    &:hover {
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: 0 16px 32px rgba(102, 126, 234, 0.2);
-      border-color: var(--color-primary);
-
-      .card-icon {
-        transform: scale(1.1) rotate(5deg);
-      }
-    }
-
-    // 加载动画状态
-    &.card-loading {
-      .card-value {
-        background: linear-gradient(
-          90deg,
-          var(--bg-tertiary) 25%,
-          var(--bg-hover) 50%,
-          var(--bg-tertiary) 75%
-        );
-        background-size: 200% 100%;
-        animation: skeleton-loading 1.5s ease-in-out infinite;
-        border-radius: 4px;
-        color: transparent !important;
-      }
-    }
-
-    @keyframes skeleton-loading {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-
     @keyframes cardSlideIn {
       from {
         opacity: 0;
-        transform: translateY(30px) scale(0.9);
+        transform: translateY(20px);
       }
       to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
       }
     }
 
@@ -642,113 +545,79 @@ onMounted(async () => {
       margin: 0 auto 14px;
       font-size: 26px;
       color: #fff;
-      transition: transform 0.4s var(--ease-bounce);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 
       &.heart {
         background: linear-gradient(135deg, #f56c6c, #fab6b6);
-        box-shadow: 0 4px 16px rgba(245, 108, 108, 0.4);
       }
 
       &.blood {
-        background: linear-gradient(135deg, #409eff, #66b1ff);
-        box-shadow: 0 4px 16px rgba(64, 158, 255, 0.4);
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
       }
 
       &.sleep {
-        background: linear-gradient(135deg, #9c27b0, #ba68c8);
-        box-shadow: 0 4px 16px rgba(156, 39, 176, 0.4);
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
       }
 
       &.step {
-        background: linear-gradient(135deg, #67c23a, #85ce61);
-        box-shadow: 0 4px 16px rgba(103, 194, 58, 0.4);
+        background: linear-gradient(135deg, #22c55e, #4ade80);
       }
     }
 
     .card-value {
       font-size: 32px;
       font-weight: 800;
-      color: #ffffff;
+      color: #1e293b;
       margin-bottom: 6px;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.3));
-    }
-
-    @keyframes valueGlow {
-      0% { filter: drop-shadow(0 0 4px rgba(102, 126, 234, 0.2)); }
-      100% { filter: drop-shadow(0 0 12px rgba(102, 126, 234, 0.4)); }
     }
 
     .card-label {
       font-size: 14px;
-      color: #b8c5d6;
+      color: #64748b;
       font-weight: 500;
-      letter-spacing: 0.5px;
     }
   }
 }
 
 // 待办事项列表
 .care-plan-list {
-  background: rgba(40, 50, 60, 0.95);
+  background: #ffffff;
   border-radius: 14px;
   padding: 24px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  position: relative;
-  z-index: 1;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
   .plan-item {
     display: flex;
     align-items: center;
     gap: 16px;
     padding: 18px 20px;
-    background: rgba(30, 40, 50, 0.9);
-    border: 1px solid rgba(102, 126, 234, 0.15);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
     margin-bottom: 12px;
-    transition: all 0.3s var(--ease-smooth);
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: var(--gradient-primary);
-      transform: scaleY(0);
-      transition: transform 0.3s var(--ease-smooth);
-    }
+    transition: all 0.3s ease;
 
     &:hover {
-      background: rgba(50, 60, 70, 0.95);
-      border-color: var(--color-primary);
-      transform: translateX(8px);
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
-
-      &::before {
-        transform: scaleY(1);
-      }
+      background: #f0fdf4;
+      border-color: #22c55e;
+      transform: translateX(4px);
     }
 
     &.completed {
-      opacity: 0.5;
+      opacity: 0.6;
 
       .plan-name {
         text-decoration: line-through;
-        color: #8a9bb0;
+        color: #94a3b8;
       }
     }
 
     .plan-time {
       font-size: 13px;
-      color: #7aa8e0;
+      color: #16a34a;
       font-weight: 600;
       min-width: 60px;
-      background: rgba(102, 126, 234, 0.1);
+      background: #dcfce7;
       padding: 6px 10px;
       border-radius: 6px;
       text-align: center;
@@ -760,13 +629,13 @@ onMounted(async () => {
       .plan-name {
         font-size: 15px;
         font-weight: 600;
-        color: #e8eef5;
+        color: #1e293b;
         margin-bottom: 5px;
       }
 
       .plan-desc {
         font-size: 13px;
-        color: #9aafc0;
+        color: #64748b;
       }
     }
 
@@ -778,13 +647,12 @@ onMounted(async () => {
 
 // 快捷操作按钮
 .quick-actions {
-  background: rgba(40, 50, 60, 0.95);
+  background: #ffffff;
   border-radius: 14px;
   padding: 24px;
   margin-bottom: 20px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  position: relative;
-  z-index: 1;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
   .action-buttons {
     display: grid;
@@ -799,61 +667,36 @@ onMounted(async () => {
       padding: 20px;
       border-radius: 12px;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-      position: relative;
-      overflow: hidden;
+      transition: all 0.3s ease;
+      color: #fff;
 
-      // 渐变色
       &.emergency {
-        background: linear-gradient(135deg, #f56c6c 0%, #f89898 100%);
-        color: #fff;
+        background: linear-gradient(135deg, #f56c6c, #ef4444);
       }
 
       &.service {
-        background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
-        color: #fff;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
       }
 
       &.health {
-        background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
-        color: #fff;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
       }
 
       &.contact {
-        background: linear-gradient(135deg, #e6a23c 0%, #f3d19e 100%);
-        color: #fff;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
       }
 
       &.evaluate {
-        background: linear-gradient(135deg, #909399 0%, #c0c4cc 100%);
-        color: #fff;
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
       }
 
       &.ai {
-        background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
-        color: #fff;
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
       }
 
       &:hover {
-        transform: translateY(-6px) scale(1.02);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-
-        // 光效扫过
-        &::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.2),
-            transparent
-          );
-          animation: shineSweep 0.6s ease;
-        }
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
       }
 
       span {
@@ -864,27 +707,21 @@ onMounted(async () => {
   }
 }
 
-@keyframes shineSweep {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
 // 通知列表
 .notifications {
-  background: rgba(40, 50, 60, 0.95);
+  background: #ffffff;
   border-radius: 14px;
   padding: 24px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  position: relative;
-  z-index: 1;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
   .section-title {
     font-size: 18px;
     font-weight: 600;
-    color: #ffffff;
+    color: #1e293b;
     margin-bottom: 16px;
     padding-left: 12px;
-    border-left: 4px solid var(--color-primary);
+    border-left: 4px solid #22c55e;
   }
 
   .notice-list {
@@ -892,7 +729,7 @@ onMounted(async () => {
       display: flex;
       align-items: flex-start;
       padding: 14px 12px;
-      border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+      border-bottom: 1px solid #e2e8f0;
       transition: all 0.3s ease;
       border-radius: 8px;
 
@@ -901,10 +738,7 @@ onMounted(async () => {
       }
 
       &:hover {
-        background: rgba(50, 60, 70, 0.8);
-        margin: 0 -8px;
-        padding-left: 12px;
-        padding-right: 12px;
+        background: #f0fdf4;
       }
 
       .notice-icon {
@@ -917,10 +751,9 @@ onMounted(async () => {
         color: #fff;
         margin-right: 14px;
         flex-shrink: 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 
-        &.care { background: linear-gradient(135deg, #67c23a, #85ce61); }
-        &.health { background: linear-gradient(135deg, #409eff, #66b1ff); }
+        &.care { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        &.health { background: linear-gradient(135deg, #3b82f6, #2563eb); }
       }
 
       .notice-content {
@@ -928,14 +761,14 @@ onMounted(async () => {
 
         .notice-text {
           font-size: 14px;
-          color: #e8eef5;
+          color: #1e293b;
           margin-bottom: 5px;
           line-height: 1.5;
         }
 
         .notice-time {
           font-size: 12px;
-          color: #7a9ab5;
+          color: #94a3b8;
         }
       }
     }
@@ -949,34 +782,12 @@ onMounted(async () => {
   p {
     margin-top: 15px;
     font-size: 16px;
-    color: var(--text-primary);
+    color: #1e293b;
   }
 
   .emergency-contact {
     font-size: 14px;
-    color: var(--text-tertiary);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    color: #64748b;
   }
 }
 </style>

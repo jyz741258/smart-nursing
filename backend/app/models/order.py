@@ -41,6 +41,7 @@ class Order(db.Model):
     # 支付信息
     payment_method = db.Column(db.String(20), comment='支付方式')
     payment_time = db.Column(db.DateTime, comment='支付时间')
+    pay_transaction_id = db.Column(db.String(64), comment='支付流水号')
 
     # 完成信息
     service_start_time = db.Column(db.DateTime, comment='服务开始时间')
@@ -85,6 +86,7 @@ class Order(db.Model):
             'statusText': self.get_status_text(),
             'paymentMethod': self.payment_method,
             'paymentTime': self.payment_time.strftime('%Y-%m-%d %H:%M:%S') if self.payment_time else None,
+            'payTransactionId': self.pay_transaction_id,
             'serviceStartTime': self.service_start_time.strftime('%Y-%m-%d %H:%M:%S') if self.service_start_time else None,
             'serviceEndTime': self.service_end_time.strftime('%Y-%m-%d %H:%M:%S') if self.service_end_time else None,
             'completionTime': self.completion_time.strftime('%Y-%m-%d %H:%M:%S') if self.completion_time else None,

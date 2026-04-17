@@ -1,0 +1,328 @@
+// ============================================
+// 全局浅色动态背景系统
+// 清爽舒适的视觉体验
+// ============================================
+
+// 动态渐变背景
+.dynamic-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+
+  // 柔和的绿色渐变
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 70%),
+    var(--bg-primary);
+
+  animation: dynamicBgMove 40s ease-in-out infinite;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  // 顶部光晕
+  &::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(34, 197, 94, 0.03) 0%,
+      transparent 60%
+    );
+    animation: topGlow 10s ease-in-out infinite;
+  }
+
+  // 底部暗角（柔和）
+  &::after {
+    background: radial-gradient(
+      ellipse at center bottom,
+      transparent 0%,
+      rgba(241, 245, 249, 0.6) 100%
+    );
+  }
+
+  @keyframes dynamicBgMove {
+    0%, 100% {
+      transform: scale(1) translateX(0);
+    }
+    50% {
+      transform: scale(1.02) translateX(1%);
+    }
+  }
+
+  @keyframes topGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+}
+
+// 所有页面容器的浅色背景覆盖
+.view-container,
+.page-container,
+.el-main,
+.main-content {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-primary) !important;
+  min-height: calc(100vh - 60px);
+}
+
+// 页面标题样式
+.page-header-section {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    background: var(--gradient-primary);
+    border-radius: 2px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .page-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+}
+
+// 卡片容器（所有页面通用）
+.content-card {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s var(--ease-smooth);
+  box-shadow: var(--shadow-sm);
+
+  // 悬停效果
+  &:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+
+    // 顶部渐变条
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  // 顶部渐变条
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s var(--ease-smooth);
+    opacity: 0.8;
+  }
+}
+
+// 统计数字样式
+.stat-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-primary);
+  animation: none;
+}
+
+// 列表项悬停效果
+.list-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--gradient-primary);
+    transform: scaleY(0);
+    transition: transform 0.3s var(--ease-smooth);
+  }
+
+  &:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--color-primary-light);
+    transform: translateX(4px);
+
+    &::before {
+      transform: scaleY(1);
+    }
+  }
+}
+
+// 按钮增强（全局）
+.btn-action {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// 状态指示灯
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+
+  &.online {
+    background: var(--color-success);
+    box-shadow: 0 0 6px var(--color-success);
+  }
+
+  &.offline {
+    background: var(--text-tertiary);
+  }
+
+  &.busy {
+    background: var(--color-warning);
+    box-shadow: 0 0 6px var(--color-warning);
+  }
+}
+
+// 标签页切换动画
+.tab-content {
+  animation: tabFadeIn 0.3s var(--ease-smooth);
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 空状态优化
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  .empty-text {
+    font-size: 14px;
+  }
+}
+
+// 加载骨架屏
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+// 响应式优化
+@media (max-width: 768px) {
+  .dynamic-bg {
+    animation: none;
+    background: var(--bg-primary);
+  }
+
+  .page-header-section {
+    .page-title {
+      font-size: 20px;
+    }
+  }
+
+  .content-card {
+    padding: 16px;
+  }
+}
+
+// 滚动条样式（浅色主题）
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+// 聚焦样式
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+// 选中文本样式
+::selection {
+  background: var(--color-primary);
+  color: white;
+}

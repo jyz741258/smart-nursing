@@ -126,6 +126,18 @@ const routes: RouteRecordRaw[] = [
         name: 'AIChat',
         component: () => import('@/views/AIChat.vue'),
         meta: { title: 'AI健康助手' }
+      },
+      {
+        path: 'payment/mock',
+        name: 'MockPayment',
+        component: () => import('@/views/MockPayment.vue'),
+        meta: { title: '模拟支付', requiresAuth: false }
+      },
+      {
+        path: 'payment/result',
+        name: 'PaymentResult',
+        component: () => import('@/views/PaymentResult.vue'),
+        meta: { title: '支付结果', requiresAuth: false }
       }
     ]
   }
