@@ -39,7 +39,7 @@
             <el-icon class="input-icon"><Iphone /></el-icon>
             <el-input
               v-model="form.phone"
-              placeholder="请输入手机号"
+              placeholder="请输入账号"
               size="large"
             />
           </div>
@@ -129,8 +129,8 @@ const demoUsers = [
 
 const rules = {
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '账号格式不正确', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },

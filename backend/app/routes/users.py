@@ -121,7 +121,7 @@ def login():
 
     user = User.query.filter_by(phone=phone).first()
     if not user or not user.check_password(password):
-        return api_error('手机号或密码错误')
+        return api_error('账号或密码错误')
 
     token = generate_token(user.id, user.user_type)
     return api_response({

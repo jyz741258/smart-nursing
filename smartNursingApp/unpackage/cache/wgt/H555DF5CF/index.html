@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>智慧养老</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #667eea;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        .btn-secondary {
+            background: #f0f2f5;
+            color: #333;
+        }
+        .btn-secondary:active {
+            background: #e4e6eb;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .info-box {
+            background: #f0f2f5;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>智慧养老 App</h1>
+            <p>5+App 原生应用</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <div class="section-title">系统测试</div>
+                <button class="btn btn-primary" onclick="testConnection()">测试后端连接</button>
+                <button class="btn btn-secondary" onclick="testPlusAPI()">测试 5+API</button>
+                <div id="status" class="status"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">功能模块</div>
+                <button class="btn btn-secondary" onclick="goToServices()">服务项目</button>
+                <button class="btn btn-secondary" onclick="goToOrders()">我的订单</button>
+                <button class="btn btn-secondary" onclick="goToProfile()">个人中心</button>
+            </div>
+            
+            <div class="info-box">
+                <strong>当前状态：</strong><br>
+                平台：5+App<br>
+                版本：1.0.0<br>
+                运行环境：plus ready
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // ========== 配置区域 ==========
+        var API_BASE = 'http://192.168.61.25:5000';  // ← 修改为你的电脑 IP
+        // =============================
+        
+        document.addEventListener('plusready', function() {
+            console.log("5+App 环境就绪");
+            console.log("设备型号：", plus.device.model);
+            console.log("API地址：", API_BASE);
+        });
+        
+        // 显示状态
+        function showStatus(message, isError) {
+            var status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + (isError ? 'error' : 'success');
+        }
+        
+        // 测试后端连接
+        function testConnection() {
+            showStatus('连接中...', false);
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', API_BASE + '/api/health', true);
+            xhr.timeout = 5000;
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    showStatus('✅ 连接成功！后端版本: ' + data.version, false);
+                } else {
+                    showStatus('❌ 连接失败：HTTP ' + xhr.status, true);
+                }
+            };
+            xhr.ontimeout = function() {
+                showStatus('❌ 连接超时，请检查后端是否启动', true);
+            };
+            xhr.onerror = function() {
+                showStatus('❌ 网络错误', true);
+            };
+            xhr.send();
+        }
+        
+        // 测试 5+ API
+        function testPlusAPI() {
+            if (typeof plus === 'undefined') {
+                showStatus('❌ 未检测到 plus 环境', true);
+                return;
+            }
+            showStatus('✅ 5+API 可用！设备信息：' + plus.device.model, false);
+            console.log('plus.runtime:', plus.runtime);
+            console.log('plus.device:', plus.device);
+        }
+        
+        // 页面跳转（后续实现）
+        function goToServices() {
+            showStatus('服务页面开发中...', false);
+        }
+        function goToOrders() {
+            showStatus('订单页面开发中...', false);
+        }
+        function goToProfile() {
+            showStatus('个人中心开发中...', false);
+        }
+        
+        // plusready 事件
+        document.addEventListener('plusready', function() {
+            console.log('5+App 环境就绪');
+            console.log('设备型号：', plus.device.model);
+            console.log('系统版本：', plus.device.androidVersion);
+        });
+    </script>
+</body>
+</html>
