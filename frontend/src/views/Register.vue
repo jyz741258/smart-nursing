@@ -56,6 +56,18 @@
           </div>
         </el-form-item>
 
+        <!-- 手机号 -->
+        <el-form-item prop="phone">
+          <div class="input-wrapper">
+            <el-icon class="input-icon"><Iphone /></el-icon>
+            <el-input
+              v-model="form.phone"
+              placeholder="请输入手机号"
+              size="large"
+            />
+          </div>
+        </el-form-item>
+
         <!-- 邮箱 -->
         <el-form-item prop="email">
           <div class="input-wrapper">
@@ -569,8 +581,6 @@ const handleRegister = async () => {
   position: relative;
   z-index: 1;
   width: 460px;
-  max-height: 90vh;
-  overflow-y: auto;
   padding: 50px 40px;
   // 深色玻璃态背景
   background: rgba(28, 33, 40, 0.92);

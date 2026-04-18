@@ -15,9 +15,12 @@ def get_services(current_user):
     category = request.args.get('category')
     status = request.args.get('status', type=int)
     is_recommended = request.args.get('is_recommended', type=int)
+    name = request.args.get('name')  # 服务名称搜索参数
 
     query = Service.query
 
+    if name:
+        query = query.filter(Service.name.like(f'%{name}%'))
     if category:
         query = query.filter_by(category=category)
     if status is not None:
@@ -26,6 +29,8 @@ def get_services(current_user):
         query = query.filter_by(is_recommended=is_recommended)
 
     query = query.order_by(Service.sort_order.asc(), Service.id.asc())
+
+    pagination = query.paginate(page=page, per_page=page_size, error_out=False)
 
     pagination = query.paginate(page=page, per_page=page_size, error_out=False)
 

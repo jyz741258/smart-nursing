@@ -230,7 +230,6 @@ const handleLogin = async () => {
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
 
   // 柔和的绿色粒子背景
   .particle-bg {

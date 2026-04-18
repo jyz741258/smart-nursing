@@ -12,12 +12,12 @@
     <el-row :gutter="20" class="stats-row">
       <el-col :span="8">
         <div class="card-container stats-card">
-          <div ref="nursingPieChartRef" style="height: 300px"></div>
+          <div ref="nursingPieChartRef" class="chart-container"></div>
         </div>
       </el-col>
       <el-col :span="16">
         <div class="card-container stats-card">
-          <div ref="nursingTrendChartRef" style="height: 300px"></div>
+          <div ref="nursingTrendChartRef" class="chart-container"></div>
         </div>
       </el-col>
     </el-row>
@@ -26,7 +26,7 @@
       <el-col :span="12">
         <div class="card-container">
           <h4 class="card-title">护理人员工作量</h4>
-          <div ref="workloadChartRef" style="height: 300px"></div>
+          <div ref="workloadChartRef" class="chart-container"></div>
         </div>
       </el-col>
       <el-col :span="12">
@@ -138,16 +138,29 @@ const getHealthAlerts = async () => {
 const updatePieChart = async (data: any[]) => {
   if (!nursingPieChartRef.value) return
 
-  // 确保DOM元素已经完全渲染
+  console.log('[Debug] updatePieChart called, data:', data)
+
+  // 等待DOM更新
   await nextTick()
-  
-  // 检查DOM元素的尺寸
-  const rect = nursingPieChartRef.value.getBoundingClientRect()
-  if (rect.width === 0 || rect.height === 0) {
-    // 如果尺寸为0，再等待一段时间
-    await new Promise(resolve => setTimeout(resolve, 200))
+
+  // 循环等待容器有尺寸
+  let retryCount = 0
+  const maxRetries = 10
+  while (nursingPieChartRef.value && (nursingPieChartRef.value.clientWidth === 0 || nursingPieChartRef.value.clientHeight === 0) && retryCount < maxRetries) {
+    console.log('[Debug] Pie chart container not ready, waiting...', retryCount)
+    await new Promise(resolve => setTimeout(resolve, 100))
+    retryCount++
   }
-  
+
+  if (!nursingPieChartRef.value) return
+
+  console.log('[Debug] Pie chart dimensions:', nursingPieChartRef.value.clientWidth, nursingPieChartRef.value.clientHeight)
+
+  // 清理旧实例
+  if (nursingPieChart) {
+    nursingPieChart.dispose()
+  }
+
   nursingPieChart = echarts.init(nursingPieChartRef.value)
   const values = new Array(7).fill(0)
 
@@ -158,12 +171,55 @@ const updatePieChart = async (data: any[]) => {
   })
 
   nursingPieChart.setOption({
-    title: { text: '护理类型分布', left: 'center', top: 10 },
-    tooltip: { trigger: 'item' },
-    legend: { bottom: 10, left: 'center' },
+    title: {
+      text: '护理类型分布',
+      left: 'center',
+      top: 5,
+      textStyle: {
+        fontSize: 12,
+        color: '#333'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'horizontal',
+      bottom: 0,
+      left: 'center',
+      itemGap: 8,
+      icon: 'circle',
+      textStyle: {
+        fontSize: 10,
+        color: '#666'
+      }
+    },
     series: [{
       type: 'pie',
-      radius: ['40%', '70%'],
+      radius: ['30%', '50%'],  // 进一步减小半径
+      center: ['50%', '42%'],  // 调整中心点位置
+      avoidLabelOverlap: true,
+      itemStyle: {
+        borderRadius: 3,
+        borderColor: '#fff',
+        borderWidth: 1.5
+      },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: '{b}\n{d}%',
+        fontSize: 9,
+        color: '#333'
+      },
+      labelLine: {
+        show: true,
+        length: 6,
+        length2: 10,
+        lineStyle: {
+          width: 1
+        }
+      },
       data: nursingTypes.map((name, index) => ({
         name,
         value: values[index]
@@ -175,9 +231,29 @@ const updatePieChart = async (data: any[]) => {
 const updateWorkloadChart = async (data: any[]) => {
   if (!workloadChartRef.value) return
 
-  // 确保DOM元素已经渲染完成
-  await new Promise(resolve => setTimeout(resolve, 100))
-  
+  console.log('[Debug] updateWorkloadChart called, data:', data)
+
+  // 等待DOM更新
+  await nextTick()
+
+  // 循环等待容器有尺寸
+  let retryCount = 0
+  const maxRetries = 10
+  while (workloadChartRef.value && (workloadChartRef.value.clientWidth === 0 || workloadChartRef.value.clientHeight === 0) && retryCount < maxRetries) {
+    console.log('[Debug] Workload chart container not ready, waiting...', retryCount)
+    await new Promise(resolve => setTimeout(resolve, 100))
+    retryCount++
+  }
+
+  if (!workloadChartRef.value) return
+
+  console.log('[Debug] Workload chart dimensions:', workloadChartRef.value.clientWidth, workloadChartRef.value.clientHeight)
+
+  // 清理旧实例
+  if (workloadChart) {
+    workloadChart.dispose()
+  }
+
   workloadChart = echarts.init(workloadChartRef.value)
   const names = data.map((item: any) => item.staff_name)
   const counts = data.map((item: any) => item.record_count)
@@ -197,16 +273,29 @@ const updateWorkloadChart = async (data: any[]) => {
 const updateTrendChart = async () => {
   if (!nursingTrendChartRef.value) return
 
-  // 确保DOM元素已经完全渲染
+  console.log('[Debug] updateTrendChart called')
+
+  // 等待DOM更新
   await nextTick()
-  
-  // 检查DOM元素的尺寸
-  const rect = nursingTrendChartRef.value.getBoundingClientRect()
-  if (rect.width === 0 || rect.height === 0) {
-    // 如果尺寸为0，再等待一段时间
-    await new Promise(resolve => setTimeout(resolve, 200))
+
+  // 循环等待容器有尺寸
+  let retryCount = 0
+  const maxRetries = 10
+  while (nursingTrendChartRef.value && (nursingTrendChartRef.value.clientWidth === 0 || nursingTrendChartRef.value.clientHeight === 0) && retryCount < maxRetries) {
+    console.log('[Debug] Trend chart container not ready, waiting...', retryCount)
+    await new Promise(resolve => setTimeout(resolve, 100))
+    retryCount++
   }
-  
+
+  if (!nursingTrendChartRef.value) return
+
+  console.log('[Debug] Trend chart dimensions:', nursingTrendChartRef.value.clientWidth, nursingTrendChartRef.value.clientHeight)
+
+  // 清理旧实例
+  if (nursingTrendChart) {
+    nursingTrendChart.dispose()
+  }
+
   nursingTrendChart = echarts.init(nursingTrendChartRef.value)
   const dates = []
   const now = new Date()
@@ -275,5 +364,12 @@ onUnmounted(() => {
     padding-bottom: 10px;
     border-bottom: 1px solid #eee;
   }
+}
+
+// 图表容器必须有明确的宽高
+.chart-container {
+  width: 100%;
+  height: 400px;  // 增加到400px提供更多空间
+  min-height: 400px;
 }
 </style>

@@ -762,7 +762,6 @@ onMounted(async () => {
   min-height: 100vh;
   padding: 20px;
   background: linear-gradient(135deg, #0a0e14 0%, #12151c 50%, #0d1117 100%);
-  overflow: hidden;
 
   &::before {
     content: '';

@@ -75,7 +75,7 @@
   position: relative;
   z-index: 1;
   background: var(--bg-primary) !important;
-  min-height: calc(100vh - 60px);
+  min-height: 100%;
 }
 
 // 页面标题样式

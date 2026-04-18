@@ -404,7 +404,6 @@ onMounted(async () => {
   min-height: 100vh;
   padding: 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f0fdf4 100%);
-  overflow: hidden;
 
   // 柔和的绿色光晕背景
   &::before {

@@ -129,7 +129,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="数值">
-          <el-input v-model="healthForm.value" placeholder="请输入数值" />
+          <div style="display: flex; align-items: center; gap: 8px">
+            <el-input v-model="healthForm.metric_value" placeholder="请输入数值" />
+            <span v-if="healthForm.metric_type && metricUnitMap[healthForm.metric_type]" style="color: var(--text-secondary); min-width: 60px">
+              {{ metricUnitMap[healthForm.metric_type] }}
+            </span>
+          </div>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="healthForm.notes" type="textarea" rows="3" placeholder="备注信息" />
@@ -268,13 +273,41 @@ const isAdminOrNurse = computed(() => {
 // 健康监测相关
 const healthSearch = reactive({ elder_id: '', metric_type: '' })
 const healthFormRef = ref<FormInstance>()
-const healthForm = reactive({ elder_id: '', metric_type: null, value: '', notes: '' })
+const healthForm = reactive({ elder_id: '', metric_type: null, metric_value: '', unit: '', notes: '' })
 const metrics = ref<any[]>([])
 const latestMetrics = ref<any>({})
 const healthLoading = ref(false)
 const healthPagination = reactive({ page: 1, page_size: 10, total: 0 })
 const showHealthDialog = ref(false)
 const elders = ref<any[]>([])
+
+// 指标类型对应的单位映射
+const metricUnitMap: Record<number, string> = {
+  1: '℃',      // 体温
+  2: 'mmHg',   // 血压-收缩压
+  3: 'mmHg',   // 血压-舒张压
+  4: '次/分',  // 心率
+  5: '%',      // 血氧
+  6: 'mmol/L', // 血糖
+  7: 'kg',     // 体重
+  8: 'cm',     // 身高
+  9: 'h',      // 睡眠时长
+  10: '步'     // 今日步数
+}
+
+// 指标类型显示名称映射
+const metricTypeNameMap: Record<number, string> = {
+  1: '体温',
+  2: '血压-收缩压',
+  3: '血压-舒张压',
+  4: '心率',
+  5: '血氧',
+  6: '血糖',
+  7: '体重',
+  8: '身高',
+  9: '睡眠时长',
+  10: '今日步数'
+}
 
 // 护理计划相关
 const plans = ref<any[]>([])
@@ -299,9 +332,17 @@ let healthChart: echarts.ECharts | null = null
 const getElders = async () => {
   try {
     const res: any = await api.get('/users/elder/list')
-    if (res.code === 200) elders.value = res.data || []
-  } catch (error) {
-    console.error('获取老人列表失���', error)
+    if (res.code === 200) {
+      elders.value = res.data || []
+      if (elders.value.length === 0) {
+        ElMessage.warning('系统中暂无老人数据')
+      }
+    } else {
+      ElMessage.error(res.message || '获取老人列表失败')
+    }
+  } catch (error: any) {
+    console.error('获取老人列表失败', error)
+    ElMessage.error(error.response?.data?.message || '获取老人列表失败，请检查网络连接')
   }
 }
 
@@ -316,11 +357,34 @@ const getMetrics = async () => {
     if (res.code === 200) {
       metrics.value = res.data.items || []
       healthPagination.total = res.data.total || 0
+      if (metrics.value.length === 0 && healthSearch.elder_id) {
+        ElMessage.info('该老人暂无健康指标数据')
+      }
+
+      // 如果选择了老人，同时获取该老人的最新指标来更新卡片
+      if (healthSearch.elder_id) {
+        await getLatestMetricsForElder(healthSearch.elder_id)
+      }
+    } else {
+      ElMessage.error(res.message || '获取健康指标失败')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取健康指标失败', error)
+    ElMessage.error(error.response?.data?.message || '获取健康指标失败，请检查网络连接')
   } finally {
     healthLoading.value = false
+  }
+}
+
+// 获取指定老人的最新指标
+const getLatestMetricsForElder = async (elder_id: number) => {
+  try {
+    const res: any = await api.get(`/health/metrics/latest/${elder_id}`)
+    if (res.code === 200 && res.data) {
+      latestMetrics.value = res.data
+    }
+  } catch (error) {
+    console.error('获取老人最新指标失败', error)
   }
 }
 
@@ -341,16 +405,39 @@ const resetHealthSearch = () => {
 
 const submitHealthRecord = async () => {
   try {
-    const res: any = await api.post('/health/metrics', healthForm)
+    // 根据指标类型自动设置单位
+    if (healthForm.metric_type && metricUnitMap[healthForm.metric_type]) {
+      healthForm.unit = metricUnitMap[healthForm.metric_type]
+    }
+
+    // 构建符合后端接口的数据结构
+    const payload = {
+      elder_id: healthForm.elder_id,
+      metric_type: healthForm.metric_type,
+      metric_value: healthForm.metric_value,
+      unit: healthForm.unit,
+      notes: healthForm.notes
+    }
+
+    const res: any = await api.post('/health/metrics', payload)
     if (res.code === 200) {
       ElMessage.success('记录成功')
       showHealthDialog.value = false
+      // 重置表单
+      healthForm.elder_id = ''
+      healthForm.metric_type = null
+      healthForm.metric_value = ''
+      healthForm.unit = ''
+      healthForm.notes = ''
       healthFormRef.value?.resetFields()
       getMetrics()
       getLatestMetrics()
+    } else {
+      ElMessage.error(res.message || '记录失败')
     }
   } catch (error) {
-    ElMessage.error('记录失败')
+    console.error('记录失败', error)
+    ElMessage.error('记录失败，请稍后重试')
   }
 }
 
@@ -414,40 +501,64 @@ const getStatusType = (status: number) => ({ 1: 'success', 2: 'warning', 3: 'inf
 const getTaskStatusType = (status: number) => ({ 1: 'warning', 2: 'success', 3: 'info' }[status] || 'info')
 
 // 导出CSV
-const exportCSV = () => {
-  if (metrics.value.length === 0) {
-    ElMessage.warning('没有数据可导出')
-    return
+const exportCSV = async () => {
+  try {
+    // 先获取所有匹配的数据（不分页）
+    const params: any = {}
+    if (healthSearch.elder_id) params.elder_id = healthSearch.elder_id
+    if (healthSearch.metric_type) params.metric_type = healthSearch.metric_type
+
+    // 设置较大的 page_size 获取所有数据
+    params.page = 1
+    params.page_size = 1000
+
+    const res: any = await api.get('/health/metrics', { params })
+
+    if (res.code !== 200) {
+      ElMessage.error(res.message || '获取数据失败')
+      return
+    }
+
+    const allMetrics = res.data.items || []
+    if (allMetrics.length === 0) {
+      ElMessage.warning('没有数据可导出')
+      return
+    }
+
+    // 生成CSV内容
+    const headers = ['ID', '老人', '指标类型', '数值', '单位', '记录时间', '备注']
+    const rows = allMetrics.map(metric => [
+      metric.id,
+      metric.elder_name,
+      metric.metric_type_name,
+      metric.metric_value,
+      metric.unit,
+      metric.recorded_at,
+      metric.notes || ''
+    ])
+
+    // 组合CSV内容
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n')
+
+    // 创建下载链接
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `健康指标_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    ElMessage.success(`成功导出 ${allMetrics.length} 条记录`)
+  } catch (error: any) {
+    console.error('导出CSV失败', error)
+    ElMessage.error(error.response?.data?.message || '导出失败，请稍后重试')
   }
-
-  // 生成CSV内容
-  const headers = ['ID', '老人', '指标类型', '数值', '单位', '记录时间', '备注']
-  const rows = metrics.value.map(metric => [
-    metric.id,
-    metric.elder_name,
-    metric.metric_type_name,
-    metric.metric_value,
-    metric.unit,
-    metric.recorded_at,
-    metric.notes || ''
-  ])
-
-  // 组合CSV内容
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.join(','))
-  ].join('\n')
-
-  // 创建下载链接
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', `健康指标_${new Date().toISOString().split('T')[0]}.csv`)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
 }
 
 // 更新图表

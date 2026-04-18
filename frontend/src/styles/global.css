@@ -152,7 +152,7 @@ a:hover {
    ======================== */
 .page-container {
   padding: 24px;
-  min-height: calc(100vh - 60px);
+  min-height: 100%;
   background: var(--bg-primary);
   transition: background-color 0.3s ease;
 }
@@ -183,7 +183,6 @@ a:hover {
   padding: 24px;
   transition: all 0.3s var(--ease-smooth);
   position: relative;
-  overflow: hidden;
 }
 
 .card-container:hover {

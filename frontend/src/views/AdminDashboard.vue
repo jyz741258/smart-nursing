@@ -219,7 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import api from '@/store/auth'
@@ -256,10 +256,12 @@ const getDashboardStats = async () => {
 const getWeeklyNursingData = async () => {
   try {
     const res: any = await api.get('/statistics/weekly-nursing')
+    console.log('[Debug] Weekly nursing data:', res)
     if (res.code === 200 && nursingChartRef.value) {
       const weekData = res.data || []
       const days = weekData.map((d: any) => d.day)
       const counts = weekData.map((d: any) => d.count)
+      console.log('[Debug] Chart data - days:', days, 'counts:', counts)
       nursingChart.setOption({
         xAxis: { type: 'category', data: days },
         series: [{ data: counts }]
@@ -274,8 +276,10 @@ const getWeeklyNursingData = async () => {
 const getServiceDistribution = async () => {
   try {
     const res: any = await api.get('/statistics/service-distribution')
+    console.log('[Debug] Service distribution data:', res)
     if (res.code === 200 && pieChartRef.value) {
       const serviceData = res.data || []
+      console.log('[Debug] Pie chart data:', serviceData)
       pieChart.setOption({
         series: [{
           data: serviceData
@@ -289,35 +293,97 @@ const getServiceDistribution = async () => {
 
 const refreshData = async () => {
   await getDashboardStats()
-  updateCharts()
+  await updateCharts()
   ElMessage.success('数据已刷新')
 }
 
-const updateCharts = () => {
-  if (nursingChartRef.value) {
-    nursingChart = echarts.init(nursingChartRef.value)
-    nursingChart.setOption({
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
-      yAxis: { type: 'value' },
-      series: [{ type: 'bar', data: [], itemStyle: { color: '#409eff' } }]
-    })
-    getWeeklyNursingData()
+// 清理图表实例
+const disposeCharts = () => {
+  if (nursingChart) {
+    nursingChart.dispose()
+    nursingChart = null
   }
+  if (pieChart) {
+    pieChart.dispose()
+    pieChart = null
+  }
+}
 
-  if (pieChartRef.value) {
-    pieChart = echarts.init(pieChartRef.value)
-    pieChart.setOption({
-      tooltip: { trigger: 'item' },
-      legend: { bottom: 0 },
-      series: [{
-        type: 'pie',
-        radius: ['40%', '70%'],
-        data: []
-      }]
-    })
-    getServiceDistribution()
-  }
+const updateCharts = async () => {
+  console.log('[Debug] updateCharts called')
+
+  // 清理旧图表
+  disposeCharts()
+
+  // 等待DOM更新
+  await nextTick()
+
+  // 延迟初始化，确保容器有尺寸
+  setTimeout(() => {
+    let chartInitialized = false
+
+    if (nursingChartRef.value) {
+      const parent = nursingChartRef.value.parentElement
+      console.log('[Debug] Nursing chart container:', {
+        width: nursingChartRef.value.clientWidth,
+        height: nursingChartRef.value.clientHeight,
+        offsetWidth: nursingChartRef.value.offsetWidth,
+        offsetHeight: nursingChartRef.value.offsetHeight,
+        parentDisplay: parent ? getComputedStyle(parent).display : 'no-parent',
+        parentWidth: parent ? parent.clientWidth : 'no-parent'
+      })
+
+      if (nursingChartRef.value.clientWidth > 0 && nursingChartRef.value.clientHeight > 0) {
+        nursingChart = echarts.init(nursingChartRef.value)
+        nursingChart.setOption({
+          tooltip: { trigger: 'axis' },
+          xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
+          yAxis: { type: 'value' },
+          series: [{ type: 'bar', data: [0, 0, 0, 0, 0, 0, 0], itemStyle: { color: '#409eff' } }]
+        })
+        getWeeklyNursingData()
+        chartInitialized = true
+      } else {
+        console.warn('[Debug] Nursing chart container has zero dimensions')
+      }
+    }
+
+    if (pieChartRef.value) {
+      const parent = pieChartRef.value.parentElement
+      console.log('[Debug] Pie chart container:', {
+        width: pieChartRef.value.clientWidth,
+        height: pieChartRef.value.clientHeight,
+        offsetWidth: pieChartRef.value.offsetWidth,
+        offsetHeight: pieChartRef.value.offsetHeight,
+        parentDisplay: parent ? getComputedStyle(parent).display : 'no-parent',
+        parentWidth: parent ? parent.clientWidth : 'no-parent'
+      })
+
+      if (pieChartRef.value.clientWidth > 0 && pieChartRef.value.clientHeight > 0) {
+        pieChart = echarts.init(pieChartRef.value)
+        pieChart.setOption({
+          tooltip: { trigger: 'item' },
+          legend: { bottom: 0, textStyle: { color: '#b8c5d6' } },
+          series: [{
+            type: 'pie',
+            radius: ['40%', '70%'],
+            data: [],
+            label: { color: '#b8c5d6' }
+          }]
+        })
+        getServiceDistribution()
+        chartInitialized = true
+      } else {
+        console.warn('[Debug] Pie chart container has zero dimensions')
+      }
+    }
+
+    // 如果图表未初始化，延迟重试
+    if (!chartInitialized) {
+      console.log('[Debug] Charts not ready, retrying in 200ms...')
+      setTimeout(updateCharts, 200)
+    }
+  }, 500)  // 增加到500ms确保布局完成
 }
 
 // 监听周期切换
@@ -418,7 +484,6 @@ onUnmounted(() => {
   min-height: 100vh;
   padding: 20px;
   background: linear-gradient(135deg, #0a0e14 0%, #12151c 50%, #0d1117 100%);
-  overflow: hidden;
 
   // 多层动态背景效果
   &::before {
