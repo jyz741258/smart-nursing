@@ -24,7 +24,7 @@ def create_app(config_name='default'):
     # 初始化CORS（允许跨域访问）
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://tf958e9b.natappfree.cc:3000", "http://tf958e9b.natappfree.cc", "*"],
+            "origins": ["http://192.168.61.18:3000", "http://tf958e9b.natappfree.cc:3000", "http://tf958e9b.natappfree.cc", "*"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }

@@ -47,3 +47,5 @@ credentials.json
 # Build
 *.pyc
 instance/
+
+doc/doc/

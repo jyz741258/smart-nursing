@@ -18,10 +18,15 @@ export default defineConfig({
       dts: 'src/components.d.ts'
     })
   ],
+  base: './',  // 使用相对路径，适配Android本地文件加载
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
     }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets'
   },
   server: {
     host: '0.0.0.0',

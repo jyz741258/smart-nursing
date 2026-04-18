@@ -1,15 +1,34 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>智慧养老系统</title>
-    <script type="module" crossorigin src="/assets/index-0a69b96c.js"></script>
-    <link rel="stylesheet" href="/assets/index-e2a0fb27.css">
-  </head>
-  <body>
-    <div id="app"></div>
-    
-  </body>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>智慧养老</title>
+    <script type="text/javascript">
+        // 5+App 环境检测
+        document.addEventListener('plusready', function() {
+            console.log('5+App 环境就绪');
+            console.log('设备型号：', plus.device.model);
+            console.log('平台：', plus.platform);
+        });
+
+        // 页面加载完成后，跳转到 Vue 应用
+        window.onload = function() {
+            // 直接跳转到 www 目录的 Vue 应用
+            var href = location.href;
+            // 如果当前不在 www 目录下，则跳转到 www/index.html
+            if (href.indexOf('/www/') === -1 && href.indexOf('/www\\') === -1) {
+                var path = href.substring(0, href.lastIndexOf('/') + 1);
+                location.href = path + 'www/index.html';
+            }
+            // 如果已经在 www 目录下，则不进行跳转，让 Vue 应用正常加载
+        };
+    </script>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+        <h2>智慧养老</h2>
+        <p>正在加载应用...</p>
+    </div>
+</body>
 </html>
