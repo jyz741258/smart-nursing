@@ -6,7 +6,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from ..extensions import db
-from ..models import Order
+from ..models import Order, User, Notification
 from ..utils.response import api_response, api_error
 from ..utils import require_token
 from ..utils.payment import payment_service
@@ -100,6 +100,12 @@ def query_payment(current_user, order_no):
                 order.payment_method = platform
                 order.payment_time = datetime.now()
                 db.session.commit()
+                
+                # 支付成功，发送通知
+                try:
+                    _send_payment_success_notifications(order)
+                except Exception as e:
+                    logger.error(f"发送支付成功通知失败: {e}")
         
         return api_response({
             'order_no': order_no,
@@ -174,6 +180,12 @@ def _handle_alipay_notify(data: dict):
                 db.session.commit()
                 
                 logger.info(f"订单支付成功: {out_trade_no}")
+                
+                # 发送支付成功通知
+                try:
+                    _send_payment_success_notifications(order)
+                except Exception as e:
+                    logger.error(f"发送支付成功通知失败: {e}")
         
         return jsonify({'success': True, 'message': 'success'})
         
@@ -208,6 +220,12 @@ def _handle_wechat_notify(data: dict):
                 db.session.commit()
                 
                 logger.info(f"订单支付成功: {out_trade_no}")
+                
+                # 发送支付成功通知
+                try:
+                    _send_payment_success_notifications(order)
+                except Exception as e:
+                    logger.error(f"发送支付成功通知失败: {e}")
         
         return jsonify({'code': 'SUCCESS', 'message': '成功'})
         
@@ -394,9 +412,104 @@ def mock_payment():
         order.pay_transaction_id = f'MOCK{datetime.now().strftime("%Y%m%d%H%M%S")}'
         db.session.commit()
         logger.info(f"模拟支付成功: {order_no}")
+        
+        # 发送支付成功通知
+        try:
+            _send_payment_success_notifications(order)
+        except Exception as e:
+            logger.error(f"发送支付成功通知失败: {e}")
 
     return jsonify({
         'success': True,
         'message': '模拟支付成功',
         'order_no': order_no
     })
+
+
+def _send_payment_success_notifications(order):
+    """
+    发送支付成功通知给相关人员
+    
+    通知对象：
+    1. 管理员（所有在线管理员）
+    2. 老人（订单的服务对象）
+    3. 家属（如果老人有绑定的家属）
+    4. 护理员（如果订单已分配）
+    """
+    try:
+        # 获取老人信息
+        elder = User.query.get(order.elder_id) if order.elder_id else None
+        elder_name = elder.real_name if elder else "未知"
+        
+        # 构建通知内容
+        title = "支付成功"
+        content = f"订单「{order.service_name}」已支付成功，服务对象：{elder_name}，服务时间：{order.appointment_date or '待定'} {order.appointment_time or ''}"
+        
+        notifications_to_send = []
+        
+        # 1. 通知所有管理员
+        admins = User.query.filter_by(user_type=3, status=1).all()
+        for admin in admins:
+            notifications_to_send.append({
+                'user_id': admin.id,
+                'title': title,
+                'content': content,
+                'type': 4,  # 任务通知
+                'priority': 1
+            })
+        
+        # 2. 通知老人（服务对象）
+        if elder and elder.status == 1:
+            notifications_to_send.append({
+                'user_id': elder.id,
+                'title': title,
+                'content': content,
+                'type': 2,  # 护理提醒
+                'priority': 1
+            })
+            
+            # 3. 通知家属（如果老人绑定了家属）
+            # 注意：老人表中的family_id字段，或通过users.binding_elder_id反向查找
+            # 根据users.py，家属的binding_elder_id指向老人，老人的family_id指向家属
+            # 但检查users.py，只有家属有binding_elder_id，老人没有family_id字段
+            # 所以需要通过家属的binding_elder_id来查找
+            families = User.query.filter_by(binding_elder_id=elder.id, user_type=4, status=1).all()
+            for family in families:
+                notifications_to_send.append({
+                    'user_id': family.id,
+                    'title': title,
+                    'content': content,
+                    'type': 4,  # 任务通知
+                    'priority': 1
+                })
+        
+        # 4. 通知护理员（如果已分配）
+        if order.nurse_id:
+            nurse = User.query.get(order.nurse_id)
+            if nurse and nurse.status == 1:
+                notifications_to_send.append({
+                    'user_id': nurse.id,
+                    'title': '新任务通知',
+                    'content': f"订单「{order.service_name}」已支付，请准备提供服务。服务对象：{elder_name}，时间：{order.appointment_date or '待定'} {order.appointment_time or ''}",
+                    'type': 2,  # 护理提醒
+                    'priority': 2  # 紧急（护理任务需要及时处理）
+                })
+        
+        # 批量创建通知
+        for notif in notifications_to_send:
+            notification = Notification(
+                user_id=notif['user_id'],
+                title=notif['title'],
+                content=notif['content'],
+                notification_type=notif['type'],
+                priority=notif['priority'],
+                created_by=order.user_id  # 下单人
+            )
+            db.session.add(notification)
+        
+        db.session.commit()
+        logger.info(f"支付成功通知已发送: {len(notifications_to_send)}条，订单号={order.order_no}")
+        
+    except Exception as e:
+        logger.error(f"发送支付成功通知失败: {e}")
+        # 不影响支付流程，只记录错误

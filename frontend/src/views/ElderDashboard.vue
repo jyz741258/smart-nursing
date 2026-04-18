@@ -355,10 +355,25 @@ const getHealthData = async () => {
       const sleepHours = res.data['睡眠时长']
       const steps = res.data['今日步数']
 
-      healthData.heartRate = heartRate?.value !== undefined ? String(heartRate.value) : '--'
-      healthData.bloodPressure = `${systolic?.value !== undefined ? systolic.value : '--'}/${diastolic?.value !== undefined ? diastolic.value : '--'}`
-      healthData.sleepHours = sleepHours?.value !== undefined ? String(sleepHours.value) : '--'
-      healthData.steps = steps?.value !== undefined ? String(Math.round(steps.value)) : '--'
+      // 心率 - 整数
+      healthData.heartRate = heartRate?.value !== undefined 
+        ? String(Math.round(heartRate.value)) 
+        : '--'
+
+      // 血压 - 整数
+      const sysVal = systolic?.value !== undefined ? Math.round(systolic.value) : '--'
+      const diaVal = diastolic?.value !== undefined ? Math.round(diastolic.value) : '--'
+      healthData.bloodPressure = `${sysVal}/${diaVal}`
+
+      // 睡眠时长 - 保留1位小数
+      healthData.sleepHours = sleepHours?.value !== undefined 
+        ? String(Number(sleepHours.value).toFixed(1)) 
+        : '--'
+
+      // 步数 - 整数
+      healthData.steps = steps?.value !== undefined 
+        ? String(Math.round(steps.value)) 
+        : '--'
     }
   } catch (error) {
     console.error('获取健康数据失败', error)

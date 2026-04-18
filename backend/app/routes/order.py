@@ -1,7 +1,9 @@
 from flask import request
+from datetime import datetime
+import uuid
 from . import order_bp
 from ..extensions import db
-from ..models import Order, Service, User
+from ..models import Order, Service, User, Notification
 from ..utils.response import api_response, api_error, page_response
 from ..utils import require_token
 
@@ -31,9 +33,12 @@ def get_orders_summary(current_user):
             # 护理人员只能看到自己的订单
             query = query.filter_by(nurse_id=current_user.id)
         elif current_user.user_type == 4:
-            # 家属只能看到自己老人的订单
-            from ..models import User
-            query = query.join(User, Order.elder_id == User.id).filter(User.family_id == current_user.id)
+            # 家属只能看到自己绑定的老人的订单
+            if current_user.binding_elder_id:
+                query = query.filter_by(elder_id=current_user.binding_elder_id)
+            else:
+                # 家属未绑定老人，返回空结果
+                query = query.filter_by(id=0)
 
     # 应用筛选条件（与 get_orders 完全一致）
     if status is not None:
@@ -103,9 +108,13 @@ def get_orders(current_user):
                 # 护理人员只能看到自己的订单
                 query = query.filter_by(nurse_id=current_user.id)
             elif current_user.user_type == 4:
-                # 家属只能看到自己老人的订单
-                from ..models import User
-                query = query.join(User, Order.elder_id == User.id).filter(User.family_id == current_user.id)
+                # 家属只能看到自己绑定的老人的订单
+                # 通过 current_user.binding_elder_id 过滤
+                if current_user.binding_elder_id:
+                    query = query.filter_by(elder_id=current_user.binding_elder_id)
+                else:
+                    # 家属未绑定老人，返回空结果
+                    query = query.filter_by(id=0)  # 永远不匹配的条件
 
         if status is not None:
             query = query.filter_by(status=status)
@@ -219,12 +228,17 @@ def create_order(current_user):
                 # 老人自己下单
                 elder_id = current_user.id
             elif current_user.user_type == 4:
-                # 家属为老人下单，需要指定老人ID
-                return api_error('请指定老人ID', 400)
+                # 家属为老人下单，从userInfo中自动获取绑定的老人ID
+                family_user = User.query.get(current_user.id)
+                if family_user and family_user.binding_elder_id:
+                    elder_id = family_user.binding_elder_id
+                else:
+                    return api_error('请先绑定老人', 400)
             else:
                 elder_id = None
 
         # 验证老人是否存在（如果指定了老人ID）
+        elder = None
         if elder_id:
             elder = User.query.get(elder_id)
             if not elder or elder.user_type != 1:
@@ -254,6 +268,39 @@ def create_order(current_user):
         db.session.add(order)
         db.session.commit()
 
+        # 订单创建成功后，发送通知给管理员和护理人员
+        try:
+            # 获取管理员（user_type=3）
+            admins = User.query.filter_by(user_type=3, status=1).all()
+            # 获取负责该老人的护理人员（通过nurse_id，如果有的话）
+            # 这里先发送给管理员，管理员再分配给护理人员
+            # 或者根据服务类型查找对应区域的护理人员
+
+            # 构建通知内容
+            notification_title = "新订单预约"
+            notification_content = f"用户 {current_user.real_name or current_user.username} 预约了服务「{service.name}」，服务时间：{appointment_date or '待定'} {appointment_time or ''}，服务对象：{elder.real_name if elder else '未知'}"
+
+            # 发送给所有在线管理员
+            for admin in admins:
+                notification = Notification(
+                    user_id=admin.id,
+                    title=notification_title,
+                    content=notification_content,
+                    notification_type=4,  # 任务通知
+                    priority=1,  # 重要
+                    created_by=current_user.id
+                )
+                db.session.add(notification)
+
+            # 如果有指定的护理人员（nurse_id字段），也发送通知
+            # 但当前订单刚创建，nurse_id为空，需要管理员分配
+            # 所以暂时只通知管理员
+
+            db.session.commit()
+        except Exception as e:
+            # 通知发送失败不影响订单创建
+            print(f"发送订单通知失败: {e}")
+
         return api_response(order.to_dict(), '订单创建成功')
     except Exception as e:
         db.session.rollback()
@@ -280,10 +327,25 @@ def update_order(current_user, order_id):
                 return api_error('无权限', 403)
     data = request.get_json()
 
+    # 记录变更用于通知
+    changes = []
+    
     if 'status' in data:
+        old_status = order.status
         order.status = data['status']
+        if old_status != data['status']:
+            status_map = {0: '已取消', 1: '待支付', 2: '待服务', 3: '服务中', 4: '已完成', 5: '已退款'}
+            changes.append(f"订单状态变更为：{status_map.get(data['status'], '未知')}")
+    
     if 'nurse_id' in data:
-        order.nurse_id = data['nurse_id']
+        old_nurse = order.nurse_id
+        new_nurse = data['nurse_id']
+        order.nurse_id = new_nurse
+        if old_nurse != new_nurse:
+            nurse = User.query.get(new_nurse)
+            nurse_name = nurse.name if nurse else "未知"
+            changes.append(f"护理人员已分配：{nurse_name}")
+    
     if 'notes' in data:
         order.notes = data['notes']
     if 'appointment_date' in data:
@@ -294,6 +356,42 @@ def update_order(current_user, order_id):
         order.remark = data['remark']
 
     db.session.commit()
+
+    # 发送通知（如果发生了重要变更）
+    try:
+        if changes:
+            # 通知护理人员（如果已分配）
+            if order.nurse_id:
+                nurse = User.query.get(order.nurse_id)
+                if nurse:
+                    notification = Notification(
+                        user_id=nurse.id,
+                        title="订单更新通知",
+                        content=f"订单「{order.service_name}」已更新：{'; '.join(changes)}",
+                        notification_type=4,  # 任务通知
+                        priority=1 if 'nurse_id' in data else 0,
+                        created_by=current_user.id
+                    )
+                    db.session.add(notification)
+            
+            # 通知老人（状态变更）
+            if 'status' in data and order.elder_id:
+                elder = User.query.get(order.elder_id)
+                if elder:
+                    notification = Notification(
+                        user_id=elder.id,
+                        title="订单状态更新",
+                        content=f"您的订单「{order.service_name}」状态已更新为：{status_map.get(data['status'], '未知')}",
+                        notification_type=2,  # 护理提醒
+                        priority=1,
+                        created_by=current_user.id
+                    )
+                    db.session.add(notification)
+            
+            db.session.commit()
+    except Exception as e:
+        print(f"发送订单更新通知失败: {e}")
+
     return api_response(order.to_dict(), '订单更新成功')
 
 

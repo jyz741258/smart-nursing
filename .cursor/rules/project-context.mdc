@@ -1,0 +1,730 @@
+# 智慧养老系统项目规则
+
+## 项目概述
+这是一个基于 uni-app + Flask 的智慧养老管理系统（Smart Nursing），服务于养老院/社区养老场景，包含四端：老人端、护士端、家属端、管理员端。
+
+## 技术栈强制要求
+
+### 前端
+- **框架**：uni-app（Vue 3 + `<script setup>` 语法）
+- **UI库**：uView Plus（uni-app生态）
+- **状态管理**：Pinia
+- **路由**：uni-app pages.json 配置
+- **网络请求**：uni.request() + 拦截器（JWT自动注入）
+- **样式**：scss，使用rpx响应式单位
+- **组件命名**：PascalCase（如 `ElderList.vue`）
+- **页面路由**：kebab-case（如 `elder-detail`）
+
+### 后端
+- **框架**：Python Flask + Flask-RESTful
+- **ORM**：SQLAlchemy
+- **数据库迁移**：Alembic
+- **认证**：JWT（flask-jwt-extended）
+- **推送**：WebSocket（实时通知）
+- **部署**：Gunicorn + Nginx + Docker
+
+### 数据库
+- **主库**：MySQL 8.0
+- **缓存**：Redis（session、token缓存）
+- **字符集**：utf8mb4
+
+## API 规范
+
+### 基础信息
+- **基础URL**：`/api/v1`
+- **请求方法**：GET / POST / PUT / DELETE
+- **数据格式**：JSON
+- **认证方式**：JWT Bearer Token（Header: `Authorization: Bearer {token}`）
+
+### 响应格式
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    // 业务数据
+  }
+}
+```
+
+### 错误码
+- `200`：成功
+- `400`：参数错误
+- `401`：未授权（token失效）
+- `403`：权限不足
+- `404`：资源不存在
+- `500`：服务器内部错误
+
+### 分页规范
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "items": [...],
+    "total": 100,
+    "page": 1,
+    "page_size": 20,
+    "total_pages": 5
+  }
+}
+```
+
+## 核心业务规则
+
+### 角色权限矩阵
+| 角色 | 管理员 | 护士 | 老人 | 家属 |
+|------|--------|------|------|------|
+| 查看老人档案 | ✅ | ✅ | ❌ | ✅（仅自家） |
+| 编辑档案 | ✅ | ✅ | ❌ | ❌ |
+| 健康数据查看 | ✅ | ✅ | ✅ | ✅（仅自家） |
+| 用药提醒管理 | ✅ | ✅ | ❌ | ❌ |
+| 一键呼叫 | ❌ | ✅ | ✅ | ❌ |
+| 视频通话 | ❌ | ❌ | ❌ | ✅（仅自家） |
+| 数据大屏 | ✅ | ❌ | ❌ | ❌ |
+| 系统配置 | ✅ | ❌ | ❌ | ❌ |
+
+### 老人状态
+- `active`：正常
+- `inactive`：失联/未激活
+- `emergency`：紧急状态（一键呼叫触发）
+
+### 护士权限
+- 只能查看**管辖区域**的老人（area_id 过滤）
+- 可绑定多个老人，负责日常巡更和用药提醒
+
+### 家属权限
+- 只能查看**已绑定**的老人信息
+- 可通过邀请码绑定老人（需护士/管理员审核）
+
+### 数据脱敏
+老人敏感字段（身份证、手机号）在返回给非管理员角色时需脱敏：
+- 身份证：`110101********1234`
+- 手机号：`138****5678`
+
+## 数据库设计规范
+
+### 命名约定
+- **表名**：蛇形小写 + 复数（`elders`, `health_records`）
+- **主键**：`id`（INT 自增）
+- **外键**：`{table_name}_id`（如 `elder_id`）
+- **时间戳**：`created_at`, `updated_at`（DATETIME）
+- **软删除**：`deleted_at`（DATETIME，NULLable）
+
+### 关键表结构
+
+#### elders（老人表）
+```sql
+id INT PK
+name VARCHAR(50)
+gender ENUM('male','female','other')
+birthday DATE
+id_card VARCHAR(18) UNIQUE
+phone VARCHAR(11)
+emergency_contact VARCHAR(50)
+emergency_phone VARCHAR(11)
+area_id INT（管辖区域）
+status ENUM('active','inactive','emergency')
+created_at DATETIME
+updated_at DATETIME
+deleted_at DATETIME NULL
+```
+
+#### health_records（健康记录表）
+```sql
+id INT PK
+elder_id INT FK
+type ENUM('blood_pressure','heart_rate','blood_sugar','temperature')
+value JSON（存储测量值，如 {"systolic":120,"diastolic":80}）
+measured_at DATETIME
+nurse_id INT（测量护士）
+created_at DATETIME
+```
+
+#### medication_reminders（用药提醒表）
+```sql
+id INT PK
+elder_id INT FK
+medication_name VARCHAR(100)
+dosage VARCHAR(50)（剂量）
+schedule_time TIME（用药时间）
+is_repeated BOOLEAN（是否重复）
+repeat_type ENUM('daily','weekly','monthly')（重复类型）
+next_remind_at DATETIME（下次提醒时间）
+status ENUM('pending','taken','missed','skipped')
+taken_at DATETIME NULL
+created_by INT（创建护士）
+created_at DATETIME
+updated_at DATETIME
+```
+
+#### nurses（护士表）
+```sql
+id INT PK
+name VARCHAR(50)
+phone VARCHAR(11) UNIQUE
+area_id INT（管辖区域）
+shift ENUM('day','night','rotating')
+is_active BOOLEAN
+created_at DATETIME
+```
+
+#### emergency_logs（紧急呼叫日志表）
+```sql
+id INT PK
+elder_id INT FK
+type ENUM('manual','auto','sos_button')
+location JSON（位置信息，如 {"lat":39.9,"lng":116.4,"address":"xxx"）
+handled_by INT FK（处理护士）
+handled_at DATETIME
+status ENUM('pending','processing','resolved')
+created_at DATETIME
+```
+
+## 项目目录结构
+
+```
+smart-nursing/
+├── .cursor/
+│   └── rules/
+│       └── project-context.mdc    ← 本项目规则文件（AI自动读取）
+├── frontend/                      # uni-app前端
+│   ├── src/
+│   │   ├── pages/                # 页面（按角色分组）
+│   │   │   ├── elder/           # 老人端页面
+│   │   │   ├── nurse/           # 护士端页面
+│   │   │   ├── family/          # 家属端页面
+│   │   │   └── admin/           # 管理员端页面
+│   │   ├── components/          # 公共组件
+│   │   │   ├── ElderCard.vue    # 老人卡片
+│   │   │   ├── HealthChart.vue  # 健康图表
+│   │   │   └── SOSButton.vue    # 一键呼叫按钮
+│   │   ├── stores/              # Pinia状态管理
+│   │   │   ├── user.ts          # 用户信息
+│   │   │   ├── elder.ts         # 老人数据
+│   │   │   └── notification.ts  # 推送通知
+│   │   ├── utils/               # 工具函数
+│   │   │   ├── request.ts       # 网络请求封装
+│   │   │   ├── auth.ts          # 认证工具
+│   │   │   └── format.ts        # 数据格式化
+│   │   └── styles/              # 全局样式
+│   ├── pages.json               # 页面配置
+│   ├── manifest.json            # 应用配置
+│   └── vite.config.ts           # Vite配置
+├── backend/                      # Flask后端
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── config.py            # 配置
+│   │   ├── extensions.py        # 扩展（db, jwt, cors）
+│   │   ├── api/                 # API蓝图
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py          # 认证API
+│   │   │   ├── elders.py        # 老人管理
+│   │   │   ├── health.py        # 健康数据
+│   │   │   ├── medication.py    # 用药提醒
+│   │   │   ├── emergency.py     # 紧急呼叫
+│   │   │   ├── nurse.py         # 护士工作台
+│   │   │   ├── family.py        # 家属端
+│   │   │   └── admin.py         # 管理员
+│   │   ├── models/              # SQLAlchemy模型
+│   │   │   ├── __init__.py
+│   │   │   ├─��� user.py          # 用户模型
+│   │   │   ├── elder.py         # 老人模型
+│   │   │   ├── health_record.py # 健康记录
+│   │   │   ├── medication.py    # 用药提醒
+│   │   │   └── emergency.py     # 紧急呼叫
+│   │   ├── services/            # 业务逻辑层
+│   │   │   ├── __init__.py
+│   │   │   ├── notification.py  # 推送服务
+│   │   │   ├── iot.py           # IoT设备集成
+│   │   │   └── report.py        # 报表生成
+│   │   └── schemas/             # 数据验证（marshmallow）
+│   │       ├── __init__.py
+│   │       ├── elder.py
+│   │       └── health.py
+│   ├── migrations/              # 数据库迁移（Alembic）
+│   ├── tests/                   # 单元测试
+│   ├── requirements.txt         # Python依赖
+│   ├── .env.example             # 环境变量示例
+│   └── run.py                   # 启动脚本
+├── docs/                        # 项目文档
+│   ├── API.md                   # API文档
+│   ├── DATABASE.md              # 数据库设计
+│   ├── DEPLOYMENT.md            # 部署文档
+│   └── USER_MANUAL.md           # 用户手册
+├── docker/
+│   ├── Dockerfile.backend
+│   ├── Dockerfile.frontend
+│   └── docker-compose.yml
+├── scripts/                     # 脚本
+│   ├── deploy.sh                # 部署脚本
+│   ├── backup.sh                # 备份脚本
+│   └── init-db.sql              # 初始化SQL
+├── .env.example                 # 环境变量模板
+├── .gitignore
+├── README.md
+└── SMART_NURSING_CONTEXT.md     # 项目上下文（供AI读取）
+```
+
+## 前端开发规范
+
+### Vue 3 组件模板
+```vue
+<template>
+  <view class="page-container">
+    <!-- 内容 -->
+  </view>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const loading = ref(false)
+
+onMounted(() => {
+  loadData()
+})
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    // 业务逻辑
+  } catch (error) {
+    console.error('加载失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.page-container {
+  padding: 30rpx;
+}
+</style>
+```
+
+### API 请求封装
+```typescript
+// frontend/src/utils/request.ts
+import { useUserStore } from '@/stores/user'
+
+export const request = (options: UniApp.RequestOptions) => {
+  const userStore = useUserStore()
+  const token = userStore.token
+
+  return new Promise((resolve, reject) => {
+    uni.request({
+      ...options,
+      header: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+        ...options.header
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          resolve(res.data)
+        } else if (res.statusCode === 401) {
+          userStore.logout()
+          uni.reLaunch({ url: '/pages/login/index' })
+        } else {
+          reject(res.data)
+        }
+      },
+      fail: reject
+    })
+  })
+}
+```
+
+### Pinia Store 示例
+```typescript
+// frontend/src/stores/elder.ts
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { request } from '@/utils/request'
+
+export const useElderStore = defineStore('elder', () => {
+  const elders = ref([])
+  const currentElder = ref(null)
+
+  const fetchElders = async (params?: any) => {
+    const res = await request({
+      url: '/api/v1/elders',
+      method: 'GET',
+      data: params
+    })
+    elders.value = res.data.items
+  }
+
+  const setCurrentElder = (elder: any) => {
+    currentElder.value = elder
+  }
+
+  return {
+    elders,
+    currentElder,
+    fetchElders,
+    setCurrentElder
+  }
+})
+```
+
+## 后端开发规范
+
+### Flask Blueprint 结构
+```python
+# backend/app/api/elders.py
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.models.elder import Elder
+from app.models.user import User
+from app import db
+
+bp = Blueprint('elders', __name__, url_prefix='/api/v1/elders')
+
+@bp.route('', methods=['GET'])
+@jwt_required()
+def get_elders():
+    """获取老人列表（支持分页、筛选）"""
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+
+    query = Elder.query.filter_by(deleted_at=None)
+
+    # 权限过滤
+    if user.role == 'nurse':
+        query = query.filter_by(area_id=user.area_id)
+    elif user.role == 'family':
+        query = query.filter_by(family_id=user.id)
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('page_size', 20, type=int)
+
+    pagination = query.paginate(page=page, per_page=per_page)
+
+    return jsonify({
+        'code': 200,
+        'message': 'success',
+        'data': {
+            'items': [e.to_dict() for e in pagination.items],
+            'total': pagination.total,
+            'page': page,
+            'page_size': per_page,
+            'total_pages': pagination.pages
+        }
+    })
+```
+
+### SQLAlchemy 模型示例
+```python
+# backend/app/models/elder.py
+from datetime import datetime
+from app import db
+
+class Elder(db.Model):
+    __tablename__ = 'elders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    gender = db.Column(db.Enum('male', 'female', 'other'), default='other')
+    birthday = db.Column(db.Date, nullable=False)
+    id_card = db.Column(db.String(18), unique=True, nullable=False)
+    phone = db.Column(db.String(11), unique=True)
+    emergency_contact = db.Column(db.String(50))
+    emergency_phone = db.Column(db.String(11))
+    area_id = db.Column(db.Integer, db.ForeignKey('areas.id'))
+    status = db.Column(db.Enum('active', 'inactive', 'emergency'), default='active')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+
+    # 关系
+    health_records = db.relationship('HealthRecord', backref='elder', lazy=True)
+    medication_reminders = db.relationship('MedicationReminder', backref='elder', lazy=True)
+
+    def to_dict(self, include_sensitive=False):
+        """序列化，根据角色脱敏"""
+        data = {
+            'id': self.id,
+            'name': self.name,
+            'gender': self.gender,
+            'birthday': self.birthday.strftime('%Y-%m-%d') if self.birthday else None,
+            'status': self.status,
+            'area_id': self.area_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+        if include_sensitive:
+            data.update({
+                'id_card': self.id_card,
+                'phone': self.phone,
+                'emergency_contact': self.emergency_contact,
+                'emergency_phone': self.emergency_phone
+            })
+        else:
+            # 脱敏处理
+            data.update({
+                'id_card': self.id_card[:6] + '********' + self.id_card[-4:] if self.id_card else None,
+                'phone': self.phone[:3] + '****' + self.phone[-4:] if self.phone else None
+            })
+
+        return data
+```
+
+### 认证装饰器（带权限校验）
+```python
+# backend/app/decorators.py
+from functools import wraps
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from app.models.user import User
+
+def role_required(roles):
+    """角色权限装饰器"""
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            verify_jwt_in_request()
+            current_user_id = get_jwt_identity()
+            user = User.query.get(current_user_id)
+
+            if not user or user.role not in roles:
+                return jsonify({'code': 403, 'message': '权限不足'}), 403
+
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
+
+# 使用示例
+@bp.route('', methods=['GET'])
+@jwt_required()
+@role_required(['admin', 'nurse', 'family'])
+def get_elders():
+    # 只有admin/nurse/family角色可以访问
+    pass
+```
+
+## 安全要求
+
+### 1. JWT 认证
+- 所有 `/api/v1/*` 端点必须 `@jwt_required()`
+- Token 有效期：7天（可配置）
+- 刷新机制：`/api/v1/auth/refresh`
+
+### 2. 数据脱敏
+- 老人身份证、手机号对非管理员角色脱敏
+- 家属只能看到绑定老人的完整信息
+
+### 3. SQL 注入防护
+- 必须使用 SQLAlchemy ORM 或参数化查询
+- 禁止字符串拼接 SQL
+
+### 4. XSS 防护
+- 前端渲染自动转义（Vue 默认）
+- 用户输入使用 `v-html` 时需谨慎
+
+### 5. CSRF 防护
+- 移动端使用 JWT，无需 CSRF token
+- 管理后台（如有）需启用 CSRF
+
+## 性能优化
+
+### 前端
+1. **列表分页**：默认 20 条/页，后端分页
+2. **图片懒加载**：`<image lazy-load>`（uni-app 内置）
+3. **虚拟列表**：长列表使用 `recycle-view` 组件
+4. **请求防抖**：搜索框输入防抖（300ms）
+
+### 后端
+1. **数据库索引**：
+   - `elders.id_card`（唯一索引）
+   - `health_records.elder_id + measured_at`（联合索引）
+   - `medication_reminders.next_remind_at`（定时任务查询）
+2. **缓存策略**：
+   - Redis 缓存老人列表（10分钟）
+   - 健康数据近期热数据缓存
+3. **分页查询**：禁止 `SELECT *`，使用 `limit/offset`
+4. **连接池**：SQLAlchemy 配置 `pool_size=20`
+
+## 实时推送（WebSocket）
+
+### 连接建立
+```javascript
+// 前端
+const socket = uni.connectSocket({
+  url: 'wss://your-domain.com/ws',
+  success: () => console.log('WebSocket连接成功')
+})
+
+socket.onMessage((res) => {
+  const data = JSON.parse(res.data)
+  if (data.type === 'emergency') {
+    // 显示紧急呼叫弹窗
+    uni.showModal({
+      title: '紧急呼叫',
+      content: data.message,
+      showCancel: false
+    })
+  }
+})
+```
+
+### 后端事件
+- 老人一键呼叫 → 推送给管辖护士
+- 设备异常告警 → 推送给相关护士
+- 用药提醒 → 推送给老人端
+
+## 错误处理
+
+### 前端统一错误处理
+```typescript
+// utils/request.ts 中添加
+interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const { status, data } = error.response || {}
+    if (status === 401) {
+      // token失效，跳转登录
+      userStore.logout()
+      uni.reLaunch({ url: '/pages/login/index' })
+    } else if (status === 403) {
+      uni.showToast({ title: '权限不足', icon: 'none' })
+    } else {
+      uni.showToast({ title: data?.message || '请求失败', icon: 'none' })
+    }
+    return Promise.reject(error)
+  }
+)
+```
+
+### 后端统一错误处理器
+```python
+# backend/app/errors.py
+from flask import jsonify
+
+def register_error_handlers(app):
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({'code': 404, 'message': '资源不存在'}), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        return jsonify({'code': 500, 'message': '服务器内部错误'}), 500
+```
+
+## 测试规范
+
+### 前端单元测试
+- 框架：Jest + @vue/test-utils
+- 测试目录：`frontend/tests/unit/`
+- 覆盖率要求：> 70%
+
+### 后端单元测试
+- 框架：pytest
+- 测试目录：`backend/tests/`
+- 使用 factory_boy 生成测试数据
+
+### API 集成测试
+- 工具：Postman / Insomnia
+- 集合：`docs/postman-collection.json`
+
+## 部署配置
+
+### 环境变量
+```bash
+# .env
+FLASK_ENV=production
+SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=jwt-secret
+DATABASE_URL=mysql+pymysql://user:pass@host/db
+REDIS_URL=redis://host:6379/0
+```
+
+### Docker 部署
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: smart_nursing
+  redis:
+    image: redis:7-alpine
+  backend:
+    build: ./backend
+    command: gunicorn -w 4 -b 0.0.0.0:5000 run:app
+    depends_on: [mysql, redis]
+  frontend:
+    build: ./frontend
+    # 使用 nginx 托管 dist 目录
+```
+
+## 常用命令
+
+### 前端
+```bash
+# 开发
+npm run dev:mp-weixin   # 微信小程序
+npm run dev:h5         # H5
+npm run build:mp-weixin # 构建小程序
+
+# HBuilderX 打包（需手动）
+# 菜单 → 发行 → 原生App-云打包
+```
+
+### 后端
+```bash
+# 开发
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+flask db upgrade          # 数据库迁移
+flask run --port=5000
+
+# 测试
+pytest
+
+# 生产
+gunicorn -w 4 -b 0.0.0.0:5000 run:app
+```
+
+### 数据库
+```bash
+# 生成迁移
+flask db migrate -m "add medication table"
+flask db upgrade
+
+# 回滚
+flask db downgrade
+```
+
+## 紧急情况处理
+
+### 一键呼叫流程
+1. 老人端触发 → 记录 `emergency_logs` 表
+2. WebSocket 推送给管辖护士（在线） + 短信通知（离线）
+3. 护士接单 → 更新 `handled_by`、`handled_at`
+4. 老人端显示"帮助已响应"
+
+### 数据恢复
+- 每日凌晨备份 MySQL（`mysqldump`）
+- 保留 30 天日志
+- 关键表（elders, health_records）开启 binlog
+
+## 联系与支持
+
+- 项目文档：`docs/` 目录
+- API 文档：`docs/API.md`（或访问 `/apidoc`）
+- 数据库ER图：`docs/ER diagram.png`
+- 技术交流：[项目GitHub Issues](https://github.com/your-repo/smart-nursing)
+
+---
+
+**最后更新：2026-04-18**
+**适用于：Cursor AI 助手自动读取项目上下文**

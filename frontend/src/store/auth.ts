@@ -3,9 +3,19 @@ import { ref } from 'vue'
 import axios from 'axios'
 import type { UserInfo, LoginForm } from '@/types'
 
+// 获取API基础URL（开发环境使用Vite代理，生产环境使用ngrok地址）
+const getBaseURL = () => {
+  // 生产环境使用环境变量
+  if (import.meta.env.PROD) {
+    return import.meta.env.VITE_API_BASE_URL || '/api'
+  }
+  // 开发环境使用Vite代理
+  return '/api'
+}
+
 // 创建 axios 实例，添加请求拦截器用于调试
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   timeout: 10000
 })
 

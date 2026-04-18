@@ -181,6 +181,24 @@ const orderForm = reactive({
   notes: ''
 })
 
+// 家属绑定的老人ID
+const bindingElderId = ref<number | null>(null)
+
+// 获取家属绑定的老人信息
+const getFamilyBindingElder = async () => {
+  try {
+    const res: any = await api.get('/users/binding-elder')
+    if (res.code === 200 && res.data) {
+      bindingElderId.value = res.data.id
+    } else {
+      bindingElderId.value = null
+    }
+  } catch (error) {
+    console.error('获取绑定老人信息失败', error)
+    bindingElderId.value = null
+  }
+}
+
 const getServices = async () => {
   loading.value = true
   try {
@@ -248,8 +266,22 @@ const submitOrder = async () => {
       serviceTime = `${year}-${month}-${day} ${hours}:${minutes}:00`
     }
 
+    // 家属需要传递老人ID
+    let elder_id = null
+    if (authStore.userInfo?.user_type === 4) {
+      // 家属类型，使用从API获取的绑定老人ID
+      elder_id = bindingElderId.value
+      
+      if (!elder_id) {
+        ElMessage.warning('请先在"家属服务"页面绑定老人')
+        showOrderDialog.value = false
+        return
+      }
+    }
+
     const res: any = await api.post('/orders/', {
       service_id: orderForm.service_id,
+      elder_id: elder_id,
       service_time: serviceTime,
       notes: orderForm.notes
     })
@@ -429,6 +461,10 @@ onMounted(() => {
   getServices()
   getCategories()
   getPaymentConfig()
+  // 家属需要获取绑定的老人信息
+  if (authStore.userInfo?.user_type === 4) {
+    getFamilyBindingElder()
+  }
 })
 </script>
 
