@@ -72,6 +72,9 @@
         <el-form-item label="姓名" prop="name">
           <el-input v-model="elderForm.name" placeholder="请输入姓名" />
         </el-form-item>
+        <el-form-item label="手机号" prop="phone" v-if="!isEdit">
+          <el-input v-model="elderForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
         <el-form-item label="性别" prop="gender">
           <el-radio-group v-model="elderForm.gender">
             <el-radio :label="1">男</el-radio>
@@ -146,6 +149,7 @@ const pagination = reactive({
 const elderForm = reactive({
   id: null as number | null,
   name: '',
+  phone: '',  // 添加老人时需要
   gender: 1,
   age: null as number | null,
   id_card: '',
@@ -156,7 +160,11 @@ const elderForm = reactive({
 
 const formRules: FormRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  age: [{ required: true, message: '请输入年龄', trigger: 'blur' }]
+  age: [{ required: true, message: '请输入年龄', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ]
 }
 
 const getElderList = async () => {
@@ -209,26 +217,80 @@ const editElder = (row: Elder) => {
 
 const deleteElder = async (row: Elder) => {
   try {
-    await ElMessageBox.confirm('确定要删除该老人吗？', '提示', {
+    await ElMessageBox.confirm('确定要删除该老人吗？', '删除确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
       type: 'warning'
     })
-    // 调用删除接口
-    ElMessage.success('删除成功')
-    getElderList()
-  } catch {
-    // 取消删除
+    console.log('[Debug] 删除老人，ID:', row.id)
+    const res: any = await api.delete(`/users/${row.id}`)
+    console.log('[Debug] 删除响应:', res)
+    if (res.code === 200) {
+      ElMessage.success('删除成功')
+      getElderList()
+    } else {
+      ElMessage.error(res.message || '删除失败')
+    }
+  } catch (error: any) {
+    console.error('[Debug] 删除异常:', error)
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除失败')
+    }
   }
 }
 
 const submitForm = async () => {
   try {
     await formRef.value?.validate()
-    // 调用添加/编辑接口
-    ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
-    showAddDialog.value = false
-    getElderList()
-  } catch (error) {
-    console.error('表单验证失败', error)
+    console.log('[Debug] 提交老人表单:', elderForm, 'isEdit:', isEdit.value)
+
+    if (isEdit.value && elderForm.id) {
+      // 编辑模式：调用管理员更新用户接口
+      const res: any = await api.put(`/users/${elderForm.id}`, {
+        name: elderForm.name,
+        gender: elderForm.gender,
+        age: elderForm.age,
+        id_card: elderForm.id_card,
+        address: elderForm.address,
+        emergency_contact: elderForm.emergency_contact,
+        emergency_phone: elderForm.emergency_phone
+      })
+      console.log('[Debug] 更新响应:', res)
+      if (res.code === 200) {
+        ElMessage.success('编辑成功')
+        showAddDialog.value = false
+        getElderList()
+      } else {
+        ElMessage.error(res.message || '编辑失败')
+      }
+    } else {
+      // 添加模式：调用管理员创建老人接口
+      const res: any = await api.post('/users/elder', {
+        phone: elderForm.phone,
+        name: elderForm.name,
+        gender: elderForm.gender,
+        age: elderForm.age,
+        id_card: elderForm.id_card,
+        address: elderForm.address,
+        emergency_contact: elderForm.emergency_contact,
+        emergency_phone: elderForm.emergency_phone
+      })
+      console.log('[Debug] 创建响应:', res)
+      if (res.code === 200) {
+        ElMessage.success('添加成功')
+        showAddDialog.value = false
+        getElderList()
+      } else {
+        ElMessage.error(res.message || '添加失败')
+      }
+    }
+  } catch (error: any) {
+    console.error('提交失败', error)
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message)
+    } else {
+      ElMessage.error('提交失败')
+    }
   }
 }
 
