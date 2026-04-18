@@ -1,7 +1,7 @@
 from flask import request
 from . import service_bp
 from ..extensions import db
-from ..models import Service
+from ..models import Service, Order  # 添加 Order 导入
 from ..utils.response import api_response, api_error, page_response
 from ..utils import require_token
 
@@ -199,7 +199,18 @@ def delete_service(current_user, service_id):
         return api_error('无权限', 403)
 
     service = Service.query.get_or_404(service_id)
-    db.session.delete(service)
-    db.session.commit()
 
-    return api_response(message='服务删除成功')
+    # 检查是否有订单引用该服务
+    order_count = Order.query.filter_by(service_id=service_id).count()
+    if order_count > 0:
+        return api_error(f'无法删除：该服务已有 {order_count} 个订单记录，请先处理相关订单', 400)
+
+    try:
+        db.session.delete(service)
+        db.session.commit()
+        return api_response(message='服务删除成功')
+    except Exception as e:
+        db.session.rollback()
+        error_msg = str(e)
+        print(f'[Error] 删除服务失败: {error_msg}')
+        return api_error('删除失败：' + error_msg, 500)

@@ -6,21 +6,23 @@ from ..utils.response import api_response, api_error, page_response
 from ..utils import require_token
 
 
-@order_bp.route('/', methods=['GET'])
+@order_bp.route('/summary', methods=['GET'])
 @require_token
-def get_orders(current_user):
-    """获取订单列表"""
-    page = request.args.get('page', 1, type=int)
-    page_size = request.args.get('page_size', 10, type=int)
+def get_orders_summary(current_user):
+    """获取订单汇总统计"""
+    from datetime import datetime
+
+    # 获取日期范围参数
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
     status = request.args.get('status', type=int)
     elder_id = request.args.get('elder_id', type=int)
     service_id = request.args.get('service_id', type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
 
+    # 构建基础查询
     query = Order.query
 
-    # 管理员可以看到所有订单
+    # 应用权限过滤（与 get_orders 保持一致）
     if current_user.user_type != 3:
         if current_user.user_type == 1:
             # 老人只能看到自己的订单
@@ -33,6 +35,7 @@ def get_orders(current_user):
             from ..models import User
             query = query.join(User, Order.elder_id == User.id).filter(User.family_id == current_user.id)
 
+    # 应用筛选条件（与 get_orders 完全一致）
     if status is not None:
         query = query.filter_by(status=status)
     if elder_id:
@@ -44,29 +47,111 @@ def get_orders(current_user):
     if end_date:
         query = query.filter(Order.created_at <= end_date)
 
-    query = query.order_by(Order.created_at.desc())
+    # 调试日志 - 查看筛选后的订单
+    all_orders = query.all()
+    print(f"[Order Summary Debug] 筛选后订单数量: {len(all_orders)}")
+    for o in all_orders[:5]:
+        print(f"  Order ID={o.id}, status={o.status}, actual_amount={o.actual_amount}, total_amount={o.total_amount}")
 
-    pagination = query.paginate(page=page, per_page=page_size, error_out=False)
-    orders = []
-    for order in pagination.items:
-        order_dict = order.to_dict()
-        # 添加上下文信息
-        service = Service.query.get(order.service_id)
-        if service:
-            order_dict['service_name'] = service.name
-            order_dict['price'] = service.price
-        elder = User.query.get(order.elder_id)
-        if elder:
-            order_dict['elder_name'] = elder.name
-        nurse = User.query.get(order.nurse_id)
-        if nurse:
-            order_dict['nurse_name'] = nurse.name
-        # 添加状态名称
-        status_names = {0: '已取消', 1: '待支付', 2: '待服务', 3: '服务中', 4: '已完成', 5: '已退款'}
-        order_dict['status_name'] = status_names.get(order.status, '未知')
-        orders.append(order_dict)
+    # 获取总订单数
+    total_orders = len(all_orders)
 
-    return page_response(orders, pagination.total, page, page_size)
+    # 获取总销售额（已完成/待支付的订单）
+    sales_query = query.filter(Order.status.in_([2, 4])).all()
+    total_sales = sum(o.actual_amount for o in sales_query if o.actual_amount) if sales_query else 0
+    print(f"[Order Summary Debug] 销售额计算: 订单数={len(sales_query)}, total_sales={total_sales}")
+
+    # 获取已完成订单数（状态为4）
+    completed_orders = query.filter_by(status=4).count()
+
+    # 获取待处理订单数（状态为1）
+    pending_orders = query.filter_by(status=1).count()
+
+    # 调试日志
+    print(f"[Order Summary] user_type={current_user.user_type}, filters: status={status}")
+    print(f"[Order Summary] total_orders={total_orders}, total_sales={total_sales}, completed={completed_orders}, pending={pending_orders}")
+
+    return api_response({
+        'total_orders': total_orders,
+        'total_sales': float(total_sales),
+        'completed_orders': completed_orders,
+        'pending_orders': pending_orders
+    })
+
+
+@order_bp.route('/', methods=['GET'])
+@require_token
+def get_orders(current_user):
+    """获取订单列表"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        page_size = request.args.get('page_size', 10, type=int)
+        status = request.args.get('status', type=int)
+        elder_id = request.args.get('elder_id', type=int)
+        service_id = request.args.get('service_id', type=int)
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        query = Order.query
+
+        # 管理员可以看到所有订单
+        if current_user.user_type != 3:
+            if current_user.user_type == 1:
+                # 老人只能看到自己的订单
+                query = query.filter_by(elder_id=current_user.id)
+            elif current_user.user_type == 2:
+                # 护理人员只能看到自己的订单
+                query = query.filter_by(nurse_id=current_user.id)
+            elif current_user.user_type == 4:
+                # 家属只能看到自己老人的订单
+                from ..models import User
+                query = query.join(User, Order.elder_id == User.id).filter(User.family_id == current_user.id)
+
+        if status is not None:
+            query = query.filter_by(status=status)
+        if elder_id:
+            query = query.filter_by(elder_id=elder_id)
+        if service_id:
+            query = query.filter_by(service_id=service_id)
+        if start_date:
+            query = query.filter(Order.created_at >= start_date)
+        if end_date:
+            query = query.filter(Order.created_at <= end_date)
+
+        # 调试日志
+        total_before_paginate = query.count()
+        print(f"[Get Orders] user_type={current_user.user_type}, filters: status={status}, total_before_paginate={total_before_paginate}")
+
+        query = query.order_by(Order.created_at.desc())
+
+        pagination = query.paginate(page=page, per_page=page_size, error_out=False)
+        orders = []
+        for order in pagination.items:
+            order_dict = order.to_dict()
+            # 添加上下文信息
+            service = Service.query.get(order.service_id)
+            if service:
+                order_dict['service_name'] = service.name
+                order_dict['price'] = service.price
+            elder = User.query.get(order.elder_id)
+            if elder:
+                order_dict['elder_name'] = elder.name
+            nurse = User.query.get(order.nurse_id)
+            if nurse:
+                order_dict['nurse_name'] = nurse.name
+            # 添加状态名称
+            status_names = {0: '已取消', 1: '待支付', 2: '待服务', 3: '服务中', 4: '已完成', 5: '已退款'}
+            order_dict['status_name'] = status_names.get(order.status, '未知')
+            orders.append(order_dict)
+
+        print(f"[Get Orders] returned {len(orders)} items, pagination.total={pagination.total}")
+
+        return page_response(orders, pagination.total, page, page_size)
+    except Exception as e:
+        print(f"[Get Orders ERROR] {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        return api_error(f'获取订单列表失败: {str(e)}', 500)
 
 
 @order_bp.route('/<int:order_id>', methods=['GET'])

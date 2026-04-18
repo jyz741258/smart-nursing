@@ -13,9 +13,12 @@
     <div class="search-form">
       <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 300px; margin-right: 10px" />
       <el-select v-model="orderStatus" placeholder="订单状态" clearable style="width: 120px; margin-right: 10px">
-        <el-option label="待处理" :value="1" />
-        <el-option label="已完成" :value="2" />
-        <el-option label="已取消" :value="3" />
+        <el-option label="待支付" :value="1" />
+        <el-option label="待服务" :value="2" />
+        <el-option label="服务中" :value="3" />
+        <el-option label="已完成" :value="4" />
+        <el-option label="已取消" :value="0" />
+        <el-option label="已退款" :value="5" />
       </el-select>
       <el-button type="primary" @click="getOrders">搜索</el-button>
       <el-button @click="resetSearch">重置</el-button>
@@ -88,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
 import api from '@/store/auth'
@@ -104,18 +107,18 @@ const pagination = reactive({
   total: 0
 })
 
-const totalOrders = computed(() => pagination.total)
-const totalSales = computed(() => {
-  // 计算当前页订单的总金额
-  const total = orders.value.reduce((sum, order) => sum + (order.actualAmount || order.totalAmount || 0), 0)
-  return total.toFixed(2)
+// 从API获取的汇总数据
+const summaryData = ref({
+  total_orders: 0,
+  total_sales: 0,
+  completed_orders: 0,
+  pending_orders: 0
 })
-const completedOrders = computed(() => {
-  return orders.value.filter(order => order.status === 2).length
-})
-const pendingOrders = computed(() => {
-  return orders.value.filter(order => order.status === 1).length
-})
+
+const totalOrders = computed(() => summaryData.value.total_orders)
+const totalSales = computed(() => summaryData.value.total_sales.toFixed(2))
+const completedOrders = computed(() => summaryData.value.completed_orders)
+const pendingOrders = computed(() => summaryData.value.pending_orders)
 
 const getOrders = async () => {
   loading.value = true
@@ -132,12 +135,44 @@ const getOrders = async () => {
     if (res.code === 200) {
       orders.value = res.data.items
       pagination.total = res.data.total
+      console.log('[Accounting] 订单列表响应:', res.data)
+      console.log('[Accounting] 表格显示总数 pagination.total =', pagination.total)
     }
   } catch (error) {
     console.error('获取订单列表失败', error)
   } finally {
     loading.value = false
   }
+}
+
+const getSummary = async () => {
+  try {
+    const params: any = {}
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.start_date = dateRange.value[0]
+      params.end_date = dateRange.value[1]
+    }
+    if (orderStatus.value) {
+      params.status = orderStatus.value
+    }
+    console.log('[Accounting] 调用 orders/summary, params:', params)
+    const res: any = await api.get('/orders/summary', { params })
+    console.log('[Accounting] orders/summary 响应:', res)
+    if (res.code === 200) {
+      summaryData.value = res.data
+      console.log('[Accounting] 汇总数据已更新:', summaryData.value)
+    }
+  } catch (error) {
+    console.error('获取订单汇总失败', error)
+  }
+}
+
+// 同时获取订单列表和汇总数据
+const refreshData = async () => {
+  await Promise.all([
+    getOrders(),
+    getSummary()
+  ])
 }
 
 const exportCSV = () => {
@@ -180,21 +215,21 @@ const exportCSV = () => {
 const resetSearch = () => {
   dateRange.value = []
   orderStatus.value = ''
-  getOrders()
+  refreshData()
 }
 
 const handleSizeChange = (size: number) => {
   pagination.page_size = size
-  getOrders()
+  refreshData()
 }
 
 const handleCurrentChange = (current: number) => {
   pagination.page = current
-  getOrders()
+  refreshData()
 }
 
 onMounted(() => {
-  getOrders()
+  refreshData()
 })
 </script>
 

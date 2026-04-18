@@ -252,15 +252,16 @@ const getDashboardStats = async () => {
   }
 }
 
-// 获取本周护理记录统计数据
+// 获取护理记录统计数据（支持本周/本月）
 const getWeeklyNursingData = async () => {
   try {
-    const res: any = await api.get('/statistics/weekly-nursing')
-    console.log('[Debug] Weekly nursing data:', res)
+    const period = chartPeriod.value  // 'week' 或 'month'
+    const res: any = await api.get('/statistics/weekly-nursing', { params: { period } })
+    console.log('[Debug] Nursing chart data (period:', period, '):', res)
     if (res.code === 200 && nursingChartRef.value) {
-      const weekData = res.data || []
-      const days = weekData.map((d: any) => d.day)
-      const counts = weekData.map((d: any) => d.count)
+      const chartData = res.data || []
+      const days = chartData.map((d: any) => d.day)  // 使用 day 字段作为X轴显示标签
+      const counts = chartData.map((d: any) => d.count)
       console.log('[Debug] Chart data - days:', days, 'counts:', counts)
       nursingChart.setOption({
         xAxis: { type: 'category', data: days },
@@ -268,7 +269,7 @@ const getWeeklyNursingData = async () => {
       })
     }
   } catch (error) {
-    console.error('获取本周护理记录数据失败', error)
+    console.error('获取护理记录数据失败', error)
   }
 }
 
@@ -335,11 +336,16 @@ const updateCharts = async () => {
 
       if (nursingChartRef.value.clientWidth > 0 && nursingChartRef.value.clientHeight > 0) {
         nursingChart = echarts.init(nursingChartRef.value)
+        // 根据周期设置默认X轴标签
+        const isWeek = chartPeriod.value === 'week'
+        const defaultXAxis = isWeek
+          ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+          : Array.from({length: 31}, (_, i) => `${i + 1}日`)
         nursingChart.setOption({
           tooltip: { trigger: 'axis' },
-          xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
+          xAxis: { type: 'category', data: defaultXAxis },
           yAxis: { type: 'value' },
-          series: [{ type: 'bar', data: [0, 0, 0, 0, 0, 0, 0], itemStyle: { color: '#409eff' } }]
+          series: [{ type: 'bar', data: new Array(defaultXAxis.length).fill(0), itemStyle: { color: '#409eff' } }]
         })
         getWeeklyNursingData()
         chartInitialized = true
@@ -388,6 +394,18 @@ const updateCharts = async () => {
 
 // 监听周期切换
 watch(chartPeriod, () => {
+  console.log('[Debug] chartPeriod changed to:', chartPeriod.value)
+  // 重新初始化图表X轴
+  if (nursingChart) {
+    const isWeek = chartPeriod.value === 'week'
+    const newXAxis = isWeek
+      ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+      : Array.from({length: 31}, (_, i) => `${i + 1}日`)
+    nursingChart.setOption({
+      xAxis: { data: newXAxis },
+      series: [{ data: new Array(newXAxis.length).fill(0) }]
+    })
+  }
   getWeeklyNursingData()
 })
 

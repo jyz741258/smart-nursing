@@ -1,22 +1,18 @@
+"""查询数据库并输出到控制台（使用ASCII避免编码问题）"""
 import sqlite3
-import sys
 
 db = r'c:\Users\Jyz74\smart-nursing\backend\instance\smart_nursing.db'
 conn = sqlite3.connect(db)
 c = conn.cursor()
 
-# 强制使用ASCII输出
 c.execute("SELECT COUNT(*) FROM orders")
 total = c.fetchone()[0]
+print("TOTAL_ORDERS =", total)
 
 c.execute("SELECT status, COUNT(*) FROM orders GROUP BY status ORDER BY status")
-stats = c.fetchall()
+print("STATS =", c.fetchall())
 
-c.execute("SELECT id, status, actual_amount, total_amount FROM orders ORDER BY id DESC LIMIT 20")
-orders = c.fetchall()
+c.execute("SELECT id, status, actual_amount FROM orders ORDER BY id DESC LIMIT 10")
+print("RECENT_ORDERS =", c.fetchall())
 
 conn.close()
-
-print(f"TOTAL_ORDERS={total}")
-print(f"STATS={stats}")
-print(f"ORDERS={orders}")

@@ -229,26 +229,34 @@ const handleEdit = (row: any) => {
 }
 
 const handleDelete = async (id: number) => {
+  console.log('[Debug] 尝试删除服务，ID:', id)
   try {
     await ElMessageBox.confirm('确定要删除这个服务吗？', '删除确认', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    const res: any = await api.delete(`/services/${id}/`)
+    console.log('[Debug] 用户确认删除，发送DELETE请求到:', `/services/${id}`)
+    const res: any = await api.delete(`/services/${id}`)
+    console.log('[Debug] 删除响应:', res)
     if (res.code === 200) {
       ElMessage.success('删除成功')
       getServices()
+    } else {
+      ElMessage.error(res.message || '删除失败')
     }
-  } catch (error) {
-    console.error('删除失败', error)
+  } catch (error: any) {
+    console.error('[Debug] 删除异常:', error)
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除失败')
+    }
   }
 }
 
 const submitForm = async () => {
   try {
     if (isEditing.value) {
-      const res: any = await api.put(`/services/${serviceForm.id}/`, serviceForm)
+      const res: any = await api.put(`/services/${serviceForm.id}`, serviceForm)  // 去掉尾随斜杠
       if (res.code === 200) {
         ElMessage.success('更新成功')
         showEditDialog.value = false

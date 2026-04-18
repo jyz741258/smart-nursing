@@ -203,26 +203,69 @@ def get_care_plan_progress(current_user):
 @statistics_bp.route('/weekly-nursing', methods=['GET'])
 @require_token
 def get_weekly_nursing(current_user):
-    """获取本周护理记录统计（每日数量）"""
+    """获取护理记录统计（按日分组，支持本周或本月）"""
+    period = request.args.get('period', 'week')  # 默认本周
     today = datetime.utcnow().date()
-    weekday = today.weekday()
-    week_start = today - timedelta(days=weekday)
 
-    week_data = []
-    day_names = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    if period == 'week':
+        # 本周：周一至周日
+        weekday = today.weekday()
+        start_date = today - timedelta(days=weekday)
+        end_date = start_date + timedelta(days=6)
+        date_format = '%Y-%m-%d'
+        day_names = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        days_to_generate = 7
+    elif period == 'month':
+        # 本月：1号至今日（或本月最后一天）
+        start_date = today.replace(day=1)
+        # 获取本月最后一天
+        if today.month == 12:
+            end_date = today.replace(month=1, day=1) - timedelta(days=1)
+        else:
+            end_date = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
+        date_format = '%m-%d'
+        days_to_generate = end_date.day  # 本月天数
+        day_names = [str(d) for d in range(1, days_to_generate + 1)]  # 1, 2, 3...
+    else:
+        return api_error('Invalid period parameter', 400)
 
-    for i in range(7):
-        day = week_start + timedelta(days=i)
-        cursor = db.session.query(func.count(NursingRecord.id)).filter(
-            db.func.date(NursingRecord.created_at) == day
-        ).scalar()
-        week_data.append({
-            'day': day_names[i],
-            'date': day.strftime('%Y-%m-%d'),
-            'count': cursor or 0
+    print(f"[Debug] Nursing chart period={period}, start={start_date}, end={end_date}")
+
+    # 查询指定时间范围内的护理记录，按日期分组统计
+    query = db.session.query(
+        db.func.date(NursingRecord.created_at).label('date'),
+        func.count(NursingRecord.id).label('count')
+    ).filter(
+        NursingRecord.created_at >= datetime.combine(start_date, datetime.min.time()),
+        NursingRecord.created_at <= datetime.combine(end_date, datetime.max.time())
+    ).group_by(db.func.date(NursingRecord.created_at)).order_by(db.func.date(NursingRecord.created_at))
+
+    results = query.all()
+    print(f"[Debug] Raw query results: {results}")
+
+    # 构建完整的数据数组（填充没有记录的日期为0）
+    data_map = {str(r.date): r.count for r in results}
+
+    chart_data = []
+    for i in range(days_to_generate):
+        if period == 'week':
+            current_date = start_date + timedelta(days=i)
+            label = day_names[i]  # 周一、周二...
+            date_key = str(current_date)
+        else:  # month
+            current_date = start_date.replace(day=i + 1)
+            label = f'{i + 1}日'  # 1日、2日...
+            date_key = str(current_date)
+
+        chart_data.append({
+            'date': date_key,
+            'day': label,  # 显示标签
+            'count': data_map.get(date_key, 0)
         })
 
-    return api_response(week_data)
+    print(f"[Debug] Chart data: {chart_data}")
+
+    return api_response(chart_data)
 
 
 @statistics_bp.route('/service-distribution', methods=['GET'])
