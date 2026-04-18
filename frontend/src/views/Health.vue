@@ -28,8 +28,8 @@
       </div>
 
       <!-- 最新指标卡片 -->
-      <el-row :gutter="20" class="latest-metrics" v-if="latestMetrics">
-        <el-col :span="6" v-for="(value, key) in latestMetrics" :key="key">
+      <el-row :gutter="20" class="latest-metrics" v-if="formattedLatestMetrics && Object.keys(formattedLatestMetrics).length > 0">
+        <el-col :span="6" v-for="(value, key) in formattedLatestMetrics" :key="key">
           <div class="metric-card">
             <div class="metric-label">{{ key }}</div>
             <div class="metric-value">{{ value.value }} {{ value.unit }}</div>
@@ -43,7 +43,11 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="elder_name" label="老人" />
         <el-table-column prop="metric_type_name" label="指标类型" />
-        <el-table-column prop="metric_value" label="数值" />
+        <el-table-column label="数值" width="120">
+          <template #default="{ row }">
+            {{ formatMetricValue(row.metric_value, row.metric_type) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="unit" label="单位" width="100" />
         <el-table-column prop="recorded_at" label="记录时间" width="180" />
         <el-table-column prop="notes" label="备注" show-overflow-tooltip />
@@ -177,6 +181,95 @@ const getElders = async () => {
   } catch (error) {
     console.error('获取老人列表失败', error)
   }
+}
+
+// 指标类型对应的单位映射
+const metricUnitMap: Record<number, string> = {
+  1: '℃',      // 体温
+  2: 'mmHg',   // 血压-收缩压
+  3: 'mmHg',   // 血压-舒张压
+  4: '次/分',  // 心率
+  5: '%',      // 血氧
+  6: 'mmol/L', // 血糖
+  7: 'kg',     // 体重
+  8: 'cm',     // 身高
+  9: 'h',      // 睡眠时长
+  10: '步'     // 今日步数
+}
+
+// 指标类型显示名称映射
+const metricTypeNameMap: Record<number, string> = {
+  1: '体温',
+  2: '血压-收缩压',
+  3: '血压-舒张压',
+  4: '心率',
+  5: '血氧',
+  6: '血糖',
+  7: '体重',
+  8: '身高',
+  9: '睡眠时长',
+  10: '今日步数'
+}
+
+// 格式化健康指标值（取整或保留小数）
+const formatMetricValue = (value: number | undefined, metricType: number): string => {
+  if (value === undefined || value === null) return '--'
+  
+  const numValue = Number(value)
+  
+  switch (metricType) {
+    case 1: // 体温 - 保留1位小数
+      return numValue.toFixed(1)
+    case 2: // 收缩压 - 整数
+    case 3: // 舒张压 - 整数
+    case 4: // 心率 - 整数
+    case 10: // 步数 - 整数
+      return String(Math.round(numValue))
+    case 5: // 血氧 - 保留1位小数
+    case 6: // 血糖 - 保留1位小数（或2位）
+      return numValue.toFixed(1)
+    case 7: // 体重 - 保留1位小数
+    case 8: // 身高 - 保留1位小数
+      return numValue.toFixed(1)
+    case 9: // 睡眠时长 - 保留1位小数
+      return numValue.toFixed(1)
+    default:
+      return String(numValue)
+  }
+}
+
+// 格式化后的最新指标（用于显示）
+const formattedLatestMetrics = computed(() => {
+  const formatted: Record<string, { value: string, unit: string, recorded_at: string }> = {}
+  if (!latestMetrics.value || typeof latestMetrics.value !== 'object') return formatted
+  
+  for (const [key, data] of Object.entries(latestMetrics.value)) {
+    const metricData = data as any
+    const metricType = getMetricTypeByKey(key)
+    formatted[key] = {
+      value: formatMetricValue(metricData.value, metricType),
+      unit: metricData.unit || '',
+      recorded_at: metricData.recorded_at || ''
+    }
+  }
+  return formatted
+})
+
+// 根据指标名称获取类型编号
+const getMetricTypeByKey = (key: string): number => {
+  const map: Record<string, number> = {
+    '体温': 1,
+    '血压-收缩压': 2,
+    '血压-舒张压': 3,
+    '心率': 4,
+    '血氧': 5,
+    '血糖': 6,
+    '体重': 7,
+    '身高': 8,
+    '睡眠时长': 9,
+    '今日步数': 10
+  }
+  return map[key] || 0
 }
 
 const resetSearch = () => {
