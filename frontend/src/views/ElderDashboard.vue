@@ -216,6 +216,9 @@
         <el-button type="primary" @click="submitEvaluation" :loading="evaluating">提交评价</el-button>
       </template>
     </el-dialog>
+
+    <!-- 字体大小切换按钮 - 仅在老人用户界面显示 -->
+    <FontSizeToggle v-if="isElderUser" />
   </div>
 </template>
 
@@ -224,9 +227,13 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import { useAuthStore } from '@/store/auth'
+import FontSizeToggle from '@/components/FontSizeToggle.vue'
 
 const emergencyDialog = ref(false)
 const authStore = useAuthStore()
+
+// 判断是否为老人用户
+const isElderUser = computed(() => authStore.userInfo?.user_type === 1)
 
 // 从用户信息中获取老人ID
 const elderId = computed(() => {
@@ -443,7 +450,7 @@ onMounted(async () => {
     gap: 10px;
     padding: 10px 18px;
     border-radius: 22px;
-    font-size: 14px;
+    font-size: 0.78rem;
     font-weight: 600;
     margin-bottom: 20px;
 
@@ -454,7 +461,7 @@ onMounted(async () => {
     }
 
     .role-icon {
-      font-size: 20px;
+      font-size: 1.11rem;
     }
 
     .role-text {
@@ -476,19 +483,20 @@ onMounted(async () => {
     box-shadow: 0 10px 30px rgba(34, 197, 94, 0.25);
 
     h1 {
-      font-size: 28px;
+      font-size: 1.56rem;
       margin-bottom: 8px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      font-weight: 700;
     }
 
     p {
-      font-size: 16px;
+      font-size: 0.89rem;
       opacity: 0.9;
     }
 
     .welcome-icon {
       opacity: 0.2;
-      font-size: 80px;
+      font-size: 4.44rem;
     }
   }
 
@@ -497,7 +505,7 @@ onMounted(async () => {
     z-index: 1;
 
     .section-title {
-      font-size: 20px;
+      font-size: calc(1.1rem + 0.3vw);
       font-weight: 700;
       color: #1e293b;
       margin-bottom: 16px;
@@ -509,7 +517,7 @@ onMounted(async () => {
 
       .title-icon {
         color: #22c55e;
-        font-size: 22px;
+        font-size: calc(1.2rem + 0.2vw);
       }
     }
   }
@@ -557,7 +565,7 @@ onMounted(async () => {
       align-items: center;
       justify-content: center;
       margin: 0 auto 14px;
-      font-size: 26px;
+      font-size: 1.44rem;
       color: #fff;
 
       &.heart {
@@ -578,14 +586,15 @@ onMounted(async () => {
     }
 
     .card-value {
-      font-size: 32px;
+      font-size: 1.78rem;
       font-weight: 800;
       color: #1e293b;
       margin-bottom: 6px;
+      min-height: 1.5em;
     }
 
     .card-label {
-      font-size: 14px;
+      font-size: 0.9em;
       color: #64748b;
       font-weight: 500;
     }
@@ -627,7 +636,7 @@ onMounted(async () => {
     }
 
     .plan-time {
-      font-size: 13px;
+      font-size: 0.8rem;
       color: #16a34a;
       font-weight: 600;
       min-width: 60px;
@@ -641,14 +650,14 @@ onMounted(async () => {
       flex: 1;
 
       .plan-name {
-        font-size: 15px;
+        font-size: 1rem;
         font-weight: 600;
         color: #1e293b;
         margin-bottom: 5px;
       }
 
       .plan-desc {
-        font-size: 13px;
+        font-size: 0.85rem;
         color: #64748b;
       }
     }
@@ -714,7 +723,7 @@ onMounted(async () => {
       }
 
       span {
-        font-size: 14px;
+        font-size: 0.9em;
         font-weight: 600;
       }
     }
@@ -730,7 +739,7 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
   .section-title {
-    font-size: 18px;
+    font-size: 1rem;
     font-weight: 600;
     color: #1e293b;
     margin-bottom: 16px;
@@ -774,14 +783,14 @@ onMounted(async () => {
         flex: 1;
 
         .notice-text {
-          font-size: 14px;
+          font-size: 0.9rem;
           color: #1e293b;
           margin-bottom: 5px;
           line-height: 1.5;
         }
 
         .notice-time {
-          font-size: 12px;
+          font-size: 0.8rem;
           color: #94a3b8;
         }
       }
@@ -795,12 +804,12 @@ onMounted(async () => {
 
   p {
     margin-top: 15px;
-    font-size: 16px;
+    font-size: 0.89rem;
     color: #1e293b;
   }
 
   .emergency-contact {
-    font-size: 14px;
+    font-size: 0.78rem;
     color: #64748b;
   }
 }
