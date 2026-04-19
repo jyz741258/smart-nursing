@@ -28,6 +28,7 @@
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
         </template>
 
         <!-- 护理人员菜单 -->
@@ -42,6 +43,7 @@
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
         </template>
 
         <!-- 家属菜单 -->
@@ -57,6 +59,7 @@
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
         </template>
 
         <!-- 管理员菜单 -->
@@ -64,6 +67,7 @@
           <el-menu-item index="/elders"><el-icon><User /></el-icon>老人管理</el-menu-item>
           <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
           <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
           <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
           <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
@@ -97,6 +101,21 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
+          <!-- 字体大小切换按钮（仅老人用户显示） -->
+          <el-tooltip :content="settingsStore.fontSizeMode === 'normal' ? '切换大字模式' : '切换普通字体'" placement="bottom">
+            <el-button
+              class="font-size-toggle"
+              :type="settingsStore.fontSizeMode === 'large' ? 'primary' : 'default'"
+              circle
+              @click="settingsStore.toggleFontSize"
+              v-if="userType === 1"
+            >
+              <el-icon :size="20">
+                <ZoomIn v-if="settingsStore.fontSizeMode === 'normal'" />
+                <ZoomOut v-else />
+              </el-icon>
+            </el-button>
+          </el-tooltip>
           <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="badge-item">
             <el-icon class="header-icon" @click="$router.push('/notifications')">
               <Bell />
@@ -166,6 +185,7 @@
               <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           </template>
 
           <!-- 护理人员菜单 -->
@@ -180,6 +200,7 @@
               <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           </template>
 
           <!-- 家属菜单 -->
@@ -195,6 +216,7 @@
               <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           </template>
 
           <!-- 管理员菜单 -->
@@ -202,6 +224,7 @@
             <el-menu-item index="/elders"><el-icon><User /></el-icon>老人管理</el-menu-item>
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
             <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
             <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
             <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
@@ -222,15 +245,18 @@
 import { ref, onMounted, computed, onMounted as onMountedRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useSettingsStore } from '@/store/settings'
 import api from '@/store/auth'
 import {
   DataAnalysis, User, Document, TrendCharts, Collection, Bell, PieChart,
-  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu, ChatDotRound
+  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu, ChatDotRound,
+  ZoomIn, ZoomOut, Location, MapLocation
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 
 const isCollapse = ref(false)
 const unreadCount = ref(0)
@@ -405,6 +431,15 @@ onUnmounted(() => {
 
       &:hover {
         color: #22c55e;
+      }
+    }
+
+    .font-size-toggle {
+      font-weight: bold;
+
+      &.el-button--primary {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border-color: #22c55e;
       }
     }
 

@@ -286,6 +286,77 @@ class AudioManager {
         break
     }
   }
+
+  // ========================
+  // 语音合成 - Text to Speech
+  // ========================
+
+  // 检查语音合成是否支持
+  isSpeechSynthesisSupported(): boolean {
+    return typeof window !== 'undefined' && 'speechSynthesis' in window
+  }
+
+  // 说话（语音合成）
+  speak(text: string, options?: {
+    lang?: string
+    rate?: number
+    pitch?: number
+    volume?: number
+  }): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.isSpeechSynthesisSupported()) {
+        reject(new Error('Speech synthesis not supported'))
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = options?.lang || 'zh-CN'
+      utterance.rate = options?.rate || 1.0
+      utterance.pitch = options?.pitch || 1.0
+      utterance.volume = (options?.volume !== undefined ? options.volume : this.volume) * 2
+
+      utterance.onend = () => resolve()
+      utterance.onerror = (e) => reject(e)
+
+      window.speechSynthesis.speak(utterance)
+    })
+  }
+
+  // 停止说话
+  stopSpeaking(): void {
+    if (this.isSpeechSynthesisSupported()) {
+      window.speechSynthesis.cancel()
+    }
+  }
+
+  // 检查是否正在说话
+  isSpeaking(): boolean {
+    return this.isSpeechSynthesisSupported() && window.speechSynthesis.speaking
+  }
+
+  // 语音反馈（播放提示音+说话）
+  async playAndSpeak(text: string, soundType: SoundType = 'info'): Promise<void> {
+    this.play(soundType)
+    await this.speak(text)
+  }
+
+  // 语音确认（用户操作成功）
+  async speakSuccess(text: string = '操作成功'): Promise<void> {
+    this.playSuccess()
+    await this.speak(text)
+  }
+
+  // 语音警告
+  async speakWarning(text: string): Promise<void> {
+    this.playWarning()
+    await this.speak(text)
+  }
+
+  // 语音错误提示
+  async speakError(text: string = '操作失败'): Promise<void> {
+    this.playError()
+    await this.speak(text)
+  }
 }
 
 // 导出单例

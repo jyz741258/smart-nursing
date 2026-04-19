@@ -1,5 +1,19 @@
 <template>
   <div class="elder-dashboard">
+    <!-- 大字模式切换横幅 -->
+    <div class="font-mode-banner" @click="toggleFontMode">
+      <div class="banner-content">
+        <el-icon :size="24"><ZoomIn /></el-icon>
+        <span class="banner-text">大字模式</span>
+      </div>
+      <el-switch
+        v-model="isLargeFont"
+        @click.stop
+        @change="toggleFontMode"
+        size="large"
+      />
+    </div>
+
     <div class="role-indicator elder">
       <span class="role-icon">👴</span>
       <span class="role-text">老人用户</span>
@@ -224,9 +238,28 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import { useAuthStore } from '@/store/auth'
+import { useSettingsStore } from '@/store/settings'
+import { ZoomIn } from '@element-plus/icons-vue'
 
 const emergencyDialog = ref(false)
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
+
+// 大字模式状态（与 settingsStore 同步）
+const isLargeFont = computed({
+  get: () => settingsStore.fontSizeMode === 'large',
+  set: () => settingsStore.toggleFontSize()
+})
+
+// 切换字体模式
+const toggleFontMode = () => {
+  settingsStore.toggleFontSize()
+  ElMessage.success(
+    settingsStore.fontSizeMode === 'large'
+      ? '已切换到大字模式，字体已放大'
+      : '已切换到普通字体模式'
+  )
+}
 
 // 从用户信息中获取老人ID
 const elderId = computed(() => {
@@ -433,6 +466,40 @@ onMounted(async () => {
       radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
     pointer-events: none;
     z-index: 0;
+  }
+
+  // 大字模式切换横幅
+  .font-mode-banner {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #fde68a, #fcd34d);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #92400e;
+
+      .banner-text {
+        font-size: 18px;
+        font-weight: 700;
+      }
+    }
   }
 
   .role-indicator {

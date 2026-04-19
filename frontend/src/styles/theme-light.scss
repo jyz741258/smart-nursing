@@ -241,3 +241,157 @@ body {
 .el-progress-bar__outer {
   background-color: var(--bg-tertiary) !important;
 }
+
+// ============================================
+// 老人大字模式 - Large Font Mode for Seniors
+// ============================================
+html.large-font-mode {
+  // 基础字体放大 1.5 倍
+  font-size: 18px;
+
+  body {
+    font-size: 1.125rem; // 18px base
+  }
+
+  // Element Plus 组件字体放大
+  .el-button {
+    font-size: 1rem;
+    padding: 12px 20px;
+  }
+
+  .el-input__inner {
+    font-size: 1rem;
+  }
+
+  .el-textarea__inner {
+    font-size: 1rem;
+  }
+
+  .el-card__body {
+    font-size: 1rem;
+  }
+
+  .el-form-item__label {
+    font-size: 1rem;
+  }
+
+  .el-menu-item,
+  .el-sub-menu__title {
+    font-size: 1rem;
+  }
+
+  .el-tag {
+    font-size: 0.875rem;
+    padding: 4px 10px;
+  }
+
+  .el-dialog__title {
+    font-size: 1.25rem;
+  }
+
+  .el-table {
+    font-size: 1rem;
+
+    th.el-table__cell,
+    td.el-table__cell {
+      padding: 16px 12px;
+      font-size: 1rem;
+    }
+  }
+
+  // 老人专属界面 - 大字模式样式
+  .elder-dashboard {
+    .welcome-banner {
+      h1 {
+        font-size: 2rem; // 36px
+      }
+
+      p {
+        font-size: 1.25rem; // 22.5px
+      }
+    }
+
+    .section-title {
+      font-size: 1.5rem; // 27px
+    }
+
+    .health-card {
+      .card-value {
+        font-size: 2.5rem; // 45px
+      }
+
+      .card-label {
+        font-size: 1.125rem; // 20px
+      }
+
+      .card-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 32px;
+      }
+    }
+
+    .action-btn {
+      span {
+        font-size: 1.125rem; // 20px
+      }
+
+      padding: 24px;
+    }
+
+    .plan-item {
+      padding: 20px 24px;
+
+      .plan-name {
+        font-size: 1.125rem; // 20px
+      }
+
+      .plan-desc {
+        font-size: 1rem; // 18px
+      }
+    }
+
+    .notice-item {
+      .notice-text {
+        font-size: 1.125rem; // 20px
+      }
+
+      .notice-time {
+        font-size: 1rem; // 18px
+      }
+    }
+  }
+
+  // 通用标题和文字放大
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.875rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  h5 { font-size: 1.125rem; }
+  h6 { font-size: 1rem; }
+
+  p, li, td, th, span, div {
+    line-height: 1.6;
+  }
+
+  // 输入框和表单元素
+  .el-input {
+    .el-input__wrapper {
+      padding: 12px 16px;
+    }
+  }
+
+  // 对话框
+  .el-dialog {
+    .el-dialog__body {
+      font-size: 1.125rem;
+    }
+  }
+
+  // 评分组件
+  .el-rate {
+    .el-rate__item {
+      font-size: 2rem;
+    }
+  }
+}

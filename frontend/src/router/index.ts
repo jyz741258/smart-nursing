@@ -128,6 +128,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'AI健康助手' }
       },
       {
+        path: 'location-map',
+        name: 'LocationMap',
+        component: () => import('@/views/LocationMap.vue'),
+        meta: { title: '位置地图' }
+      },
+      {
         path: 'payment/mock',
         name: 'MockPayment',
         component: () => import('@/views/MockPayment.vue'),
