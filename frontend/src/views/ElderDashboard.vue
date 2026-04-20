@@ -15,13 +15,13 @@
     </div>
 
     <div class="role-indicator elder">
-      <span class="role-icon">👴</span>
+      <span class="role-icon">{{ elderGender === 2 ? '👵' : '👴' }}</span>
       <span class="role-text">老人用户</span>
     </div>
 
     <div class="welcome-banner">
       <div class="welcome-text">
-        <h1>您好，爷爷/奶奶</h1>
+        <h1>您好，{{ elderGender === 2 ? '奶奶' : '爷爷' }}</h1>
         <p>今天是 {{ currentDate }}，愿您身体健康，生活愉快</p>
       </div>
       <div class="welcome-icon">
@@ -270,6 +270,11 @@ const isElderUser = computed(() => authStore.userInfo?.user_type === 1)
 // 从用户信息中获取老人ID
 const elderId = computed(() => {
   return authStore.userInfo?.id || null
+})
+
+// 获取老人性别（1-男，2-女）
+const elderGender = computed(() => {
+  return authStore.userInfo?.gender || 1
 })
 
 const currentDate = computed(() => {

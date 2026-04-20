@@ -420,22 +420,31 @@ const loadAllData = async () => {
     } catch (e) {
       console.error('健康分析加载失败:', e)
     }
-    
+
     try {
       const insightRes = await api.get('/bigdata/health-insights', { params })
       if (insightRes.code === 200) {
         insights.value = insightRes.data || []
+        // 更新数据完整度
+        const completenessInsight = insights.value.find((i: any) => i.type === 'data_quality')
+        if (completenessInsight) {
+          dataCompleteness.value = completenessInsight.value
+        } else {
+          dataCompleteness.value = 100
+        }
       } else {
         console.warn('智能洞察接口返回:', insightRes)
       }
     } catch (e) {
       console.error('智能洞察加载失败:', e)
     }
-    
+
     try {
       const alertRes = await api.get('/bigdata/anomaly-alerts', { params })
       if (alertRes.code === 200) {
         anomalyAlerts.value = alertRes.data || []
+        // 使用实际异常告警数量
+        abnormalCount.value = anomalyAlerts.value.length
       } else {
         console.warn('异常告警接口返回:', alertRes)
       }
@@ -500,24 +509,22 @@ const loadAllData = async () => {
 // 更新统计数据
 const updateStatistics = (data: any) => {
   totalRecords.value = Object.values(data).reduce((sum: number, metric: any) => sum + (metric.count || 0), 0)
-  
+
+  // 计算健康评分（基于异常率）
   let totalAbnormal = 0
   let totalCount = 0
-  
+
   Object.values(data).forEach((metric: any) => {
-    if (metric.abnormal_rate) {
+    if (metric.abnormal_rate && metric.count) {
       totalAbnormal += metric.count * metric.abnormal_rate / 100
       totalCount += metric.count
     }
   })
-  
-  abnormalCount.value = Math.round(totalAbnormal)
-  healthScore.value = Math.max(0, Math.round(100 - totalAbnormal / Math.max(totalCount, 1) * 100))
-  
-  // 计算数据完整度（基于insights）
-  const completenessInsight = insights.value.find((i: any) => i.type === 'data_quality')
-  if (completenessInsight) {
-    dataCompleteness.value = completenessInsight.value
+
+  if (totalCount > 0) {
+    healthScore.value = Math.max(0, Math.round(100 - totalAbnormal / totalCount * 100))
+  } else {
+    healthScore.value = 100 // 无数据时默认满分
   }
 }
 

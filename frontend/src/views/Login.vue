@@ -161,11 +161,12 @@ const quickLogin = async (user: any) => {
         id: loginData.user_id || loginData.id || 0,
         user_type: userType,
         name: loginData.name || user.roleName,
-        phone: user.phone
+        phone: user.phone,
+        gender: loginData.gender || 1
       }
       localStorage.setItem('token', loginData.token || '')
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
-      
+
       // 同时更新authStore
       authStore.userInfo = userInfo
       authStore.token = loginData.token || ''
