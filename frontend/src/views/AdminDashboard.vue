@@ -10,7 +10,10 @@
         <h2 class="page-title">管理中心</h2>
         <p class="page-desc">欢迎回来</p>
       </div>
-      <el-button type="primary" @click="refreshData"><el-icon><Refresh /></el-icon>刷新数据</el-button>
+      <div class="header-actions">
+        <el-button type="primary" @click="refreshData"><el-icon><Refresh /></el-icon>刷新数据</el-button>
+        <el-button type="success" @click="showSendNotificationDialog = true"><el-icon><Bell /></el-icon>发送通知</el-button>
+      </div>
     </div>
 
     <el-row :gutter="20" class="stats-row">
@@ -215,6 +218,79 @@
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
+
+    <!-- 发送通知对话框 -->
+    <el-dialog v-model="showSendNotificationDialog" title="发送通知" width="600px">
+      <el-form :model="notificationForm" label-width="100px">
+        <el-form-item label="通知类型">
+          <el-select v-model="notificationForm.notification_type" placeholder="请选择类型" style="width: 100%">
+            <el-option label="系统通知" :value="1" />
+            <el-option label="护理提醒" :value="2" />
+            <el-option label="健康预警" :value="3" />
+            <el-option label="任务通知" :value="4" />
+            <el-option label="紧急通知" :value="5" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="优先级">
+          <el-radio-group v-model="notificationForm.priority">
+            <el-radio :label="0">普通</el-radio>
+            <el-radio :label="1">重要</el-radio>
+            <el-radio :label="2">紧急</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="选择接收人">
+          <el-select
+            v-model="notificationForm.user_ids"
+            multiple
+            placeholder="请选择接收人"
+            style="width: 100%"
+            filterable
+          >
+            <el-option-group label="老人">
+              <el-option
+                v-for="user in userList.filter(u => u.user_type === 1)"
+                :key="user.id"
+                :label="user.name + ' (' + user.phone + ')'"
+                :value="user.id"
+              />
+            </el-option-group>
+            <el-option-group label="护理人员">
+              <el-option
+                v-for="user in userList.filter(u => u.user_type === 2)"
+                :key="user.id"
+                :label="user.name + ' (' + user.phone + ')'"
+                :value="user.id"
+              />
+            </el-option-group>
+            <el-option-group label="家属">
+              <el-option
+                v-for="user in userList.filter(u => u.user_type === 4)"
+                :key="user.id"
+                :label="user.name + ' (' + user.phone + ')'"
+                :value="user.id"
+              />
+            </el-option-group>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="通知标题">
+          <el-input v-model="notificationForm.title" placeholder="请输入通知标题" />
+        </el-form-item>
+        <el-form-item label="通知内容">
+          <el-input
+            v-model="notificationForm.content"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入通知内容"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showSendNotificationDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleSendNotification" :loading="sendingNotification">
+          发送通知
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -233,10 +309,74 @@ let pieChart: echarts.ECharts | null = null
 const userName = ref('管理员')
 const stats = reactive({ elderCount: 0, nurseCount: 0, familyCount: 0, todayOrders: 0 })
 
+// 发送通知相关
+const showSendNotificationDialog = ref(false)
+const sendingNotification = ref(false)
+const userList = ref<any[]>([])
+const notificationForm = reactive({
+  notification_type: 1,
+  priority: 0,
+  user_ids: [] as number[],
+  title: '',
+  content: ''
+})
+
 const pendingTasks = ref([
   { task_name: '日常护理', elder_name: '张三', nurse_name: '李护理', status: '待执行' },
   { task_name: '健康监测', elder_name: '李四', nurse_name: '王护理', status: '待执行' }
 ])
+
+// 加载用户列表
+const loadUserList = async () => {
+  try {
+    const res: any = await api.get('/notifications/users')
+    if (res.code === 200) {
+      userList.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取用户列表失败', error)
+  }
+}
+
+// 发送通知
+const handleSendNotification = async () => {
+  if (!notificationForm.title.trim()) {
+    ElMessage.warning('请输入通知标题')
+    return
+  }
+  if (notificationForm.user_ids.length === 0) {
+    ElMessage.warning('请选择至少一个接收人')
+    return
+  }
+
+  sendingNotification.value = true
+  try {
+    const res: any = await api.post('/notifications/create', {
+      user_ids: notificationForm.user_ids,
+      title: notificationForm.title,
+      content: notificationForm.content,
+      notification_type: notificationForm.notification_type,
+      priority: notificationForm.priority
+    })
+    if (res.code === 200) {
+      ElMessage.success(res.message || '通知发送成功')
+      showSendNotificationDialog.value = false
+      // 重置表单
+      notificationForm.title = ''
+      notificationForm.content = ''
+      notificationForm.user_ids = []
+      notificationForm.notification_type = 1
+      notificationForm.priority = 0
+    } else {
+      ElMessage.error(res.message || '发送失败')
+    }
+  } catch (error) {
+    console.error('发送通知失败', error)
+    ElMessage.error('发送通知失败')
+  } finally {
+    sendingNotification.value = false
+  }
+}
 
 const getDashboardStats = async () => {
   try {
@@ -485,6 +625,7 @@ watch(showEvaluationDialog, (val) => {
 
 onMounted(async () => {
   await getDashboardStats()
+  await loadUserList()
   updateCharts()
   window.addEventListener('resize', handleResize)
 })
@@ -618,6 +759,12 @@ onUnmounted(() => {
     font-size: 14px; 
     color: #a8b4c4;
     margin-top: 4px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
   }
 }
 

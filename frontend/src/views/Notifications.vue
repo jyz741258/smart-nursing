@@ -19,16 +19,26 @@
                 <el-badge is-dot :hidden="row.is_read" />
               </template>
             </el-table-column>
-            <el-table-column prop="title" label="标题" />
-            <el-table-column prop="notification_type_name" label="类型" width="120" />
-            <el-table-column prop="priority_name" label="优先级" width="100">
+            <el-table-column prop="title" label="标题" min-width="150" />
+            <el-table-column prop="created_by_name" label="发送者" width="100">
+              <template #default="{ row }">
+                <el-tag size="small" type="info">{{ row.created_by_name }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="user_name" label="接收者" width="100">
+              <template #default="{ row }">
+                <el-tag size="small">{{ row.user_name }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="notification_type_name" label="类型" width="100" />
+            <el-table-column prop="priority_name" label="优先级" width="80">
               <template #default="{ row }">
                 <el-tag v-if="row.priority === 2" type="danger" size="small">{{ row.priority_name }}</el-tag>
                 <el-tag v-else-if="row.priority === 1" type="warning" size="small">{{ row.priority_name }}</el-tag>
                 <span v-else>{{ row.priority_name }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="created_at" label="时间" width="180" />
+            <el-table-column prop="created_at" label="时间" width="160" />
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="未读" name="unread">
@@ -41,9 +51,19 @@
                 <el-badge is-dot :hidden="row.is_read" />
               </template>
             </el-table-column>
-            <el-table-column prop="title" label="标题" />
-            <el-table-column prop="notification_type_name" label="类型" width="120" />
-            <el-table-column prop="created_at" label="时间" width="180" />
+            <el-table-column prop="title" label="标题" min-width="150" />
+            <el-table-column prop="created_by_name" label="发送者" width="100">
+              <template #default="{ row }">
+                <el-tag size="small" type="info">{{ row.created_by_name }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="user_name" label="接收者" width="100">
+              <template #default="{ row }">
+                <el-tag size="small">{{ row.user_name }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="notification_type_name" label="类型" width="100" />
+            <el-table-column prop="created_at" label="时间" width="160" />
           </el-table>
         </el-tab-pane>
       </el-tabs>
@@ -65,6 +85,8 @@
     <el-dialog v-model="showDetailDialog" title="通知详情" width="500px">
       <el-descriptions :column="1" border>
         <el-descriptions-item label="标题">{{ currentNotification.title }}</el-descriptions-item>
+        <el-descriptions-item label="发送者">{{ currentNotification.created_by_name }}</el-descriptions-item>
+        <el-descriptions-item label="接收者">{{ currentNotification.user_name }}</el-descriptions-item>
         <el-descriptions-item label="类型">{{ currentNotification.notification_type_name }}</el-descriptions-item>
         <el-descriptions-item label="优先级">
           <el-tag v-if="currentNotification.priority === 2" type="danger" size="small">紧急</el-tag>
