@@ -12,6 +12,20 @@
         </div>
       </div>
       <div class="header-right">
+        <!-- 语音播报按钮 -->
+        <el-tooltip content="语音播报AI回复" placement="bottom">
+          <el-button
+            :type="voiceEnabled ? 'primary' : 'default'"
+            circle
+            @click="toggleVoice"
+            :disabled="!lastAiResponse"
+          >
+            <el-icon :size="18">
+              <Microphone v-if="!voiceEnabled" />
+              <CloseBold v-else />
+            </el-icon>
+          </el-button>
+        </el-tooltip>
         <el-tag v-if="modelInfo" type="info" size="small">{{ modelInfo }}</el-tag>
       </div>
     </div>
@@ -77,24 +91,74 @@
 
     <!-- 输入区域 -->
     <div class="chat-input-area">
+      <!-- 语音输入动画提示 -->
+      <div v-if="isListening" class="voice-indicator">
+        <div class="voice-wave">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span class="voice-text">
+          {{ interimTranscript || '正在聆听...' }}
+        </span>
+        <el-button type="danger" size="small" @click="stopListening">停止</el-button>
+      </div>
+
       <el-input
         v-model="userInput"
         type="textarea"
         :rows="3"
-        placeholder="请输入您的问题..."
-        :disabled="isSending"
+        :placeholder="isListening ? '正在聆听，请说话...' : '请输入您的问题，或点击下方麦克风按钮语音输入'"
+        :disabled="isSending || isListening"
         @keydown.ctrl.enter="sendMessage"
         resize="none"
       />
       <div class="input-actions">
+        <div class="action-left">
+          <!-- 语音输入按钮 -->
+          <el-tooltip :content="getVoiceButtonTooltip()" placement="top">
+            <el-button
+              :type="isListening ? 'danger' : 'success'"
+              circle
+              @click="toggleVoiceInput"
+              :disabled="isSending"
+              class="voice-btn"
+            >
+              <div class="voice-btn-content">
+                <el-icon :size="22" :class="{ 'pulsing': isListening }">
+                  <Microphone v-if="!isListening" />
+                  <CloseBold v-else />
+                </el-icon>
+              </div>
+            </el-button>
+          </el-tooltip>
+        </div>
+        <div class="action-right">
+          <el-button
+            type="primary"
+            :loading="isSending"
+            @click="sendMessage"
+            :disabled="!userInput.trim() && !speechTranscript"
+          >
+            <el-icon><Promotion /></el-icon>
+            发送 (Ctrl+Enter)
+          </el-button>
+        </div>
+      </div>
+      <!-- 错误提示 -->
+      <div v-if="speechError" class="speech-error">
+        <el-icon><Warning /></el-icon>
+        <span class="error-text">{{ speechError }}</span>
         <el-button
+          v-if="speechError.includes('权限')"
           type="primary"
-          :loading="isSending"
-          @click="sendMessage"
-          :disabled="!userInput.trim()"
+          size="small"
+          @click="handleRetryPermission"
+          :loading="isRequestingPermission"
         >
-          <el-icon><Promotion /></el-icon>
-          发送 (Ctrl+Enter)
+          重新授权
         </el-button>
       </div>
     </div>
@@ -102,10 +166,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ChatDotRound, User, Promotion } from '@element-plus/icons-vue'
+import { ChatDotRound, User, Promotion, Microphone, CloseBold, Warning } from '@element-plus/icons-vue'
 import api from '@/store/auth'
+import { useSpeechRecognition } from '@/composables/useSpeechRecognition'
+import { audioManager } from '@/utils/audioManager'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -120,6 +186,80 @@ const isTyping = ref(false)
 const aiStatus = ref<'checking' | 'online' | 'offline'>('checking')
 const modelInfo = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
+const lastAiResponse = ref('')
+const voiceEnabled = ref(false)
+
+// 语音识别相关
+const {
+  isListening,
+  isSupported,
+  isRequestingPermission,
+  transcript: speechTranscript,
+  interimTranscript,
+  error: speechError,
+  startListening,
+  stopListening: stopVoiceInput,
+  retryPermission
+} = useSpeechRecognition()
+
+// 获取语音按钮提示文本
+const getVoiceButtonTooltip = () => {
+  if (isListening.value) {
+    return '正在聆听...'
+  }
+  if (!isSupported.value) {
+    return '您的浏览器不支持语音输入'
+  }
+  if (isRequestingPermission.value) {
+    return '正在请求权限...'
+  }
+  return '点击开始语音输入'
+}
+
+// 点击语音输入按钮
+const toggleVoiceInput = async () => {
+  if (isListening.value) {
+    stopVoiceInput()
+  } else {
+    await startListening()
+  }
+}
+
+// 重新请求麦克风权限
+const handleRetryPermission = async () => {
+  retryPermission()
+  await startListening()
+}
+
+// 停止语音输入
+const stopListening = () => {
+  stopVoiceInput()
+}
+
+// 监听语音识别结果，自动填充到输入框
+watch(speechTranscript, (newTranscript) => {
+  if (newTranscript) {
+    userInput.value = newTranscript
+  }
+})
+
+// 切换语音播报
+const toggleVoice = async () => {
+  if (!lastAiResponse.value) return
+
+  voiceEnabled.value = !voiceEnabled.value
+
+  if (voiceEnabled.value) {
+    try {
+      await audioManager.speak(lastAiResponse.value)
+    } catch (e) {
+      ElMessage.error('语音播报失败')
+      voiceEnabled.value = false
+    }
+  } else {
+    audioManager.stopSpeaking()
+  }
+}
 
 // 滚动到底部
 const scrollToBottom = async () => {
@@ -140,6 +280,12 @@ const sendMessage = async () => {
   const message = userInput.value.trim()
   if (!message || isSending.value) return
 
+  // 停止语音播报
+  if (voiceEnabled.value) {
+    audioManager.stopSpeaking()
+    voiceEnabled.value = false
+  }
+
   // 添加用户消息
   messages.value.push({
     role: 'user',
@@ -147,6 +293,8 @@ const sendMessage = async () => {
     time: getCurrentTime()
   })
   userInput.value = ''
+  speechTranscript.value = ''
+  interimTranscript.value = ''
   await scrollToBottom()
 
   isSending.value = true
@@ -155,11 +303,22 @@ const sendMessage = async () => {
   try {
     const res: any = await api.post('/ai/chat', { message })
     if (res.code === 200) {
+      const reply = res.data.reply
       messages.value.push({
         role: 'assistant',
-        content: res.data.reply,
+        content: reply,
         time: getCurrentTime()
       })
+      lastAiResponse.value = reply
+
+      // 如果启用了语音播报，自动播放
+      if (voiceEnabled.value) {
+        try {
+          await audioManager.speak(reply)
+        } catch (e) {
+          console.error('语音播报失败:', e)
+        }
+      }
     } else {
       ElMessage.error(res.message || '发送失败')
     }
@@ -199,7 +358,8 @@ const getModelInfo = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await audioManager.init() // 初始化音频
   checkAIStatus()
   getModelInfo()
 })
@@ -243,6 +403,10 @@ onMounted(() => {
   }
 
   .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
     .el-tag {
       background: rgba(255, 255, 255, 0.2);
       border: none;
@@ -377,15 +541,126 @@ onMounted(() => {
   background: #fff;
   border-top: 1px solid #e4e7ed;
 
-  .input-actions {
+  // 语音输入指示器
+  .voice-indicator {
     display: flex;
-    justify-content: flex-end;
-    margin-top: 10px;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-radius: 12px;
+    color: #fff;
 
-    .el-button {
+    .voice-wave {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      height: 30px;
+
+      span {
+        width: 4px;
+        background: #fff;
+        border-radius: 2px;
+        animation: voiceWave 0.8s ease-in-out infinite;
+
+        &:nth-child(1) { height: 10px; animation-delay: 0s; }
+        &:nth-child(2) { height: 20px; animation-delay: 0.1s; }
+        &:nth-child(3) { height: 30px; animation-delay: 0.2s; }
+        &:nth-child(4) { height: 20px; animation-delay: 0.3s; }
+        &:nth-child(5) { height: 10px; animation-delay: 0.4s; }
+      }
+    }
+
+    .voice-text {
+      flex: 1;
+      font-size: 14px;
+      color: #fff;
+    }
+  }
+
+  @keyframes voiceWave {
+    0%, 100% {
+      transform: scaleY(0.5);
+      opacity: 0.7;
+    }
+    50% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  // 错误提示
+  .speech-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    color: #dc2626;
+    font-size: 13px;
+    flex-wrap: wrap;
+
+    .error-text {
+      flex: 1;
+    }
+
+    .el-button {
+      margin-left: auto;
+    }
+  }
+
+  .input-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+
+    .action-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .voice-btn {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .voice-btn-content {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .pulsing {
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .action-right {
+      .el-button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
     }
   }
 }

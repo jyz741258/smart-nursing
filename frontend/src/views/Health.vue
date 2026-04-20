@@ -316,20 +316,21 @@ onMounted(() => {
   text-align: center;
 
   .metric-label {
-    font-size: 14px;
+    font-size: 0.85em;
     color: #909399;
     margin-bottom: 8px;
   }
 
   .metric-value {
-    font-size: 24px;
+    font-size: calc(1.4rem + 0.3vw);
     font-weight: bold;
     color: #303133;
     margin-bottom: 4px;
+    min-height: 1.5em;
   }
 
   .metric-time {
-    font-size: 12px;
+    font-size: 0.8em;
     color: #c0c4cc;
   }
 }

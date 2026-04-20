@@ -478,7 +478,7 @@ onMounted(() => {
   margin-bottom: 30px;
 
   .page-title {
-    font-size: 20px;
+    font-size: calc(1.2rem + 0.3vw);
     font-weight: 600;
     color: #303133;
   }
@@ -506,13 +506,13 @@ onMounted(() => {
 
     .service-name {
       font-weight: 600;
-      font-size: 16px;
+      font-size: 1em;
     }
 
     .service-price {
       color: #f56c6c;
       font-weight: 600;
-      font-size: 18px;
+      font-size: calc(1.1rem + 0.2vw);
     }
   }
 
@@ -525,12 +525,12 @@ onMounted(() => {
       margin-bottom: 10px;
     }
 
-    .service-info {
-      display: flex;
-      justify-content: space-between;
-      color: #909399;
-      font-size: 14px;
-    }
+  .service-info {
+    display: flex;
+    justify-content: space-between;
+    color: #909399;
+    font-size: 0.78rem;
+  }
   }
 
   .service-footer {
@@ -542,7 +542,7 @@ onMounted(() => {
 .service-requirements-tag {
   color: #67c23a;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 0.67rem;
   background: #f0f9eb;
   padding: 2px 8px;
   border-radius: 4px;
@@ -553,7 +553,7 @@ onMounted(() => {
   padding: 8px 12px;
   background: #f4f4f5;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 0.72rem;
   color: #606266;
   
   strong {
@@ -565,7 +565,7 @@ onMounted(() => {
 .detail-requirements {
   color: #67c23a;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 0.89rem;
   margin: 10px 0;
   padding: 10px;
   background: #f0f9eb;
@@ -582,7 +582,7 @@ onMounted(() => {
   .detail-price {
     color: #f56c6c;
     font-weight: 600;
-    font-size: 20px;
+    font-size: 1.11rem;
     margin: 10px 0;
   }
 
@@ -610,26 +610,26 @@ onMounted(() => {
     margin-bottom: 10px;
     
     .label {
-      font-size: 14px;
+      font-size: 0.78rem;
       color: #606266;
     }
     
     .amount {
-      font-size: 28px;
+      font-size: 1.56rem;
       font-weight: 700;
       color: #f56c6c;
     }
   }
   
   .pay-order {
-    font-size: 12px;
+    font-size: 0.67rem;
     color: #909399;
   }
 }
 
 .pay-methods {
   .pay-method-title {
-    font-size: 14px;
+    font-size: 0.78rem;
     color: #606266;
     margin-bottom: 15px;
   }
@@ -674,7 +674,7 @@ onMounted(() => {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 1rem;
         font-weight: bold;
         color: #fff;
         
@@ -689,7 +689,7 @@ onMounted(() => {
       
       .method-name {
         flex: 1;
-        font-size: 16px;
+        font-size: 0.89rem;
         font-weight: 500;
       }
     }

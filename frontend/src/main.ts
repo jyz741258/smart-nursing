@@ -14,6 +14,7 @@ import './styles/buttons.scss'
 import './styles/tables.scss'
 import './styles/advanced-effects.scss'
 import './styles/theme-light.scss' // 浅色绿色主题样式
+import './styles/theme.scss' // 大字模式样式
 
 const app = createApp(App)
 

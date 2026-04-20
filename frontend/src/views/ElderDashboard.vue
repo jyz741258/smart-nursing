@@ -1,5 +1,19 @@
 <template>
   <div class="elder-dashboard">
+    <!-- 大字模式切换横幅 -->
+    <div class="font-mode-banner" @click="toggleFontMode">
+      <div class="banner-content">
+        <el-icon :size="24"><ZoomIn /></el-icon>
+        <span class="banner-text">大字模式</span>
+      </div>
+      <el-switch
+        v-model="isLargeFont"
+        @click.stop
+        @change="toggleFontMode"
+        size="large"
+      />
+    </div>
+
     <div class="role-indicator elder">
       <span class="role-icon">👴</span>
       <span class="role-text">老人用户</span>
@@ -216,6 +230,9 @@
         <el-button type="primary" @click="submitEvaluation" :loading="evaluating">提交评价</el-button>
       </template>
     </el-dialog>
+
+    <!-- 字体大小切换按钮 - 仅在老人用户界面显示 -->
+    <FontSizeToggle v-if="isElderUser" />
   </div>
 </template>
 
@@ -224,9 +241,35 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import { useAuthStore } from '@/store/auth'
+<<<<<<< HEAD
+import { useSettingsStore } from '@/store/settings'
+import { ZoomIn } from '@element-plus/icons-vue'
+=======
+import FontSizeToggle from '@/components/FontSizeToggle.vue'
+>>>>>>> 80a9819847ffeb6112cd2ef02adf221c61625dfd
 
 const emergencyDialog = ref(false)
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
+
+// 大字模式状态（与 settingsStore 同步）
+const isLargeFont = computed({
+  get: () => settingsStore.fontSizeMode === 'large',
+  set: () => settingsStore.toggleFontSize()
+})
+
+// 切换字体模式
+const toggleFontMode = () => {
+  settingsStore.toggleFontSize()
+  ElMessage.success(
+    settingsStore.fontSizeMode === 'large'
+      ? '已切换到大字模式，字体已放大'
+      : '已切换到普通字体模式'
+  )
+}
+
+// 判断是否为老人用户
+const isElderUser = computed(() => authStore.userInfo?.user_type === 1)
 
 // 从用户信息中获取老人ID
 const elderId = computed(() => {
@@ -435,6 +478,40 @@ onMounted(async () => {
     z-index: 0;
   }
 
+  // 大字模式切换横幅
+  .font-mode-banner {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #fde68a, #fcd34d);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #92400e;
+
+      .banner-text {
+        font-size: 18px;
+        font-weight: 700;
+      }
+    }
+  }
+
   .role-indicator {
     position: relative;
     z-index: 1;
@@ -443,7 +520,7 @@ onMounted(async () => {
     gap: 10px;
     padding: 10px 18px;
     border-radius: 22px;
-    font-size: 14px;
+    font-size: 0.78rem;
     font-weight: 600;
     margin-bottom: 20px;
 
@@ -454,7 +531,7 @@ onMounted(async () => {
     }
 
     .role-icon {
-      font-size: 20px;
+      font-size: 1.11rem;
     }
 
     .role-text {
@@ -476,19 +553,20 @@ onMounted(async () => {
     box-shadow: 0 10px 30px rgba(34, 197, 94, 0.25);
 
     h1 {
-      font-size: 28px;
+      font-size: 1.56rem;
       margin-bottom: 8px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      font-weight: 700;
     }
 
     p {
-      font-size: 16px;
+      font-size: 0.89rem;
       opacity: 0.9;
     }
 
     .welcome-icon {
       opacity: 0.2;
-      font-size: 80px;
+      font-size: 4.44rem;
     }
   }
 
@@ -497,7 +575,7 @@ onMounted(async () => {
     z-index: 1;
 
     .section-title {
-      font-size: 20px;
+      font-size: calc(1.1rem + 0.3vw);
       font-weight: 700;
       color: #1e293b;
       margin-bottom: 16px;
@@ -509,7 +587,7 @@ onMounted(async () => {
 
       .title-icon {
         color: #22c55e;
-        font-size: 22px;
+        font-size: calc(1.2rem + 0.2vw);
       }
     }
   }
@@ -557,7 +635,7 @@ onMounted(async () => {
       align-items: center;
       justify-content: center;
       margin: 0 auto 14px;
-      font-size: 26px;
+      font-size: 1.44rem;
       color: #fff;
 
       &.heart {
@@ -578,14 +656,15 @@ onMounted(async () => {
     }
 
     .card-value {
-      font-size: 32px;
+      font-size: 1.78rem;
       font-weight: 800;
       color: #1e293b;
       margin-bottom: 6px;
+      min-height: 1.5em;
     }
 
     .card-label {
-      font-size: 14px;
+      font-size: 0.9em;
       color: #64748b;
       font-weight: 500;
     }
@@ -627,7 +706,7 @@ onMounted(async () => {
     }
 
     .plan-time {
-      font-size: 13px;
+      font-size: 0.8rem;
       color: #16a34a;
       font-weight: 600;
       min-width: 60px;
@@ -641,14 +720,14 @@ onMounted(async () => {
       flex: 1;
 
       .plan-name {
-        font-size: 15px;
+        font-size: 1rem;
         font-weight: 600;
         color: #1e293b;
         margin-bottom: 5px;
       }
 
       .plan-desc {
-        font-size: 13px;
+        font-size: 0.85rem;
         color: #64748b;
       }
     }
@@ -714,7 +793,7 @@ onMounted(async () => {
       }
 
       span {
-        font-size: 14px;
+        font-size: 0.9em;
         font-weight: 600;
       }
     }
@@ -730,7 +809,7 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
   .section-title {
-    font-size: 18px;
+    font-size: 1rem;
     font-weight: 600;
     color: #1e293b;
     margin-bottom: 16px;
@@ -774,14 +853,14 @@ onMounted(async () => {
         flex: 1;
 
         .notice-text {
-          font-size: 14px;
+          font-size: 0.9rem;
           color: #1e293b;
           margin-bottom: 5px;
           line-height: 1.5;
         }
 
         .notice-time {
-          font-size: 12px;
+          font-size: 0.8rem;
           color: #94a3b8;
         }
       }
@@ -795,12 +874,12 @@ onMounted(async () => {
 
   p {
     margin-top: 15px;
-    font-size: 16px;
+    font-size: 0.89rem;
     color: #1e293b;
   }
 
   .emergency-contact {
-    font-size: 14px;
+    font-size: 0.78rem;
     color: #64748b;
   }
 }

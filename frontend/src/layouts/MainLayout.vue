@@ -28,6 +28,7 @@
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
         </template>
 
         <!-- 护理人员菜单 -->
@@ -42,6 +43,7 @@
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
         </template>
 
         <!-- 家属菜单 -->
@@ -57,6 +59,7 @@
             <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
         </template>
 
         <!-- 管理员菜单 -->
@@ -64,6 +67,7 @@
           <el-menu-item index="/elders"><el-icon><User /></el-icon>老人管理</el-menu-item>
           <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
           <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+          <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
           <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
           <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
@@ -97,6 +101,21 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
+          <!-- 字体大小切换按钮（仅老人用户显示） -->
+          <el-tooltip :content="settingsStore.fontSizeMode === 'normal' ? '切换大字模式' : '切换普通字体'" placement="bottom">
+            <el-button
+              class="font-size-toggle"
+              :type="settingsStore.fontSizeMode === 'large' ? 'primary' : 'default'"
+              circle
+              @click="settingsStore.toggleFontSize"
+              v-if="userType === 1"
+            >
+              <el-icon :size="20">
+                <ZoomIn v-if="settingsStore.fontSizeMode === 'normal'" />
+                <ZoomOut v-else />
+              </el-icon>
+            </el-button>
+          </el-tooltip>
           <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="badge-item">
             <el-icon class="header-icon" @click="$router.push('/notifications')">
               <Bell />
@@ -105,6 +124,34 @@
           <div class="user-type-badge" :class="'type-' + userType" v-show="!isMobile">
             {{ userTypeName }}
           </div>
+          
+          <!-- 字体大小控制 -->
+          <div class="font-control" v-show="!isMobile">
+            <el-tooltip content="调整字体大小" placement="bottom">
+              <el-icon class="font-btn" @click="showFontMenu = !showFontMenu">
+                <ZoomIn />
+              </el-icon>
+            </el-tooltip>
+            <el-dropdown v-model="showFontMenu" @command="handleFontCommand">
+              <span class="font-size-indicator" :class="settingsStore.fontSize">
+                {{ fontSizeLabel }}
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="decrease" :disabled="settingsStore.fontSize === 'small'">
+                    <el-icon><ZoomOut /></el-icon>减小字体
+                  </el-dropdown-item>
+                  <el-dropdown-item command="reset">
+                    <el-icon><RefreshLeft /></el-icon>恢复默认
+                  </el-dropdown-item>
+                  <el-dropdown-item command="increase" :disabled="settingsStore.fontSize === 'xlarge'">
+                    <el-icon><ZoomIn /></el-icon>增大字体
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+          
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-avatar :size="32" :src="userInfo?.avatar || ''">
@@ -166,6 +213,7 @@
               <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           </template>
 
           <!-- 护理人员菜单 -->
@@ -180,6 +228,7 @@
               <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           </template>
 
           <!-- 家属菜单 -->
@@ -195,6 +244,7 @@
               <el-menu-item index="/notifications"><el-icon><Bell /></el-icon>消息通知</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/ai-chat"><el-icon><ChatDotRound /></el-icon>AI健康助手</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
           </template>
 
           <!-- 管理员菜单 -->
@@ -202,6 +252,7 @@
             <el-menu-item index="/elders"><el-icon><User /></el-icon>老人管理</el-menu-item>
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
+            <el-menu-item index="/location-map"><el-icon><MapLocation /></el-icon>位置地图</el-menu-item>
             <el-menu-item index="/service-management"><el-icon><Collection /></el-icon>服务管理</el-menu-item>
             <el-menu-item index="/accounting"><el-icon><Document /></el-icon>账目管理</el-menu-item>
             <el-menu-item index="/statistics"><el-icon><PieChart /></el-icon>数据统计</el-menu-item>
@@ -219,24 +270,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, onMounted as onMountedRef } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useSettingsStore } from '@/store/settings'
 import api from '@/store/auth'
 import {
   DataAnalysis, User, Document, TrendCharts, Collection, Bell, PieChart,
-  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu, ChatDotRound
+  Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu, ChatDotRound,
+<<<<<<< HEAD
+  ZoomIn, ZoomOut, Location, MapLocation
+=======
+  ZoomIn, ZoomOut, RefreshLeft
+>>>>>>> 80a9819847ffeb6112cd2ef02adf221c61625dfd
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 
 const isCollapse = ref(false)
 const unreadCount = ref(0)
 const userType = ref(3)
 const isMobile = ref(false)
 const showMobileMenu = ref(false)
+const showFontMenu = ref(false)
+
+const fontSizeLabel = computed(() => {
+  const labels: Record<string, string> = {
+    small: '正常',
+    medium: '中等',
+    large: '大字',
+    xlarge: '特大'
+  }
+  return labels[settingsStore.fontSize] || '中等'
+})
 
 const dashboardPath = computed(() => {
   const paths: Record<number, string> = { 1: '/elder-dashboard', 2: '/nurse-dashboard', 3: '/admin-dashboard', 4: '/family-dashboard' }
@@ -280,6 +349,37 @@ const handleCommand = (command: string) => {
   }
 }
 
+// 字体大小控制
+const increaseFontSize = () => {
+  const sizes = ['small', 'medium', 'large', 'xlarge']
+  const currentIndex = sizes.indexOf(settingsStore.fontSize)
+  if (currentIndex < sizes.length - 1) {
+    settingsStore.setFontSize(sizes[currentIndex + 1])
+  }
+}
+
+const decreaseFontSize = () => {
+  const sizes = ['small', 'medium', 'large', 'xlarge']
+  const currentIndex = sizes.indexOf(settingsStore.fontSize)
+  if (currentIndex > 0) {
+    settingsStore.setFontSize(sizes[currentIndex - 1])
+  }
+}
+
+const resetFontSize = () => {
+  settingsStore.setFontSize('medium')
+}
+
+const handleFontCommand = (command: string) => {
+  if (command === 'increase') {
+    increaseFontSize()
+  } else if (command === 'decrease') {
+    decreaseFontSize()
+  } else if (command === 'reset') {
+    resetFontSize()
+  }
+}
+
 const getUserType = () => {
   const info = userInfo.value
   if (info) {
@@ -307,6 +407,8 @@ onMounted(() => {
   getUserType()
   getUnreadCount()
   checkMobile()
+  // 初始化字体设置
+  settingsStore.initSettings()
   window.addEventListener('resize', checkMobile)
 })
 
@@ -408,6 +510,15 @@ onUnmounted(() => {
       }
     }
 
+    .font-size-toggle {
+      font-weight: bold;
+
+      &.el-button--primary {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border-color: #22c55e;
+      }
+    }
+
     .user-type-badge {
       padding: 4px 12px;
       border-radius: 12px;
@@ -421,17 +532,81 @@ onUnmounted(() => {
       &.type-4 { background: #8b5cf6; }
     }
 
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
 
-      .username {
-        color: #1e293b;
+    .username {
+      color: #1e293b;
+    }
+  }
+
+  // 字体控制样式
+  .font-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 5px;
+
+    .font-btn {
+      font-size: 18px;
+      cursor: pointer;
+      color: #64748b;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+
+      &:hover {
+        color: #22c55e;
+        background: #f0fdf4;
+      }
+    }
+
+    .font-size-indicator {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #f0fdf4;
+      color: #22c55e;
+      border: 1px solid #dcfce7;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #dcfce7;
+      }
+
+      // 不同字体大小的指示器样式
+      &.small {
+        font-size: 12px;
+        background: #f5f7fa;
+        color: #909399;
+        border-color: #e4e7ed;
+      }
+
+      &.medium {
+        font-size: 13px;
+      }
+
+      &.large {
+        font-size: 15px;
+        background: #ecf5ff;
+        color: #409eff;
+        border-color: #d9ecff;
+      }
+
+      &.xlarge {
+        font-size: 17px;
+        background: #fef0f0;
+        color: #f56c6c;
+        border-color: #fde2e2;
       }
     }
   }
+}
 }
 
 .main-content {
@@ -482,7 +657,7 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     color: #ffffff;
-    font-size: 18px;
+    font-size: 1.1em;
     font-weight: bold;
     background: linear-gradient(135deg, #22c55e, #16a34a);
     margin-bottom: 20px;
