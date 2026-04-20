@@ -134,6 +134,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '位置地图' }
       },
       {
+        path: 'elder-location-map',
+        name: 'ElderLocationMap',
+        component: () => import('@/views/ElderLocationMap.vue'),
+        meta: { title: '位置地图', roles: [1] }
+      },
+      {
+        path: 'staff-location-map',
+        name: 'StaffLocationMap',
+        component: () => import('@/views/StaffLocationMap.vue'),
+        meta: { title: '位置地图', roles: [2, 3, 4] }
+      },
+      {
         path: 'payment/mock',
         name: 'MockPayment',
         component: () => import('@/views/MockPayment.vue'),

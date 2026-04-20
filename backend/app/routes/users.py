@@ -128,7 +128,8 @@ def login():
         'token': token,
         'user_id': user.id,
         'user_type': user.user_type,
-        'name': user.name
+        'name': user.real_name or user.username or phone,
+        'phone': phone
     }, '登录成功')
 
 

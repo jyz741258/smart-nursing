@@ -121,7 +121,7 @@ const form = reactive({
 
 // 样例账号列表
 const demoUsers = [
-  { id: 1, role: 'elder', roleName: '老人', phone: '13900001001', password: '123456' },
+  { id: 5, role: 'elder', roleName: '老人', phone: '13900001001', password: '123456' },
   { id: 4, role: 'family', roleName: '家属', phone: '13900001004', password: '123456' },
   { id: 2, role: 'nurse', roleName: '护理员', phone: '13900001002', password: '123456' },
   { id: 3, role: 'admin', roleName: '管理员', phone: '13800138000', password: '123456' }
