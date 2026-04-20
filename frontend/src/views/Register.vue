@@ -157,12 +157,14 @@
 
         <!-- 性别和年龄 -->
         <div class="form-row">
-          <el-form-item prop="gender">
-            <el-select v-model="form.gender" placeholder="性别" size="large" class="half-input">
-              <el-option :value="0" label="未知" />
-              <el-option :value="1" label="男" />
-              <el-option :value="2" label="女" />
-            </el-select>
+          <el-form-item prop="gender" class="gender-select-wrapper">
+            <div class="gender-radio-group">
+              <el-radio-group v-model="form.gender" size="large">
+                <el-radio-button :value="0">未知</el-radio-button>
+                <el-radio-button :value="1">男</el-radio-button>
+                <el-radio-button :value="2">女</el-radio-button>
+              </el-radio-group>
+            </div>
           </el-form-item>
 
           <el-form-item prop="age">
@@ -673,7 +675,7 @@ const handleRegister = async () => {
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--text-tertiary);
+      color: #8b949e;
       z-index: 1;
       transition: color 0.3s ease;
     }
@@ -682,31 +684,54 @@ const handleRegister = async () => {
       padding-left: 45px;
       height: 48px;
       border-radius: 12px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border-color);
+      background: rgba(33, 38, 45, 0.8) !important;
+      border: 1px solid #30363d;
       box-shadow: none !important;
       transition: all 0.3s var(--ease-smooth);
 
       &:hover {
-        border-color: var(--color-primary);
-        background: var(--bg-hover);
+        border-color: #667eea;
+        background: rgba(33, 38, 45, 0.9) !important;
       }
 
       &.is-focus {
-        border-color: var(--color-primary);
-        background: var(--bg-tertiary);
+        border-color: #667eea;
+        background: rgba(33, 38, 45, 0.9) !important;
         box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
       }
     }
 
     :deep(.el-input__inner) {
       height: 48px;
-      color: var(--text-primary);
-      background: transparent;
+      color: #f5f8fa !important;
+      background: transparent !important;
 
       &::placeholder {
-        color: var(--text-tertiary);
+        color: #8b949e !important;
       }
+    }
+
+    // Element Plus input 元素直接样式
+    :deep(input.el-input__inner) {
+      color: #f5f8fa !important;
+      background: transparent !important;
+
+      &::placeholder {
+        color: #8b949e !important;
+      }
+    }
+
+    // 强制覆盖 Element Plus 内部样式
+    :deep(.el-input__inner::-webkit-input-placeholder) {
+      color: #8b949e !important;
+    }
+
+    :deep(.el-input__inner::-moz-placeholder) {
+      color: #8b949e !important;
+    }
+
+    :deep(.el-input__inner::-ms-input-placeholder) {
+      color: #8b949e !important;
     }
 
     &:hover .input-icon {
@@ -747,6 +772,77 @@ const handleRegister = async () => {
       :deep(.el-input__wrapper) {
         padding-left: 45px;
         cursor: pointer;
+        background: rgba(33, 38, 45, 0.8) !important;
+        border: 1px solid #30363d !important;
+      }
+
+      :deep(.el-input__inner) {
+        color: #f5f8fa !important;
+        background: transparent !important;
+
+        &::placeholder {
+          color: #8b949e !important;
+        }
+      }
+    }
+
+    // el-select 下拉框文字颜色
+    :deep(.el-select__wrapper) {
+      background-color: rgba(33, 38, 45, 0.8) !important;
+      color: #f5f8fa !important;
+      box-shadow: none !important;
+      border: 1px solid #30363d !important;
+
+      &:hover {
+        border-color: #667eea !important;
+      }
+
+      &.is-focused {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
+      }
+
+      .el-select__placeholder {
+        color: #8b949e !important;
+      }
+
+      .el-select__placeholder.is-transparent {
+        color: #8b949e !important;
+      }
+    }
+
+    :deep(.el-select__tags-text) {
+      color: #f5f8fa !important;
+    }
+
+    :deep(.el-select-dropdown) {
+      background-color: rgba(28, 33, 40, 0.95) !important;
+      border: 1px solid #30363d !important;
+
+      .el-select-dropdown__item {
+        color: #f5f8fa !important;
+
+        &:hover {
+          background-color: #30363d !important;
+        }
+
+        &.is-selected {
+          color: #667eea !important;
+          background-color: rgba(102, 126, 234, 0.1) !important;
+        }
+      }
+    }
+
+    :deep(.el-select-dropdown__item) {
+      color: #f5f8fa !important;
+      background-color: transparent !important;
+
+      &.is-hovering {
+        background-color: #30363d !important;
+      }
+
+      &.is-selected {
+        color: #667eea !important;
       }
     }
   }
@@ -754,9 +850,92 @@ const handleRegister = async () => {
   .form-row {
     display: flex;
     gap: 15px;
+    align-items: flex-start;
 
     .half-input {
       flex: 1;
+
+      :deep(.el-input__wrapper) {
+        background: rgba(33, 38, 45, 0.8) !important;
+        border: 1px solid #30363d !important;
+      }
+
+      :deep(.el-input__inner) {
+        color: #f5f8fa !important;
+        background: transparent !important;
+
+        &::placeholder {
+          color: #8b949e !important;
+        }
+      }
+
+      :deep(input.el-input__inner) {
+        color: #f5f8fa !important;
+        background: transparent !important;
+
+        &::placeholder {
+          color: #8b949e !important;
+        }
+      }
+    }
+  }
+
+  // 性别选择器 - radio-button 样式
+  .gender-select-wrapper {
+    width: 100%;
+    flex: 1;
+
+    :deep(.el-form-item__content) {
+      line-height: normal !important;
+    }
+
+    .gender-radio-group {
+      width: 100%;
+
+      .el-radio-group {
+        display: flex;
+        width: 100%;
+        gap: 8px;
+
+        .el-radio-button {
+          flex: 1;
+
+          .el-radio-button__inner {
+            width: 100%;
+            background: rgba(33, 38, 45, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            color: #8b949e;
+            font-size: 14px;
+            height: 48px;
+            line-height: 48px;
+            padding: 0 16px;
+            transition: all 0.3s ease;
+            box-shadow: none !important;
+
+            &:hover {
+              color: #f5f8fa;
+              border-color: #667eea;
+            }
+          }
+
+          &.is-active {
+            .el-radio-button__inner {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              border-color: #667eea;
+              color: #ffffff;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
+          }
+
+          .el-radio-button__original-radio:checked + .el-radio-button__inner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          }
+        }
+      }
     }
   }
 
@@ -774,26 +953,32 @@ const handleRegister = async () => {
     border-radius: 12px;
     margin-bottom: 10px;
     border: 1px solid rgba(64, 158, 255, 0.3);
-  }
 
-  .full-width {
-    background: rgba(230, 162, 60, 0.08);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(230, 162, 60, 0.3);
-  }
+    :deep(.el-select__wrapper) {
+      background-color: rgba(33, 38, 45, 0.8) !important;
+      color: #f5f8fa !important;
+      border: 1px solid #30363d !important;
+      box-shadow: none !important;
 
-  .relation-section {
-    background: rgba(64, 158, 255, 0.08);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(64, 158, 255, 0.3);
+      .el-select__placeholder {
+        color: #8b949e !important;
+      }
+    }
   }
 
   .full-width {
     width: 100%;
+
+    :deep(.el-select__wrapper) {
+      background-color: rgba(33, 38, 45, 0.8) !important;
+      color: #f5f8fa !important;
+      border: 1px solid #30363d !important;
+      box-shadow: none !important;
+
+      .el-select__placeholder {
+        color: #8b949e !important;
+      }
+    }
   }
 
   .register-btn {

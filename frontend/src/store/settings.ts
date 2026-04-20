@@ -1,36 +1,4 @@
 import { defineStore } from 'pinia'
-<<<<<<< HEAD
-import { ref, watch } from 'vue'
-
-export const useSettingsStore = defineStore('settings', () => {
-  // 从 localStorage 读取字体设置
-  const fontSizeMode = ref<'normal' | 'large'>(
-    (localStorage.getItem('fontSizeMode') as 'normal' | 'large') || 'normal'
-  )
-
-  // 切换字体大小模式
-  const toggleFontSize = () => {
-    fontSizeMode.value = fontSizeMode.value === 'normal' ? 'large' : 'normal'
-    localStorage.setItem('fontSizeMode', fontSizeMode.value)
-  }
-
-  // 设置字体大小模式
-  const setFontSize = (mode: 'normal' | 'large') => {
-    fontSizeMode.value = mode
-    localStorage.setItem('fontSizeMode', mode)
-  }
-
-  // 监听变化并更新 HTML class
-  watch(fontSizeMode, (newMode) => {
-    if (newMode === 'large') {
-      document.documentElement.classList.add('large-font-mode')
-    } else {
-      document.documentElement.classList.remove('large-font-mode')
-    }
-  }, { immediate: true })
-
-  return { fontSizeMode, toggleFontSize, setFontSize }
-=======
 import { ref, watch, computed } from 'vue'
 
 // 字体大小选项
@@ -53,14 +21,40 @@ export const useSettingsStore = defineStore('settings', () => {
   // 字体大小设置，默认 medium（中等，适合老人）
   const fontSize = ref<string>(localStorage.getItem('fontSize') || FONT_SIZES.MEDIUM)
   const highContrast = ref<boolean>(localStorage.getItem('highContrast') === 'true')
+  
+  // 兼容旧版本的 fontSizeMode
+  const fontSizeMode = computed({
+    get: () => fontSize.value === FONT_SIZES.LARGE || fontSize.value === FONT_SIZES.XLARGE ? 'large' : 'normal',
+    set: (val) => {
+      fontSize.value = val === 'large' ? FONT_SIZES.LARGE : FONT_SIZES.MEDIUM
+      localStorage.setItem('fontSize', fontSize.value)
+      applyScale()
+    }
+  })
 
   // 计算缩放比例
   const scale = computed(() => FONT_SCALE[fontSize.value as keyof typeof FONT_SCALE] || 1)
 
-  // 切换字体大小
+  // 切换字体大小模式（兼容旧版本）
+  const toggleFontSize = () => {
+    if (fontSize.value === FONT_SIZES.MEDIUM) {
+      fontSize.value = FONT_SIZES.LARGE
+    } else if (fontSize.value === FONT_SIZES.LARGE) {
+      fontSize.value = FONT_SIZES.XLARGE
+    } else if (fontSize.value === FONT_SIZES.XLARGE) {
+      fontSize.value = FONT_SIZES.MEDIUM
+    } else {
+      fontSize.value = FONT_SIZES.LARGE
+    }
+    localStorage.setItem('fontSize', fontSize.value)
+    applyScale()
+  }
+
+  // 设置字体大小
   const setFontSize = (size: string) => {
     fontSize.value = size
     localStorage.setItem('fontSize', size)
+    applyScale()
   }
 
   // 应用字体大小到文档根元素（通过缩放整个页面）
@@ -106,13 +100,15 @@ export const useSettingsStore = defineStore('settings', () => {
 
   return {
     fontSize,
+    fontSizeMode,
     highContrast,
     scale,
+    toggleFontSize,
     setFontSize,
     toggleHighContrast,
     initSettings,
+    applyScale,
     FONT_SIZES,
     FONT_SCALE
   }
->>>>>>> 80a9819847ffeb6112cd2ef02adf221c61625dfd
 })

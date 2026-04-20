@@ -241,12 +241,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import { useAuthStore } from '@/store/auth'
-<<<<<<< HEAD
 import { useSettingsStore } from '@/store/settings'
 import { ZoomIn } from '@element-plus/icons-vue'
-=======
-import FontSizeToggle from '@/components/FontSizeToggle.vue'
->>>>>>> 80a9819847ffeb6112cd2ef02adf221c61625dfd
 
 const emergencyDialog = ref(false)
 const authStore = useAuthStore()

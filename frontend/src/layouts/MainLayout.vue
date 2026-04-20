@@ -278,11 +278,7 @@ import api from '@/store/auth'
 import {
   DataAnalysis, User, Document, TrendCharts, Collection, Bell, PieChart,
   Fold, Expand, SwitchButton, FirstAidKit, House, Sunny, Menu, ChatDotRound,
-<<<<<<< HEAD
-  ZoomIn, ZoomOut, Location, MapLocation
-=======
-  ZoomIn, ZoomOut, RefreshLeft
->>>>>>> 80a9819847ffeb6112cd2ef02adf221c61625dfd
+  ZoomIn, ZoomOut, MapLocation
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
