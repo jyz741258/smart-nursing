@@ -257,11 +257,11 @@ body {
 
 // 高对比度模式
 body.high-contrast {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
 
   * {
-    border-color: #ffffff !important;
+    border-color: #000000 !important;
     box-shadow: none !important;
   }
 
@@ -274,33 +274,33 @@ body.high-contrast {
   .el-textarea__inner,
   .el-select .el-input__inner,
   .el-date-editor .el-input__inner {
-    background-color: #000000 !important;
-    color: #ffffff !important;
-    border-color: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
   }
 
   .el-table {
     th,
     tr,
     td {
-      background-color: #000000 !important;
-      color: #ffffff !important;
-      border-color: #ffffff !important;
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      border-color: #000000 !important;
     }
 
     &:hover > tr:hover > td {
-      background-color: #1a1a1a !important;
+      background-color: #f0f0f0 !important;
     }
   }
 
   .el-button {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border-color: #ffffff !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #000000 !important;
 
     &.is-plain {
       background-color: transparent !important;
-      color: #ffffff !important;
+      color: #000000 !important;
     }
 
     &:hover {
@@ -309,27 +309,27 @@ body.high-contrast {
   }
 
   .el-link {
-    color: #4ade80 !important;
+    color: #22c55e !important;
 
     &:hover {
-      color: #22c55e !important;
+      color: #16a34a !important;
     }
   }
 
   .el-tag {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border-color: #ffffff !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #000000 !important;
   }
 
   .el-badge__content {
-    background-color: #f56c6c !important;
+    background-color: #ef4444 !important;
     color: #ffffff !important;
   }
 
   .el-drawer {
-    background-color: #000000 !important;
-    color: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
   }
 }
 

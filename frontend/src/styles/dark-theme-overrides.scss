@@ -46,7 +46,25 @@
 
 .el-input__inner {
   color: var(--text-primary) !important;
+  background: transparent !important;
   &::placeholder { color: var(--text-tertiary) !important; }
+}
+
+// input 元素直接样式
+input.el-input__inner {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+  &::placeholder { color: var(--text-tertiary) !important; }
+}
+
+// el-select 样式
+.el-select__wrapper {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+
+  .el-select__placeholder {
+    color: var(--text-tertiary) !important;
+  }
 }
 
 // 下拉框
