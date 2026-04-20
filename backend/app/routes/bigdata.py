@@ -563,23 +563,28 @@ def get_health_insights(current_user):
     elder_id = request.args.get('elder_id', type=int)
     days = request.args.get('days', 30, type=int)
     start_date = datetime.utcnow() - timedelta(days=days)
-    
+
     query = HealthMetric.query.filter(
         HealthMetric.recorded_at >= start_date
     )
-    
+
     if elder_id:
         query = query.filter_by(elder_id=elder_id)
-    
+
     metrics = query.all()
-    
+
     insights = []
-    
-    # 1. 数据完整度分析
-    total_days = days
+
+    # 1. 数据完整度分析（按老人计算）
+    elder_ids = set(m.elder_id for m in metrics)
+    total_expected_records = len(elder_ids) * days  # 每个老人每天应有1条记录
+
+    # 统计实际记录
     days_with_data = len(set(m.recorded_at.strftime('%Y-%m-%d') for m in metrics))
-    completeness = days_with_data / total_days * 100
-    
+
+    # 完整度 = 有数据的天数 / 总天数，最大100%
+    completeness = min(100, days_with_data / days * 100) if days > 0 else 0
+
     insights.append({
         'type': 'data_quality',
         'title': '数据完整度',

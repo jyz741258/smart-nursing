@@ -129,7 +129,8 @@ def login():
         'user_id': user.id,
         'user_type': user.user_type,
         'name': user.real_name or user.username or phone,
-        'phone': phone
+        'phone': phone,
+        'gender': user.gender
     }, '登录成功')
 
 
