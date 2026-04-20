@@ -1,201 +1,153 @@
 <template>
   <div class="register-container">
-    <!-- 粒子背景 -->
-    <div class="particle-bg">
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-    </div>
-
-    <div class="register-background">
-      <div class="bg-gradient"></div>
-      <div class="bg-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-      </div>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+      <div class="circle circle-3"></div>
     </div>
 
     <div class="register-box">
+      <!-- 标题区域 -->
       <div class="register-header">
         <div class="logo">
-          <el-icon :size="48"><FirstAidKit /></el-icon>
+          <el-icon :size="40"><FirstAidKit /></el-icon>
         </div>
         <h1>智慧养老系统</h1>
-        <p>Smart Nursing Platform - 用户注册</p>
+        <p>Smart Nursing Platform</p>
       </div>
 
+      <!-- 注册表单 -->
       <el-form
         ref="formRef"
         :model="form"
         :rules="rules"
         class="register-form"
         @submit.prevent="handleRegister"
+        size="large"
       >
-        <!-- 用户类型选择 -->
+        <!-- 用户类型 -->
         <el-form-item prop="user_type">
-          <div class="input-wrapper">
-            <el-icon class="input-icon"><User /></el-icon>
-            <el-select
-              v-model="form.user_type"
-              placeholder="请选择用户类型"
-              size="large"
-              class="user-type-select"
-            >
-              <el-option
-                :value="1"
-                label="老人"
-              />
-              <el-option
-                :value="4"
-                label="家属"
-              />
-            </el-select>
-          </div>
+          <el-select
+            v-model="form.user_type"
+            placeholder="请选择用户类型"
+            class="full-select"
+          >
+            <el-option :value="1" label="老人" />
+            <el-option :value="4" label="家属" />
+          </el-select>
         </el-form-item>
 
         <!-- 手机号 -->
         <el-form-item prop="phone">
-          <div class="input-wrapper">
-            <el-icon class="input-icon"><Iphone /></el-icon>
-            <el-input
-              v-model="form.phone"
-              placeholder="请输入手机号"
-              size="large"
-            />
-          </div>
+          <el-input
+            v-model="form.phone"
+            placeholder="请输入手机号"
+            prefix-icon="Phone"
+          />
         </el-form-item>
 
         <!-- 邮箱 -->
         <el-form-item prop="email">
-          <div class="input-wrapper">
-            <el-icon class="input-icon"><Message /></el-icon>
-            <el-input
-              v-model="form.email"
-              placeholder="请输入邮箱地址"
-              size="large"
-            />
-          </div>
+          <el-input
+            v-model="form.email"
+            placeholder="请输入邮箱地址"
+            prefix-icon="Message"
+          />
         </el-form-item>
 
-        <!-- 邮箱验证码 -->
+        <!-- 验证码 -->
         <el-form-item prop="email_code">
-          <div class="input-wrapper sms-wrapper">
-            <el-icon class="input-icon"><Key /></el-icon>
-            <el-input
-              v-model="form.email_code"
-              placeholder="请输入验证码"
-              size="large"
-              class="sms-input"
-            />
-            <el-button
-              size="large"
-              :disabled="smsSending || countdown > 0"
-              @click="sendEmailCode"
-              class="sms-btn"
-            >
-              {{ countdown > 0 ? `${countdown}秒后重发` : '获取验证码' }}
-            </el-button>
-          </div>
+          <el-input
+            v-model="form.email_code"
+            placeholder="请输入验证码"
+            prefix-icon="Key"
+            class="code-input"
+          >
+            <template #append>
+              <el-button
+                :disabled="smsSending || countdown > 0"
+                @click="sendEmailCode"
+                class="code-btn"
+              >
+                {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+              </el-button>
+            </template>
+          </el-input>
         </el-form-item>
-
-        <!-- 验证码显示区域 - 已移除（安全优化：验证码不在页面显示） -->
 
         <!-- 密码 -->
         <el-form-item prop="password">
-          <div class="input-wrapper">
-            <el-icon class="input-icon"><Lock /></el-icon>
-            <el-input
-              v-model="form.password"
-              type="password"
-              placeholder="请输入密码（6-20位）"
-              size="large"
-              show-password
-            />
-          </div>
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="请输入密码（6-20位）"
+            prefix-icon="Lock"
+            show-password
+          />
         </el-form-item>
 
         <!-- 确认密码 -->
         <el-form-item prop="confirm_password">
-          <div class="input-wrapper">
-            <el-icon class="input-icon"><Lock /></el-icon>
-            <el-input
-              v-model="form.confirm_password"
-              type="password"
-              placeholder="请再次输入密码"
-              size="large"
-              show-password
-            />
-          </div>
-        </el-form-item>
-
-        <!-- 姓名（可选） -->
-        <el-form-item prop="name">
-          <div class="input-wrapper">
-            <el-icon class="input-icon"><User /></el-icon>
-            <el-input
-              v-model="form.name"
-              placeholder="请输入姓名（可选）"
-              size="large"
-            />
-          </div>
-        </el-form-item>
-
-        <!-- 身份证号（可选） -->
-        <el-form-item prop="id_card">
-          <div class="input-wrapper">
-            <el-icon class="input-icon"><Document /></el-icon>
-            <el-input
-              v-model="form.id_card"
-              placeholder="请输入身份证号（可选）"
-              size="large"
-            />
-          </div>
-        </el-form-item>
-
-        <!-- 性别和年龄 -->
-        <div class="form-row">
-          <el-form-item prop="gender" class="gender-select-wrapper">
-            <div class="gender-radio-group">
-              <el-radio-group v-model="form.gender" size="large">
-                <el-radio-button :value="0">未知</el-radio-button>
-                <el-radio-button :value="1">男</el-radio-button>
-                <el-radio-button :value="2">女</el-radio-button>
-              </el-radio-group>
-            </div>
-          </el-form-item>
-
-          <el-form-item prop="age">
-            <el-input
-              v-model.number="form.age"
-              placeholder="年龄（必须大于0）"
-              size="large"
-              class="half-input"
-              type="number"
-              min="1"
-            />
-          </el-form-item>
-        </div>
-
-        <!-- 家属与老人关系（仅家属显示） -->
-        <div v-if="form.user_type === 4" class="relation-section">
-          <el-alert
-            title="请选择与老人的关系"
-            type="info"
-            :closable="false"
-            show-icon
-            style="margin-bottom: 15px"
+          <el-input
+            v-model="form.confirm_password"
+            type="password"
+            placeholder="请再次输入密码"
+            prefix-icon="Lock"
+            show-password
           />
-          <el-form-item prop="relation_with_elder">
-            <div class="input-wrapper">
-              <el-icon class="input-icon"><User /></el-icon>
+        </el-form-item>
+
+        <!-- 姓名 -->
+        <el-form-item prop="name">
+          <el-input
+            v-model="form.name"
+            placeholder="请输入姓名（可选）"
+            prefix-icon="User"
+          />
+        </el-form-item>
+
+        <!-- 身份证 -->
+        <el-form-item prop="id_card">
+          <el-input
+            v-model="form.id_card"
+            placeholder="请输入身份证号（可选）"
+            prefix-icon="Document"
+          />
+        </el-form-item>
+
+        <!-- 性别 -->
+        <el-form-item prop="gender" class="gender-item">
+          <template #label><span class="field-label">性别</span></template>
+          <div class="gender-buttons">
+            <el-radio-group v-model="form.gender">
+              <el-radio-button :value="0">未知</el-radio-button>
+              <el-radio-button :value="1">男</el-radio-button>
+              <el-radio-button :value="2">女</el-radio-button>
+            </el-radio-group>
+          </div>
+        </el-form-item>
+
+        <!-- 年龄 -->
+        <el-form-item prop="age">
+          <el-input
+            v-model.number="form.age"
+            placeholder="年龄（必须大于0）"
+            prefix-icon="Calendar"
+            type="number"
+            min="1"
+          />
+        </el-form-item>
+
+        <!-- 家属关系 -->
+        <template v-if="form.user_type === 4">
+          <div class="relation-section">
+            <el-form-item prop="relation_with_elder">
+              <template #label><span class="field-label">与老人关系</span></template>
               <el-select
                 v-model="form.relation_with_elder"
                 placeholder="请选择与老人的关系"
-                size="large"
-                class="full-width"
+                class="full-select"
               >
                 <el-option :value="1" label="子女" />
                 <el-option :value="2" label="配偶" />
@@ -204,50 +156,37 @@
                 <el-option :value="5" label="其他亲属" />
                 <el-option :value="6" label="朋友/邻居" />
               </el-select>
-            </div>
-          </el-form-item>
-        </div>
+            </el-form-item>
+          </div>
+        </template>
 
         <!-- 注册按钮 -->
         <el-form-item>
           <el-button
             type="primary"
-            size="large"
             :loading="loading"
             class="register-btn"
             native-type="submit"
           >
-            <span v-if="!loading">注 册</span>
-            <span v-else>注册中...</span>
+            {{ loading ? '注册中...' : '注 册' }}
           </el-button>
         </el-form-item>
       </el-form>
 
+      <!-- 底部链接 -->
       <div class="register-footer">
-        <p>已有账号？<el-link type="primary" @click="$router.push('/login')">立即登录</el-link></p>
-        <div class="back-login" @click="$router.push('/login')">
-          <el-icon><ArrowLeft /></el-icon>
-          <span>返回登录</span>
-        </div>
+        <span>已有账号？</span>
+        <el-link type="primary" @click="$router.push('/login')">立即登录</el-link>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import {
-  Iphone,
-  Lock,
-  Message,
-  User,
-  Document,
-  ArrowLeft,
-  FirstAidKit,
-  Key
-} from '@element-plus/icons-vue'
+import { FirstAidKit } from '@element-plus/icons-vue'
 import api from '@/store/auth'
 
 const router = useRouter()
@@ -399,7 +338,6 @@ const handleRegister = async () => {
       email: form.email
     }
 
-    // 如果是家属注册，添加关系字段
     if (form.user_type === 4) {
       registerData.relation_with_elder = form.relation_with_elder
     }
@@ -436,565 +374,327 @@ const handleRegister = async () => {
 </script>
 
 <style scoped lang="scss">
+// 配色方案 - 绿色、浅蓝、白色
+$primary-green: #22c55e;
+$primary-green-dark: #16a34a;
+$primary-green-light: #4ade80;
+$light-blue: #3b82f6;
+$light-blue-light: #60a5fa;
+$white: #ffffff;
+$gray-50: #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-300: #cbd5e1;
+$gray-400: #94a3b8;
+$gray-500: #64748b;
+$gray-600: #475569;
+$gray-700: #334155;
+$gray-800: #1e293b;
+
 .register-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 50%, #f0fdf4 100%);
   position: relative;
   overflow: hidden;
-
-  // 粒子背景
-  .particle-bg {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-
-    .particle {
-      position: absolute;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
-      filter: blur(1px);
-
-      &:nth-child(1) {
-        width: 80px;
-        height: 80px;
-        top: 20%;
-        left: 10%;
-        animation: particleFloat 25s ease-in-out infinite;
-      }
-
-      &:nth-child(2) {
-        width: 60px;
-        height: 60px;
-        top: 60%;
-        right: 10%;
-        animation: particleFloat 30s ease-in-out infinite;
-        animation-delay: -5s;
-      }
-
-      &:nth-child(3) {
-        width: 100px;
-        height: 100px;
-        bottom: 20%;
-        left: 30%;
-        animation: particleFloat 28s ease-in-out infinite;
-        animation-delay: -10s;
-      }
-
-      &:nth-child(4) {
-        width: 40px;
-        height: 40px;
-        top: 10%;
-        right: 30%;
-        animation: particleFloat 22s ease-in-out infinite;
-        animation-delay: -15s;
-      }
-
-      &:nth-child(5) {
-        width: 70px;
-        height: 70px;
-        bottom: 10%;
-        right: 20%;
-        animation: particleFloat 26s ease-in-out infinite;
-        animation-delay: -8s;
-      }
-    }
-  }
-
-  @keyframes particleFloat {
-    0% {
-      transform: translateY(0) translateX(0) rotate(0deg);
-      opacity: 0.6;
-    }
-    33% {
-      transform: translateY(-80px) translateX(30px) rotate(120deg);
-      opacity: 0.3;
-    }
-    66% {
-      transform: translateY(-40px) translateX(-30px) rotate(240deg);
-      opacity: 0.5;
-    }
-    100% {
-      transform: translateY(0) translateX(0) rotate(360deg);
-      opacity: 0.6;
-    }
-  }
 }
 
-.register-background {
+// 背景装饰
+.bg-decoration {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
 
-  .bg-gradient {
+  .circle {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: 50%;
+    opacity: 0.5;
   }
 
-  .bg-shapes {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-
-    .shape {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0.1;
-    }
-
-    .shape-1 {
-      width: 600px;
-      height: 600px;
-      background: #fff;
-      top: -200px;
-      right: -200px;
-      animation: float 6s ease-in-out infinite;
-    }
-
-    .shape-2 {
-      width: 400px;
-      height: 400px;
-      background: #fff;
-      bottom: -150px;
-      left: -100px;
-      animation: float 8s ease-in-out infinite reverse;
-    }
-
-    .shape-3 {
-      width: 200px;
-      height: 200px;
-      background: #fff;
-      top: 50%;
-      left: 10%;
-      animation: float 5s ease-in-out infinite;
-    }
+  .circle-1 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
   }
-}
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-30px) rotate(10deg); }
+  .circle-2 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    bottom: -50px;
+    left: -50px;
+  }
+
+  .circle-3 {
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
+    top: 50%;
+    left: 10%;
+  }
 }
 
 .register-box {
+  width: 100%;
+  max-width: 420px;
+  background: $white;
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 20px 25px -5px rgba(0, 0, 0, 0.05);
   position: relative;
   z-index: 1;
-  width: 460px;
-  padding: 50px 40px;
-  // 深色玻璃态背景
-  background: rgba(28, 33, 40, 0.92);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
-              0 0 0 1px rgba(102, 126, 234, 0.1);
-
-  // 全息渐变边框
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    z-index: -1;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3), rgba(240, 147, 251, 0.3));
-    background-size: 300% 300%;
-    animation: holographicShift 4s ease-in-out infinite;
-    border-radius: 26px;
-    filter: blur(8px);
-    opacity: 0.6;
-  }
-
-  // 顶部高光线
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    animation: topShine 3s ease-in-out infinite;
-    animation-delay: 2s;
-  }
-
-  @keyframes topShine {
-    0%, 100% { left: -100%; }
-    50% { left: 100%; }
-  }
 }
 
+// 标题区域
 .register-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 
   .logo {
-    width: 80px;
-    height: 80px;
-    background: var(--gradient-primary);
-    border-radius: 20px;
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, $primary-green 0%, $light-blue 100%);
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    margin: 0 auto 20px;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-    animation: logoFloat 3s ease-in-out infinite;
+    color: $white;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
   }
 
   h1 {
-    font-size: 28px;
-    color: var(--text-primary);
-    margin-bottom: 8px;
+    font-size: 26px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--text-primary), var(--color-primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: $gray-800;
+    margin-bottom: 6px;
   }
 
   p {
     font-size: 14px;
-    color: var(--text-secondary);
-  }
-
-  @keyframes logoFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    color: $gray-500;
   }
 }
 
+// 表单样式
 .register-form {
-  .input-wrapper {
-    position: relative;
+  :deep(.el-form-item) {
+    margin-bottom: 18px;
+  }
+
+  :deep(.el-form-item__label) {
+    color: $gray-700;
+    font-weight: 500;
+    padding-bottom: 8px;
+  }
+
+  :deep(.el-input__wrapper) {
+    padding: 4px 16px;
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px $gray-200 inset;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 0 0 1px $primary-green inset;
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2), 0 0 0 1px $primary-green inset;
+    }
+  }
+
+  :deep(.el-input__inner) {
+    height: 44px;
+    color: $gray-800;
+
+    &::placeholder {
+      color: $gray-400;
+    }
+  }
+
+  :deep(.el-input__prefix) {
+    color: $gray-400;
+  }
+
+  // 下拉框样式
+  :deep(.el-select) {
     width: 100%;
 
-    .input-icon {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #8b949e;
-      z-index: 1;
-      transition: color 0.3s ease;
-    }
-
-    :deep(.el-input__wrapper) {
-      padding-left: 45px;
-      height: 48px;
+    .el-select__wrapper {
+      min-height: 52px;
+      padding: 6px 16px;
       border-radius: 12px;
-      background: rgba(33, 38, 45, 0.8) !important;
-      border: 1px solid #30363d;
-      box-shadow: none !important;
-      transition: all 0.3s var(--ease-smooth);
+      box-shadow: 0 0 0 1px $gray-200 inset;
 
       &:hover {
-        border-color: #667eea;
-        background: rgba(33, 38, 45, 0.9) !important;
-      }
-
-      &.is-focus {
-        border-color: #667eea;
-        background: rgba(33, 38, 45, 0.9) !important;
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
-      }
-    }
-
-    :deep(.el-input__inner) {
-      height: 48px;
-      color: #f5f8fa !important;
-      background: transparent !important;
-
-      &::placeholder {
-        color: #8b949e !important;
-      }
-    }
-
-    // Element Plus input 元素直接样式
-    :deep(input.el-input__inner) {
-      color: #f5f8fa !important;
-      background: transparent !important;
-
-      &::placeholder {
-        color: #8b949e !important;
-      }
-    }
-
-    // 强制覆盖 Element Plus 内部样式
-    :deep(.el-input__inner::-webkit-input-placeholder) {
-      color: #8b949e !important;
-    }
-
-    :deep(.el-input__inner::-moz-placeholder) {
-      color: #8b949e !important;
-    }
-
-    :deep(.el-input__inner::-ms-input-placeholder) {
-      color: #8b949e !important;
-    }
-
-    &:hover .input-icon {
-      color: var(--color-primary);
-    }
-
-    &.sms-wrapper {
-      display: flex;
-      gap: 10px;
-
-      .sms-input {
-        flex: 1;
-      }
-
-      .sms-btn {
-        width: 140px;
-        height: 48px;
-        border-radius: 12px;
-        flex-shrink: 0;
-        background: var(--gradient-primary);
-        border: none;
-        color: white;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-      }
-    }
-
-    &.user-type-select {
-      :deep(.el-input__wrapper) {
-        padding-left: 45px;
-        cursor: pointer;
-        background: rgba(33, 38, 45, 0.8) !important;
-        border: 1px solid #30363d !important;
-      }
-
-      :deep(.el-input__inner) {
-        color: #f5f8fa !important;
-        background: transparent !important;
-
-        &::placeholder {
-          color: #8b949e !important;
-        }
-      }
-    }
-
-    // el-select 下拉框文字颜色
-    :deep(.el-select__wrapper) {
-      background-color: rgba(33, 38, 45, 0.8) !important;
-      color: #f5f8fa !important;
-      box-shadow: none !important;
-      border: 1px solid #30363d !important;
-
-      &:hover {
-        border-color: #667eea !important;
+        box-shadow: 0 0 0 1px $primary-green inset;
       }
 
       &.is-focused {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2), 0 0 0 1px $primary-green inset !important;
       }
 
       .el-select__placeholder {
-        color: #8b949e !important;
+        color: $gray-400;
       }
 
-      .el-select__placeholder.is-transparent {
-        color: #8b949e !important;
+      .el-select__selected-item {
+        color: $gray-800;
       }
     }
+  }
 
-    :deep(.el-select__tags-text) {
-      color: #f5f8fa !important;
-    }
+  :deep(.el-select-dropdown) {
+    border-radius: 12px;
+    border: 1px solid $gray-200;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 
-    :deep(.el-select-dropdown) {
-      background-color: rgba(28, 33, 40, 0.95) !important;
-      border: 1px solid #30363d !important;
+    .el-select-dropdown__item {
+      color: $gray-700;
+      padding: 12px 16px;
 
-      .el-select-dropdown__item {
-        color: #f5f8fa !important;
-
-        &:hover {
-          background-color: #30363d !important;
-        }
-
-        &.is-selected {
-          color: #667eea !important;
-          background-color: rgba(102, 126, 234, 0.1) !important;
-        }
-      }
-    }
-
-    :deep(.el-select-dropdown__item) {
-      color: #f5f8fa !important;
-      background-color: transparent !important;
-
-      &.is-hovering {
-        background-color: #30363d !important;
+      &:hover {
+        background-color: $gray-50;
       }
 
       &.is-selected {
-        color: #667eea !important;
+        color: $primary-green;
+        background-color: rgba(34, 197, 94, 0.08);
+        font-weight: 600;
       }
     }
   }
 
-  .form-row {
-    display: flex;
-    gap: 15px;
-    align-items: flex-start;
+  // 验证码输入框
+  .code-input {
+    :deep(.el-input-group__append) {
+      background: linear-gradient(135deg, $primary-green 0%, $primary-green-dark 100%);
+      border: none;
+      border-radius: 0 12px 12px 0;
+      padding: 0;
+      margin: 0;
+      box-shadow: none;
 
-    .half-input {
-      flex: 1;
+      .code-btn {
+        background: transparent;
+        border: none;
+        color: $white;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 0 18px;
+        height: 44px;
+        margin: 3px 0;
+        border-radius: 0 9px 9px 0;
+        transition: all 0.2s ease;
+        white-space: nowrap;
 
-      :deep(.el-input__wrapper) {
-        background: rgba(33, 38, 45, 0.8) !important;
-        border: 1px solid #30363d !important;
-      }
-
-      :deep(.el-input__inner) {
-        color: #f5f8fa !important;
-        background: transparent !important;
-
-        &::placeholder {
-          color: #8b949e !important;
+        &:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.15);
         }
-      }
 
-      :deep(input.el-input__inner) {
-        color: #f5f8fa !important;
-        background: transparent !important;
-
-        &::placeholder {
-          color: #8b949e !important;
+        &:disabled {
+          background: rgba(255, 255, 255, 0.5);
+          color: $primary-green-dark;
+          cursor: not-allowed;
         }
       }
     }
+
+    :deep(.el-input__wrapper) {
+      border-radius: 12px 0 0 12px;
+    }
   }
 
-  // 性别选择器 - radio-button 样式
-  .gender-select-wrapper {
-    width: 100%;
-    flex: 1;
+  // 字段标签
+  .field-label {
+    font-weight: 500;
+    color: $gray-700;
+  }
 
+  // 性别选择
+  .gender-item {
     :deep(.el-form-item__content) {
-      line-height: normal !important;
+      justify-content: flex-start;
+    }
+  }
+
+  .gender-buttons {
+    :deep(.el-radio-group) {
+      display: flex;
+      gap: 12px;
     }
 
-    .gender-radio-group {
-      width: 100%;
+    :deep(.el-radio-button) {
+      .el-radio-button__inner {
+        border: 2px solid $gray-200;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        color: $gray-500;
+        background: $gray-50;
+        box-shadow: none !important;
+        transition: all 0.2s ease;
 
-      .el-radio-group {
-        display: flex;
-        width: 100%;
-        gap: 8px;
-
-        .el-radio-button {
-          flex: 1;
-
-          .el-radio-button__inner {
-            width: 100%;
-            background: rgba(33, 38, 45, 0.8);
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            color: #8b949e;
-            font-size: 14px;
-            height: 48px;
-            line-height: 48px;
-            padding: 0 16px;
-            transition: all 0.3s ease;
-            box-shadow: none !important;
-
-            &:hover {
-              color: #f5f8fa;
-              border-color: #667eea;
-            }
-          }
-
-          &.is-active {
-            .el-radio-button__inner {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              border-color: #667eea;
-              color: #ffffff;
-              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            }
-          }
-
-          .el-radio-button__original-radio:checked + .el-radio-button__inner {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: #667eea;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-          }
+        &:hover {
+          border-color: $primary-green;
+          color: $primary-green;
         }
       }
+
+      &.is-active {
+        .el-radio-button__inner {
+          border-color: $primary-green;
+          background: linear-gradient(135deg, $primary-green 0%, $primary-green-dark 100%);
+          color: $white;
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+        }
+      }
+
+      .el-radio-button__original-radio:checked + .el-radio-button__inner {
+        border-color: $primary-green;
+        background: linear-gradient(135deg, $primary-green 0%, $primary-green-dark 100%);
+        color: $white;
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+      }
     }
   }
 
-  .admin-validation {
-    background: rgba(230, 162, 60, 0.08);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(230, 162, 60, 0.3);
-  }
-
+  // 关系选择区域
   .relation-section {
-    background: rgba(64, 158, 255, 0.08);
-    padding: 15px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.2);
     border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(64, 158, 255, 0.3);
-
-    :deep(.el-select__wrapper) {
-      background-color: rgba(33, 38, 45, 0.8) !important;
-      color: #f5f8fa !important;
-      border: 1px solid #30363d !important;
-      box-shadow: none !important;
-
-      .el-select__placeholder {
-        color: #8b949e !important;
-      }
-    }
+    padding: 16px;
+    margin-bottom: 18px;
   }
 
-  .full-width {
-    width: 100%;
-
-    :deep(.el-select__wrapper) {
-      background-color: rgba(33, 38, 45, 0.8) !important;
-      color: #f5f8fa !important;
-      border: 1px solid #30363d !important;
-      box-shadow: none !important;
-
-      .el-select__placeholder {
-        color: #8b949e !important;
-      }
-    }
-  }
-
+  // 注册按钮
   .register-btn {
     width: 100%;
-    height: 48px;
+    height: 52px;
     border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, $primary-green 0%, $light-blue 100%);
     border: none;
-    transition: all 0.3s var(--ease-smooth);
-    margin-top: 10px;
+    color: $white;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
     }
 
     &:active {
@@ -1003,37 +703,40 @@ const handleRegister = async () => {
   }
 }
 
+// 底部链接
 .register-footer {
   text-align: center;
-  margin-top: 25px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid $gray-100;
 
-  p {
-    color: var(--text-secondary);
+  span {
+    color: $gray-500;
     font-size: 14px;
-    margin-bottom: 15px;
   }
 
-  .back-login {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--color-primary);
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s var(--ease-smooth);
+  :deep(.el-link) {
+    font-weight: 500;
 
     &:hover {
-      color: var(--color-primary-light);
-      transform: translateX(4px);
+      color: $primary-green;
     }
+  }
+}
 
-    svg {
-      transition: transform 0.3s ease;
-    }
+// 响应式
+@media (max-width: 480px) {
+  .register-box {
+    padding: 30px 24px;
+  }
 
-    &:hover svg {
-      transform: translateX(-2px);
-    }
+  .register-header h1 {
+    font-size: 22px;
+  }
+
+  .gender-buttons :deep(.el-radio-button__inner) {
+    padding: 8px 16px;
+    font-size: 13px;
   }
 }
 </style>

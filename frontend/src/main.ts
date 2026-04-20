@@ -8,13 +8,19 @@ import router from './router'
 import App from './App.vue'
 import './styles/global.css'
 
+// 浅色主题必须在深色主题之前加载
+import './styles/theme-light.scss' // 浅色绿色主题样式（必须最先加载）
+import './styles/global-dynamic-bg.scss' // 全局动态背景
+
 // 引入动画和动效样式
 import './styles/animations.scss'
 import './styles/buttons.scss'
 import './styles/tables.scss'
 import './styles/advanced-effects.scss'
-import './styles/theme-light.scss' // 浅色绿色主题样式
-import './styles/theme.scss' // 大字模式样式
+
+// 深色主题样式（最后加载，可以覆盖）
+// 注意：老人界面不应使用深色主题，所以这行可以注释掉
+// import './styles/theme.scss'
 
 const app = createApp(App)
 

@@ -23,7 +23,8 @@
       <el-tab-pane label="健康监测" name="health">
         <div class="card-container">
           <div class="search-form">
-            <el-select v-model="healthSearch.elder_id" placeholder="选择老人" clearable style="width: 150px">
+            <!-- 老人用户不显示老人选择框 -->
+            <el-select v-if="!isElder" v-model="healthSearch.elder_id" placeholder="选择老人" clearable style="width: 150px">
               <el-option v-for="elder in elders" :key="elder.id" :label="elder.name" :value="elder.id" />
             </el-select>
             <el-select v-model="healthSearch.metric_type" placeholder="指标类型" clearable style="width: 150px">
@@ -53,8 +54,8 @@
 
           <!-- 指标记录列表 -->
           <el-table :data="metrics" v-loading="healthLoading" style="margin-top: 20px">
-            <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="elder_name" label="老人" />
+            <!-- 老人用户不显示"老人"列 -->
+            <el-table-column v-if="!isElder" prop="elder_name" label="老人" />
             <el-table-column prop="metric_type_name" label="指标类型" />
             <el-table-column label="数值" width="120">
               <template #default="{ row }">
@@ -274,6 +275,19 @@ const isAdminOrNurse = computed(() => {
   return userType === 2 || userType === 3
 })
 
+// 判断是否为老人用户
+const isElder = computed(() => {
+  return authStore.userInfo?.user_type === 1
+})
+
+// 获取当前老人用户的ID
+const currentElderId = computed(() => {
+  if (isElder.value) {
+    return authStore.userInfo?.id
+  }
+  return null
+})
+
 // 健康监测相关
 const healthSearch = reactive({ elder_id: '', metric_type: '' })
 const healthFormRef = ref<FormInstance>()
@@ -374,33 +388,6 @@ const getMetricTypeByKey = (key: string): number => {
   return map[key] || 0
 }
 
-// 格式化健康指标值（取整或保留小数）
-const formatMetricValue = (value: number | undefined, metricType: number): string => {
-  if (value === undefined || value === null) return '--'
-  
-  const numValue = Number(value)
-  
-  switch (metricType) {
-    case 1: // 体温 - 保留1位小数
-      return numValue.toFixed(1)
-    case 2: // 收缩压 - 整数
-    case 3: // 舒张压 - 整数
-    case 4: // 心率 - 整数
-    case 10: // 步数 - 整数
-      return String(Math.round(numValue))
-    case 5: // 血氧 - 保留1位小数
-    case 6: // 血糖 - 保留2位小数
-      return numValue.toFixed(1)
-    case 7: // 体重 - 保留1位小数
-    case 8: // 身高 - 保留1位小数
-      return numValue.toFixed(1)
-    case 9: // 睡眠时长 - 保留1位小数
-      return numValue.toFixed(1)
-    default:
-      return String(numValue)
-  }
-}
-
 // 护理计划相关
 const plans = ref<any[]>([])
 const planLoading = ref(false)
@@ -442,7 +429,14 @@ const getMetrics = async () => {
   healthLoading.value = true
   try {
     const params: any = { page: healthPagination.page, page_size: healthPagination.page_size }
-    if (healthSearch.elder_id) params.elder_id = healthSearch.elder_id
+
+    // 老人用户只能查看自己的数据
+    if (isElder.value && currentElderId.value) {
+      params.elder_id = currentElderId.value
+    } else {
+      if (healthSearch.elder_id) params.elder_id = healthSearch.elder_id
+    }
+
     if (healthSearch.metric_type) params.metric_type = healthSearch.metric_type
 
     const res: any = await api.get('/health/metrics', { params })
@@ -482,16 +476,24 @@ const getLatestMetricsForElder = async (elder_id: number) => {
 
 const getLatestMetrics = async () => {
   try {
-    const res: any = await api.get('/health/latest')
-    if (res.code === 200 && res.data) latestMetrics.value = res.data
+    // 老人用户获取自己的最新指标，其他用户获取所有老人的最新指标
+    if (isElder.value && currentElderId.value) {
+      await getLatestMetricsForElder(currentElderId.value)
+    } else {
+      const res: any = await api.get('/health/latest')
+      if (res.code === 200 && res.data) latestMetrics.value = res.data
+    }
   } catch (error) {
     console.error('获取最新指标失败', error)
   }
 }
 
 const resetHealthSearch = () => {
-  healthSearch.elder_id = ''
   healthSearch.metric_type = ''
+  // 老人用户不重置老人选择（因为是固定的）
+  if (!isElder.value) {
+    healthSearch.elder_id = ''
+  }
   getMetrics()
 }
 
@@ -536,7 +538,14 @@ const submitHealthRecord = async () => {
 const getPlans = async () => {
   planLoading.value = true
   try {
-    const res: any = await api.get('/care/plans', { params: { page: planPagination.page, page_size: planPagination.page_size } })
+    const params: any = { page: planPagination.page, page_size: planPagination.page_size }
+
+    // 老人用户只能查看自己的护理计划
+    if (isElder.value && currentElderId.value) {
+      params.elder_id = currentElderId.value
+    }
+
+    const res: any = await api.get('/care/plans', { params })
     if (res.code === 200) {
       plans.value = res.data.items || []
       planPagination.total = res.data.total || 0
@@ -720,7 +729,12 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.page-container { padding: 20px; }
+.page-container {
+  padding: 20px;
+  background: #ffffff;
+  color: #303133;
+  min-height: 100%;
+}
 
 .page-header {
   display: flex;
@@ -741,36 +755,42 @@ onMounted(() => {
 }
 
 .main-tabs {
-  background: #fff;
+  background: #ffffff;
   padding: 20px;
   border-radius: 8px;
 }
 
-.card-container { background: #fff; border-radius: 8px; }
+.card-container {
+  background: #ffffff;
+  border-radius: 8px;
+}
 
 .search-form {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
   padding: 15px;
-  background: #f5f7fa;
+  background: #f0fdf4;
   border-radius: 8px;
+  border: 1px solid #dcfce7;
 }
 
 .latest-metrics {
   margin-bottom: 20px;
 
   .metric-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     color: #fff;
     padding: 20px;
     border-radius: 12px;
     text-align: center;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 
     .metric-label {
       font-size: 14px;
-      opacity: 0.9;
+      opacity: 0.95;
       margin-bottom: 8px;
+      font-weight: 500;
     }
 
     .metric-value {
@@ -781,7 +801,7 @@ onMounted(() => {
 
     .metric-time {
       font-size: 12px;
-      opacity: 0.7;
+      opacity: 0.85;
     }
   }
 }
@@ -793,5 +813,92 @@ onMounted(() => {
     margin-bottom: 10px;
     color: #303133;
   }
+}
+
+// 确保表格文字颜色可见
+:deep(.el-table) {
+  background: #ffffff !important;
+  color: #303133 !important;
+
+  th.el-table__cell {
+    background: #f5f7fa !important;
+    color: #303133 !important;
+  }
+
+  td.el-table__cell {
+    color: #303133 !important;
+  }
+
+  .cell {
+    color: #303133 !important;
+  }
+
+  // 空状态文字
+  .el-table__empty-text {
+    color: #606266 !important;
+  }
+}
+
+// 确保tabs标签页样式正确
+:deep(.el-tabs__item) {
+  color: #606266 !important;
+
+  &.is-active {
+    color: #22c55e !important;
+  }
+
+  &:hover {
+    color: #22c55e !important;
+  }
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: #22c55e !important;
+}
+
+// 确保下拉框样式正确
+:deep(.el-select) {
+  .el-input__wrapper {
+    background: #ffffff !important;
+    box-shadow: 0 0 0 1px #dcdfe6 inset !important;
+  }
+
+  .el-input__inner {
+    color: #303133 !important;
+  }
+}
+
+// 确保按钮样式正确
+:deep(.el-button) {
+  background: #ffffff !important;
+  border-color: #dcdfe6 !important;
+  color: #303133 !important;
+}
+
+:deep(.el-button--primary) {
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+  color: #ffffff !important;
+}
+
+// 确保分页样式正确
+:deep(.el-pagination) {
+  color: #303133 !important;
+}
+
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  background: #ffffff !important;
+  color: #303133 !important;
+}
+
+:deep(.el-pagination .el-pager li) {
+  background: #ffffff !important;
+  color: #303133 !important;
+}
+
+:deep(.el-pagination .el-pager li.is-active) {
+  background: #22c55e !important;
+  color: #ffffff !important;
 }
 </style>

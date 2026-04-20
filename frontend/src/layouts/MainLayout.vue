@@ -533,9 +533,23 @@ onUnmounted(() => {
     align-items: center;
     gap: 10px;
     cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f0fdf4;
+    }
 
     .username {
       color: #1e293b;
+      font-weight: 500;
+    }
+
+    .el-dropdown__caret-button {
+      .el-icon {
+        color: #64748b;
+      }
     }
   }
 
@@ -615,14 +629,41 @@ onUnmounted(() => {
   background-color: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  padding: 8px 0 !important;
 
-  .el-dropdown-item {
+  .el-dropdown-menu__item {
     color: #1e293b !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
 
     &:hover {
       background-color: #f0fdf4 !important;
       color: #22c55e !important;
     }
+
+    &:focus {
+      background-color: #f0fdf4 !important;
+      color: #22c55e !important;
+    }
+
+    .el-icon {
+      color: #64748b !important;
+      margin-right: 8px !important;
+    }
+  }
+
+  // 分隔线
+  .el-dropdown-menu__item--divided {
+    border-top: 1px solid #e2e8f0 !important;
+    margin-top: 8px !important;
+  }
+}
+
+// 确保下拉触发器文字可见
+:deep(.el-dropdown) {
+  .el-dropdown-selfdefine {
+    color: #1e293b !important;
   }
 }
 

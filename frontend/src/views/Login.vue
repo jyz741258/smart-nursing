@@ -456,12 +456,27 @@ const handleLogin = async () => {
       &:hover, &.is-focus {
         box-shadow: 0 0 0 2px #22c55e;
       }
+
+      .el-input__inner {
+        color: #1e293b !important;
+        -webkit-text-fill-color: #1e293b !important;
+      }
     }
 
     :deep(.el-input__inner) {
       height: 48px;
-      color: #1e293b;
+      color: #1e293b !important;
+      -webkit-text-fill-color: #1e293b !important;
+
       &::placeholder {
+        color: #94a3b8 !important;
+        -webkit-text-fill-color: #94a3b8 !important;
+      }
+    }
+
+    // 密码显示切换按钮
+    :deep(.el-input__suffix) {
+      .el-icon {
         color: #94a3b8;
       }
     }
