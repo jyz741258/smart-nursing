@@ -595,7 +595,7 @@ onMounted(async () => {
   position: relative;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #0a0e14 0%, #12151c 50%, #0d1117 100%);
+  background: linear-gradient(135deg, #0a141e 0%, #1a2332 50%, #121a24 100%);
 
   &::before {
     content: '';
@@ -605,10 +605,11 @@ onMounted(async () => {
     width: 300%;
     height: 300%;
     background: 
-      radial-gradient(ellipse at 30% 30%, rgba(245, 108, 108, 0.12) 0%, transparent 40%),
-      radial-gradient(ellipse at 70% 70%, rgba(240, 147, 251, 0.08) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 50%, rgba(245, 108, 108, 0.1) 0%, transparent 50%);
-    animation: familyBgFloat 25s ease-in-out infinite;
+      radial-gradient(ellipse at 20% 20%, rgba(64, 158, 255, 0.15) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 80%, rgba(102, 177, 255, 0.1) 0%, transparent 45%),
+      radial-gradient(ellipse at 40% 60%, rgba(64, 158, 255, 0.12) 0%, transparent 55%),
+      radial-gradient(ellipse at 60% 40%, rgba(102, 177, 255, 0.08) 0%, transparent 55%);
+    animation: familyBgFloat 28s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
   }
@@ -618,10 +619,10 @@ onMounted(async () => {
     position: fixed;
     inset: 0;
     background-image: 
-      linear-gradient(rgba(245, 108, 108, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(245, 108, 108, 0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-    animation: gridMove 25s linear infinite;
+      linear-gradient(rgba(64, 158, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(64, 158, 255, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 30s linear infinite;
     pointer-events: none;
     z-index: 0;
   }
@@ -667,9 +668,9 @@ onMounted(async () => {
   margin-bottom: 24px;
 
   &.family {
-    background: linear-gradient(135deg, #f56c6c, #fa7979);
+    background: linear-gradient(135deg, #409eff, #66b1ff);
     color: #ffffff;
-    box-shadow: 0 4px 24px rgba(245, 108, 108, 0.5), 0 0 0 2px rgba(245, 108, 108, 0.2);
+    box-shadow: 0 4px 24px rgba(64, 158, 255, 0.5), 0 0 0 2px rgba(64, 158, 255, 0.2);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     animation: fadeInDown 0.6s var(--ease-bounce);
   }
@@ -686,7 +687,7 @@ onMounted(async () => {
 .welcome-banner {
   position: relative;
   z-index: 1;
-  background: linear-gradient(135deg, #f56c6c, #fa7979);
+  background: linear-gradient(135deg, #409eff, #66b1ff);
   border-radius: 18px;
   padding: 32px;
   display: flex;
@@ -694,7 +695,7 @@ onMounted(async () => {
   align-items: center;
   margin-bottom: 28px;
   color: #fff;
-  box-shadow: 0 10px 40px rgba(245, 108, 108, 0.4);
+  box-shadow: 0 10px 40px rgba(64, 158, 255, 0.4);
   overflow: hidden;
 
   &::before {
@@ -716,7 +717,7 @@ onMounted(async () => {
     left: -10%;
     width: 250px;
     height: 250px;
-    background: radial-gradient(circle, rgba(240, 147, 251, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(102, 177, 255, 0.15) 0%, transparent 70%);
     border-radius: 50%;
     animation: bannerOrb2 30s ease-in-out infinite reverse;
   }
@@ -772,77 +773,110 @@ onMounted(async () => {
     font-weight: 600;
     color: #ffffff;
     padding-left: 10px;
-    border-left: 4px solid #f56c6c;
+    border-left: 4px solid #409eff;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 }
 
 .health-cards {
   .health-card {
-    background: rgba(40, 50, 60, 0.95);
-    border-radius: 12px;
-    padding: 20px;
+    background: rgba(45, 55, 70, 0.95);
+    border-radius: 16px;
+    padding: 24px;
     text-align: center;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(245, 108, 108, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(64, 158, 255, 0.25);
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(64, 158, 255, 0.1) 0%, transparent 70%);
+      transform: rotate(45deg);
+      transition: all 0.6s ease;
+      opacity: 0;
+    }
 
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(245, 108, 108, 0.3);
-      border-color: rgba(245, 108, 108, 0.4);
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(64, 158, 255, 0.4);
+      border-color: rgba(64, 158, 255, 0.5);
+
+      &::before {
+        opacity: 1;
+        transform: rotate(45deg) scale(1.2);
+      }
     }
 
     .card-icon {
-      width: 50px;
-      height: 50px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 12px;
-      font-size: 24px;
+      margin: 0 auto 16px;
+      font-size: 28px;
       color: #fff;
+      position: relative;
+      z-index: 1;
     }
 
     .card-value {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 700;
       color: #ffffff;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .card-label {
-      font-size: 13px;
+      font-size: 14px;
       color: #b8c5d6;
+      position: relative;
+      z-index: 1;
     }
 
     .card-status {
       font-size: 12px;
-      margin-top: 8px;
-      padding: 2px 8px;
-      border-radius: 10px;
+      font-weight: 500;
+      margin-top: 12px;
+      padding: 4px 12px;
+      border-radius: 12px;
       display: inline-block;
+      position: relative;
+      z-index: 1;
 
       &.normal {
         background: rgba(103, 194, 58, 0.2);
         color: #67c23a;
+        border: 1px solid rgba(103, 194, 58, 0.3);
       }
 
       &.warning {
         background: rgba(245, 158, 11, 0.2);
         color: #e6a23c;
+        border: 1px solid rgba(245, 158, 11, 0.3);
       }
 
       &.danger {
         background: rgba(245, 108, 108, 0.2);
         color: #f56c6c;
+        border: 1px solid rgba(245, 108, 108, 0.3);
       }
     }
 
-    &.heart .card-icon { background: linear-gradient(135deg, #f56c6c, #fab6b6); }
-    &.blood .card-icon { background: linear-gradient(135deg, #e6a23c, #f3d19e); }
-    &.sleep .card-icon { background: linear-gradient(135deg, #909399, #c0c4cc); }
+    &.heart .card-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
+    &.blood .card-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
+    &.sleep .card-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
     &.activity .card-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
   }
 }
@@ -850,40 +884,51 @@ onMounted(async () => {
 .nursing-records {
   position: relative;
   z-index: 1;
-  background: rgba(40, 50, 60, 0.95);
+  background: rgba(45, 55, 70, 0.95);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid rgba(245, 108, 108, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.25);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+  }
 
   :deep(.el-card) {
     border: none;
     box-shadow: none;
-    background: rgba(30, 40, 50, 0.9);
+    background: rgba(35, 45, 60, 0.9);
     border-radius: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    padding: 20px;
     transition: all 0.3s ease;
+    border-left: 4px solid #409eff;
 
     &:hover {
-      transform: translateX(8px);
-      box-shadow: 0 6px 20px rgba(245, 108, 108, 0.15);
+      transform: translateX(10px);
+      box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+      background: rgba(40, 50, 65, 0.95);
     }
   }
 
   h4 {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 8px;
+    color: #66b1ff;
+    margin-bottom: 10px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 
   p {
-    font-size: 13px;
+    font-size: 14px;
     color: #9aafc0;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    line-height: 1.5;
   }
 
   .record-nurse {
-    color: #7a9ab5;
+    color: #66b1ff;
+    font-weight: 500;
   }
 }
 
@@ -894,11 +939,11 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 20px;
-  border: 1px solid rgba(245, 108, 108, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.2);
   transition: all 0.3s ease;
 
   &:hover {
-    box-shadow: 0 12px 32px rgba(245, 108, 108, 0.15);
+    box-shadow: 0 12px 32px rgba(64, 158, 255, 0.15);
   }
 }
 
@@ -910,12 +955,12 @@ onMounted(async () => {
     background: rgba(30, 40, 50, 0.9);
     border-radius: 12px;
     margin-bottom: 12px;
-    border: 1px solid rgba(245, 108, 108, 0.15);
+    border: 1px solid rgba(64, 158, 255, 0.15);
     transition: all 0.3s ease;
 
     &:hover {
       background: rgba(50, 60, 70, 0.95);
-      border-color: rgba(245, 108, 108, 0.3);
+      border-color: rgba(64, 158, 255, 0.3);
       transform: translateX(8px);
     }
 
@@ -928,7 +973,7 @@ onMounted(async () => {
         display: block;
         font-size: 20px;
         font-weight: 600;
-        color: #f56c6c;
+        color: #409eff;
       }
 
       .week {
@@ -942,13 +987,15 @@ onMounted(async () => {
 
       .plan-name {
         font-size: 14px;
-        color: #e8eef5;
+        font-weight: 600;
+        color: #ffffff;
         margin-bottom: 4px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
 
       .plan-time {
         font-size: 12px;
-        color: #7a9ab5;
+        color: #9aafc0;
       }
     }
   }
@@ -958,47 +1005,69 @@ onMounted(async () => {
   .alert-item {
     display: flex;
     align-items: flex-start;
-    padding: 16px;
+    padding: 18px;
     border-radius: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     background: rgba(245, 158, 11, 0.15);
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.25);
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: #f59e0b;
+    }
 
     &.danger {
       background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.25);
 
-      .alert-icon {
+      &::before {
+        background: #ef4444;
+      }
+
+      .el-icon {
         color: #ef4444;
       }
     }
 
     &:hover {
-      transform: translateX(8px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      transform: translateX(10px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     }
 
     .el-icon {
-      margin-right: 12px;
-      margin-top: 3px;
-      font-size: 20px;
+      margin-right: 14px;
+      margin-top: 4px;
+      font-size: 22px;
       color: #f59e0b;
+      position: relative;
+      z-index: 1;
     }
 
     .alert-content {
       flex: 1;
+      position: relative;
+      z-index: 1;
 
       .alert-text {
         font-size: 14px;
-        color: #e8eef5;
-        margin-bottom: 6px;
+        font-weight: 500;
+        color: #ffffff;
+        margin-bottom: 8px;
         line-height: 1.5;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
 
       .alert-time {
         font-size: 12px;
-        color: #7a9ab5;
+        color: #9aafc0;
       }
     }
   }
@@ -1014,7 +1083,7 @@ onMounted(async () => {
       width: 100%;
       justify-content: flex-start;
       background: rgba(30, 40, 50, 0.9);
-      border: 1px solid rgba(245, 108, 108, 0.2);
+      border: 1px solid rgba(64, 158, 255, 0.2);
       color: #e8eef5;
       padding: 16px 20px;
       border-radius: 12px;
@@ -1022,9 +1091,9 @@ onMounted(async () => {
 
       &:hover {
         background: rgba(50, 60, 70, 0.95);
-        border-color: rgba(245, 108, 108, 0.4);
+        border-color: rgba(64, 158, 255, 0.4);
         transform: translateX(8px);
-        box-shadow: 0 6px 16px rgba(245, 108, 108, 0.2);
+        box-shadow: 0 6px 16px rgba(64, 158, 255, 0.2);
       }
     }
   }
@@ -1037,7 +1106,7 @@ onMounted(async () => {
   border-radius: 18px;
   padding: 80px;
   text-align: center;
-  border: 1px solid rgba(245, 108, 108, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.2);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 

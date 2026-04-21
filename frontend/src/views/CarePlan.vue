@@ -282,3 +282,192 @@ onMounted(() => {
   getElders()
 })
 </script>
+
+<style scoped lang="scss">
+.page-container {
+  padding: 24px;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+}
+
+.card-container {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: all 0.3s var(--ease-smooth);
+  position: relative;
+
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s var(--ease-smooth);
+  }
+
+  &:hover::before {
+    transform: scaleX(1);
+  }
+}
+
+.tasks-section {
+  margin-top: 24px;
+
+  h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-left: 10px;
+    border-left: 4px solid var(--color-primary);
+  }
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  background: transparent;
+
+  th.el-table__cell {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  td.el-table__cell {
+    color: var(--text-primary);
+  }
+
+  .el-table__row {
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+  }
+}
+
+/* 对话框样式优化 */
+:deep(.el-dialog) {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+
+  .el-dialog__title {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .el-dialog__body {
+    color: var(--text-primary);
+  }
+}
+
+/* 描述列表样式优化 */
+:deep(.el-descriptions) {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+
+  .el-descriptions__label {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .el-descriptions__content {
+    color: var(--text-primary);
+  }
+}
+
+/* 表单样式优化 */
+:deep(.el-form-item__label) {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+:deep(.el-input__inner),
+:deep(.el-textarea__inner) {
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+
+  &:focus {
+    border-color: var(--color-primary);
+  }
+}
+
+:deep(.el-select) {
+  .el-select__input {
+    color: var(--text-primary);
+  }
+
+  .el-select__placeholder {
+    color: var(--text-tertiary);
+  }
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  font-weight: 500;
+
+  &.el-button--primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+
+    &:hover {
+      background-color: var(--color-primary-light);
+      border-color: var(--color-primary-light);
+    }
+  }
+
+  &.el-button--success {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+
+    &:hover {
+      background-color: var(--color-success-light);
+      border-color: var(--color-success-light);
+    }
+  }
+
+  &.el-button--warning {
+    background-color: var(--color-warning);
+    border-color: var(--color-warning);
+
+    &:hover {
+      background-color: var(--color-warning-light);
+      border-color: var(--color-warning-light);
+    }
+  }
+}
+
+/* 标签样式优化 */
+:deep(.el-tag) {
+  font-weight: 500;
+}
+</style>
