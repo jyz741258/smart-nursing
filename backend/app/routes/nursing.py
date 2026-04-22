@@ -47,6 +47,24 @@ def get_nursing_records(current_user):
 
     query = NursingRecord.query
 
+    # 权限控制
+    if current_user.user_type == 4:  # 家属
+        # 家属只能查看绑定的老人的护理记录
+        if current_user.binding_elder_id:
+            # 如果提供了elder_id，验证是否是绑定的老人
+            if elder_id and elder_id != current_user.binding_elder_id:
+                return api_error('无权限查看该老人的护理记录', 403)
+            # 强制使用绑定的老人ID
+            elder_id = current_user.binding_elder_id
+        else:
+            return page_response([], 0, page, page_size)  # 未绑定老人，返回空
+    elif current_user.user_type == 1:  # 老人
+        # 老人只能查看自己的护理记录
+        if elder_id and elder_id != current_user.id:
+            return api_error('无权限查看其他老人的护理记录', 403)
+        # 强制使用老人自己的ID
+        elder_id = current_user.id
+
     if elder_id:
         query = query.filter_by(elder_id=elder_id)
     if nursing_type:
@@ -66,6 +84,8 @@ def get_nursing_records(current_user):
         'end_time': r.end_time.isoformat() if r.end_time else None,
         'status': r.status,
         'status_name': r.get_status_display(),
+        'staff_id': r.staff_id,
+        'staff_name': r.staff.name if r.staff else None,
         'created_at': r.created_at.isoformat()
     } for r in pagination.items]
 
