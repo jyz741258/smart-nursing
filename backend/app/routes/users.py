@@ -276,8 +276,8 @@ def bind_elder(current_user):
     if not elder:
         return api_error('老人不存在或用户类型不正确')
 
-    # 验证老人账号和密码
-    if elder.username != username or not elder.check_password(password):
+    # 验证老人账号和密码（支持用户名或手机号）
+    if (elder.username != username and elder.phone != username) or not elder.check_password(password):
         return api_error('老人账号或密码错误')
 
     # 检查是否已经绑定
