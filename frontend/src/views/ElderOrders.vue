@@ -23,8 +23,16 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="appointment_date" label="预约日期" width="120" />
-      <el-table-column prop="appointment_time" label="预约时间" width="100" />
+      <el-table-column label="预约日期" width="120">
+        <template #default="{ row }">
+          {{ row.appointment_date || '待定' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="预约时间" width="100">
+        <template #default="{ row }">
+          {{ row.appointment_time || '待定' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="nurse_name" label="护理员" width="100">
         <template #default="{ row }">
           <span v-if="row.nurse_name">{{ row.nurse_name }}</span>

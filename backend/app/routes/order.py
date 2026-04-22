@@ -144,12 +144,30 @@ def get_orders(current_user):
         pagination = query.paginate(page=page, per_page=page_size, error_out=False)
         orders = []
         for order in pagination.items:
-            order_dict = order.to_dict()
+            # 直接构建蛇形命名法的字典
+            order_dict = {
+                'id': order.id,
+                'order_no': order.order_no,
+                'user_id': order.user_id,
+                'service_id': order.service_id,
+                'elder_id': order.elder_id,
+                'nurse_id': order.nurse_id,
+                'total_amount': float(order.total_amount) if order.total_amount else 0,
+                'actual_amount': float(order.actual_amount) if order.actual_amount else 0,
+                'service_name': order.service_name,
+                'appointment_date': order.appointment_date.strftime('%Y-%m-%d') if order.appointment_date else None,
+                'appointment_time': order.appointment_time,
+                'remark': order.remark,
+                'status': order.status,
+                'created_at': order.created_at.strftime('%Y-%m-%d %H:%M:%S') if order.created_at else None
+            }
+            # 调试日志：打印订单数据，确认预约日期和预约时间是否存在
+            print(f"[Order Debug] ID={order.id}, appointment_date={order.appointment_date}, appointment_time={order.appointment_time}")
             # 添加上下文信息
             service = Service.query.get(order.service_id)
             if service:
                 order_dict['service_name'] = service.name
-                order_dict['price'] = service.price
+                order_dict['price'] = float(service.price) if service.price else 0
             elder = User.query.get(order.elder_id)
             if elder:
                 order_dict['elder_name'] = elder.name
@@ -272,6 +290,17 @@ def create_order(current_user):
             status=1,  # 待支付
             created_by=current_user.id
         )
+
+        # 自动分配护理员（选择第一个可用的护理员）
+        try:
+            available_nurse = User.query.filter_by(user_type=2, status=1).first()
+            if available_nurse:
+                order.nurse_id = available_nurse.id
+                print(f"自动分配护理员成功：护理员ID={available_nurse.id}, 姓名={available_nurse.name}")
+            else:
+                print("无可用护理员，未分配")
+        except Exception as e:
+            print(f"自动分配护理员失败：{e}")
 
         db.session.add(order)
         db.session.commit()
