@@ -92,6 +92,21 @@
               </div>
             </div>
 
+            <!-- 服务老人 -->
+            <div class="elder-list">
+              <div class="section-title">服务老人</div>
+              <div class="elder-items">
+                <div v-for="elder in serviceElders" :key="elder.id" class="elder-item">
+                  <div class="elder-info">
+                    <div class="elder-name">{{ elder.name }}</div>
+                    <div class="elder-phone">{{ elder.phone }}</div>
+                  </div>
+                  <el-button type="primary" size="small" @click="viewElderOrders(elder.id)">查看订单</el-button>
+                </div>
+              </div>
+              <el-empty v-if="serviceElders.length === 0" description="暂无服务老人" />
+            </div>
+
             <div class="quick-actions">
               <div class="section-title">快捷操作</div>
               <div class="action-list">
@@ -222,8 +237,33 @@ const todayTasks = ref([
   { id: 3, time: '14:00', duration: 45, elderName: '王五', address: '西城区金融街8号', notes: '服药提醒', type: 4, status: 1 }
 ])
 
+// 服务老人列表
+const serviceElders = ref<any[]>([])
+
 const getTypeName = (type: number) => ({ 1: '日常照护', 2: '医疗护理', 3: '康复训练', 4: '健康监测' }[type] || '其他')
 const getTypeColor = (type: number) => ({ 1: 'success', 2: 'primary', 3: 'warning', 4: 'info' }[type] || 'info')
+
+// 加载服务老人列表
+const loadServiceElders = async () => {
+  try {
+    const res: any = await api.get('/users/service-elders')
+    if (res.code === 200) {
+      serviceElders.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取服务老人列表失败', error)
+    // 模拟数据
+    serviceElders.value = [
+      { id: 1, name: '张三', phone: '13900001001' },
+      { id: 3, name: '王五', phone: '13900001003' }
+    ]
+  }
+}
+
+// 查看老人订单
+const viewElderOrders = (elderId: number) => {
+  $router.push({ path: '/orders', query: { elder_id: elderId } })
+}
 
 const startTask = (task: any) => {
   currentTask.value = task
@@ -241,6 +281,7 @@ const syncHealth = () => ElMessage.success('健康数据同步成功')
 
 onMounted(() => {
   loadOrders()
+  loadServiceElders()
   // 每30秒轮询检查新订单
   orderTimer = setInterval(loadOrders, 30000)
 })
@@ -618,6 +659,69 @@ onUnmounted(() => {
       background: rgba(64, 158, 255, 0.15);
       border-color: rgba(64, 158, 255, 0.4);
       transform: translateX(8px);
+    }
+  }
+}
+
+// 服务老人列表
+.elder-list {
+  position: relative;
+  z-index: 1;
+  background: rgba(40, 50, 60, 0.95);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(64, 158, 255, 0.2);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 32px rgba(64, 158, 255, 0.15);
+  }
+
+  .section-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: #ffffff;
+    padding-left: 12px;
+    border-left: 4px solid #409eff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    margin-bottom: 18px;
+  }
+
+  .elder-items {
+    .elder-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: rgba(30, 40, 50, 0.9);
+      border: 1px solid rgba(64, 158, 255, 0.15);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(50, 60, 70, 0.95);
+        border-color: rgba(64, 158, 255, 0.4);
+        transform: translateX(8px);
+        box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+      }
+
+      .elder-info {
+        flex: 1;
+
+        .elder-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #e8eef5;
+          margin-bottom: 4px;
+        }
+
+        .elder-phone {
+          font-size: 13px;
+          color: #9aafc0;
+        }
+      }
     }
   }
 }

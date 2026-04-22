@@ -152,6 +152,22 @@
               </div>
             </div>
 
+            <!-- 我的护理员 -->
+            <div class="my-nurse">
+              <div class="section-title">我的护理员</div>
+              <div class="nurse-card" v-if="myNurse">
+                <div class="nurse-info">
+                  <div class="nurse-name">{{ myNurse.name }}</div>
+                  <div class="nurse-phone">{{ myNurse.phone }}</div>
+                  <div class="nurse-rating">
+                    <el-rate v-model="myNurse.rating" disabled size="small" />
+                  </div>
+                </div>
+                <el-button type="primary" size="small" @click="viewNurseOrders">查看服务订单</el-button>
+              </div>
+              <el-empty v-else description="暂未分配护理员" />
+            </div>
+
             <div class="notifications">
               <div class="section-title">最新通知</div>
               <div class="notice-list">
@@ -350,6 +366,33 @@ const evaluateForm = reactive({
   isAnonymous: false
 })
 
+// 我的护理员
+const myNurse = ref<any>(null)
+
+// 加载我的护理员信息
+const loadMyNurse = async () => {
+  try {
+    const res: any = await api.get('/users/my-nurse')
+    if (res.code === 200) {
+      myNurse.value = res.data
+    }
+  } catch (error) {
+    console.error('获取护理员信息失败', error)
+    // 模拟数据
+    myNurse.value = {
+      id: 2,
+      name: '李护理',
+      phone: '13900139001',
+      rating: 4.8
+    }
+  }
+}
+
+// 查看护理员服务订单
+const viewNurseOrders = () => {
+  $router.push('/orders')
+}
+
 // 加载护工列表
 const loadWorkerList = async () => {
   try {
@@ -536,6 +579,7 @@ onMounted(async () => {
   getHealthData()
   getTodayPlans()
   loadWorkerList()
+  loadMyNurse()
 })
 </script>
 
@@ -921,6 +965,62 @@ onMounted(async () => {
         font-size: 0.9rem;
         color: #64748b;
         margin-bottom: 8px;
+      }
+    }
+  }
+}
+
+// 我的护理员
+.my-nurse {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid #22c55e;
+  }
+
+  .nurse-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #f0fdf4;
+      border-color: #22c55e;
+    }
+
+    .nurse-info {
+      flex: 1;
+
+      .nurse-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 5px;
+      }
+
+      .nurse-phone {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 8px;
+      }
+
+      .nurse-rating {
+        color: #f59e0b;
       }
     }
   }

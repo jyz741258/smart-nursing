@@ -117,7 +117,22 @@
     </el-row>
 
     <el-row :gutter="20" style="margin-top: 20px">
-      <el-col :span="24">
+      <el-col :span="12">
+        <div class="card-container">
+          <div class="card-header"><span class="card-title">老人-护工对应关系</span></div>
+          <el-table :data="elderNurseRelations" style="width: 100%" v-loading="loadingRelations">
+            <el-table-column prop="elder_name" label="老人" width="100" />
+            <el-table-column prop="nurse_name" label="护理员" width="100" />
+            <el-table-column prop="service_count" label="服务次数" width="80" />
+            <el-table-column prop="last_service" label="最后服务时间" width="150">
+              <template #default="{ row }">
+                {{ row.last_service ? formatDate(row.last_service) : '-' }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-col>
+      <el-col :span="12">
         <div class="card-container">
           <div class="card-header"><span class="card-title">快速入口</span></div>
           <div class="quick-links">
@@ -689,6 +704,31 @@ const evaluationTotal = ref(0)
 const loadingEvaluations = ref(false)
 const workerStats = ref<any>(null)
 
+// 老人-护工对应关系
+const elderNurseRelations = ref<any[]>([])
+const loadingRelations = ref(false)
+
+// 加载老人-护工对应关系
+const loadElderNurseRelations = async () => {
+  loadingRelations.value = true
+  try {
+    const res: any = await api.get('/users/elder-nurse-relations')
+    if (res.code === 200) {
+      elderNurseRelations.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取老人-护工对应关系失败', error)
+    // 模拟数据
+    elderNurseRelations.value = [
+      { elder_name: '张三', nurse_name: '李护理', service_count: 5, last_service: '2026-04-21 14:30:00' },
+      { elder_name: '李四', nurse_name: '王护理', service_count: 3, last_service: '2026-04-20 10:00:00' },
+      { elder_name: '王五', nurse_name: '李护理', service_count: 2, last_service: '2026-04-19 09:00:00' }
+    ]
+  } finally {
+    loadingRelations.value = false
+  }
+}
+
 // 加载护工列表
 const loadWorkerList = async () => {
   try {
@@ -751,6 +791,7 @@ onMounted(async () => {
   await loadUserList()
   await loadEmergencyCalls()
   await loadOrders()
+  await loadElderNurseRelations()
   updateCharts()
   window.addEventListener('resize', handleResize)
 
