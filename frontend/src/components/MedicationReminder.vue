@@ -7,58 +7,6 @@
       </el-button>
     </div>
 
-    <!-- 今日提醒列表 -->
-    <div class="today-reminders">
-      <h4 class="section-title">今日提醒</h4>
-      <div v-if="todayReminders.length === 0" class="empty-reminders">
-        <el-empty description="今日暂无用药提醒" />
-      </div>
-      <div v-else class="reminder-list">
-        <div 
-          v-for="reminder in todayReminders" 
-          :key="reminder.id"
-          :class="['reminder-item', { 'completed': reminder.completed }]"
-        >
-          <div class="reminder-time">
-            <div class="time">
-              {{ reminder.time }}
-            </div>
-            <div class="status">
-              <el-tag :type="reminder.completed ? 'success' : 'warning'" size="small">
-                {{ reminder.completed ? '已服用' : '待服用' }}
-              </el-tag>
-            </div>
-          </div>
-          <div class="reminder-content">
-            <h5 class="medication-name">{{ reminder.medication_name }}</h5>
-            <p class="medication-dosage">{{ reminder.dosage }}</p>
-            <p class="medication-notes" v-if="reminder.notes">{{ reminder.notes }}</p>
-          </div>
-          <div class="reminder-actions">
-            <el-button 
-              v-if="!reminder.completed" 
-              type="success" 
-              size="small" 
-              @click="markAsCompleted(reminder.id)"
-            >
-              <el-icon><Check /></el-icon> 确认服用
-            </el-button>
-            <el-button 
-              v-else 
-              type="info" 
-              size="small" 
-              @click="markAsUncompleted(reminder.id)"
-            >
-              <el-icon><Close /></el-icon> 取消确认
-            </el-button>
-            <el-button type="danger" size="small" @click="deleteReminder(reminder.id)">
-              <el-icon><Delete /></el-icon> 删除
-            </el-button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 所有提醒列表 -->
     <div class="all-reminders" style="margin-top: 20px;">
       <h4 class="section-title">所有提醒</h4>
@@ -86,6 +34,7 @@
             <p class="medication-dosage">{{ reminder.dosage }}</p>
             <p class="medication-notes" v-if="reminder.notes">{{ reminder.notes }}</p>
             <p class="medication-days">{{ reminder.days.join('、') }}</p>
+            <p class="medication-user" v-if="reminder.user_name">{{ reminder.user_name }}</p>
           </div>
           <div class="reminder-actions">
             <el-button 
@@ -115,6 +64,11 @@
     <!-- 添加提醒对话框 -->
     <el-dialog v-model="showAddReminderDialog" title="添加用药提醒" width="500px">
       <el-form :model="reminderForm" label-width="100px">
+        <el-form-item label="老人" v-if="isAdmin">
+          <el-select v-model="reminderForm.user_id" placeholder="选择老人">
+            <el-option v-for="elder in elderList" :key="elder.id" :label="elder.name" :value="elder.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="药品名称">
           <el-input v-model="reminderForm.medication_name" placeholder="请输入药品名称" />
         </el-form-item>
@@ -161,12 +115,15 @@ interface Reminder {
   days: string[]
   notes: string
   completed: boolean
+  user_name?: string
 }
 
 const showAddReminderDialog = ref(false)
 const reminders = ref<Reminder[]>([])
+const elderList = ref<any[]>([])
 
 const reminderForm = ref({
+  user_id: '',
   medication_name: '',
   time: '',
   dosage: '',
@@ -174,15 +131,24 @@ const reminderForm = ref({
   notes: ''
 })
 
-// 计算今日提醒
-const todayReminders = computed(() => {
-  const today = new Date().toLocaleDateString('zh-CN', { weekday: 'long' })
-  return reminders.value.filter(reminder => 
-    reminder.days.includes(today) && 
-    new Date(`2000-01-01 ${reminder.time}`) >= new Date(`2000-01-01 00:00`) &&
-    new Date(`2000-01-01 ${reminder.time}`) <= new Date(`2000-01-01 23:59`)
-  )
+// 获取当前用户类型
+const isAdmin = computed(() => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  return user.user_type === 3
 })
+
+// 加载老人列表
+const loadElderList = async () => {
+  if (!isAdmin.value) return
+  try {
+    const res: any = await api.get('/users/elders')
+    if (res.code === 200) {
+      elderList.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取老人列表失败', error)
+  }
+}
 
 // 加载用药提醒
 const loadReminders = async () => {
@@ -241,6 +207,7 @@ const addReminder = async () => {
       await loadReminders()
       // 重置表单
       reminderForm.value = {
+        user_id: '',
         medication_name: '',
         time: '',
         dosage: '',
@@ -266,6 +233,7 @@ const addReminder = async () => {
     showAddReminderDialog.value = false
     // 重置表单
     reminderForm.value = {
+      user_id: '',
       medication_name: '',
       time: '',
       dosage: '',
@@ -340,6 +308,7 @@ const deleteReminder = async (id: number) => {
 
 onMounted(() => {
   loadReminders()
+  loadElderList()
 })
 </script>
 
@@ -447,6 +416,12 @@ onMounted(() => {
         font-size: 12px;
         color: #409eff;
         margin: 0;
+      }
+
+      .medication-user {
+        font-size: 12px;
+        color: #67c23a;
+        margin: 4px 0 0 0;
       }
     }
 
