@@ -29,7 +29,12 @@ api.interceptors.request.use(config => {
   })
   const token = localStorage.getItem('token')
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    // 确保headers对象存在
+    if (!config.headers) {
+      config.headers = {}
+    }
+    // 正确设置Authorization头
+    config.headers['Authorization'] = `Bearer ${token}`
   }
   return config
 })

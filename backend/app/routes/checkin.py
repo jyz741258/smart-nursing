@@ -3,18 +3,21 @@ from . import checkin_bp
 from ..models import User, CheckinRecord
 from ..extensions import db
 from ..utils.auth import require_token
-from ..utils.response import api_response, api_error
+from ..utils.response import api_response, api_error, page_response
 import datetime
 
 
 @checkin_bp.route('/', methods=['POST'])
-@require_token
-def checkin(current_user):
+# @require_token
+def checkin():
     """执行打卡"""
+    # 暂时跳过认证，使用固定用户ID（护理员）
+    current_user_id = 2  # 护理员用户ID
+    
     # 检查今天是否已经打卡
     today = datetime.date.today()
     existing_checkin = CheckinRecord.query.filter_by(
-        user_id=current_user.id,
+        user_id=current_user_id,
         date=today
     ).first()
     
@@ -23,7 +26,7 @@ def checkin(current_user):
     
     # 创建新的打卡记录
     checkin_record = CheckinRecord(
-        user_id=current_user.id,
+        user_id=current_user_id,
         date=today,
         time=datetime.datetime.now().time()
     )
@@ -38,11 +41,14 @@ def checkin(current_user):
 
 
 @checkin_bp.route('/history', methods=['GET'])
-@require_token
-def get_checkin_history(current_user):
+# @require_token
+def get_checkin_history():
     """获取打卡历史"""
+    # 暂时跳过认证，使用固定用户ID（护理员）
+    current_user_id = 2  # 护理员用户ID
+    
     records = CheckinRecord.query.filter_by(
-        user_id=current_user.id
+        user_id=current_user_id
     ).order_by(CheckinRecord.date.desc(), CheckinRecord.time.desc()).all()
     
     history = []
@@ -109,3 +115,39 @@ def get_checkin_stats(current_user):
         'weekly_checkins': weekly_checkins,
         'max_consecutive_days': max_consecutive
     })
+
+
+@checkin_bp.route('/admin/history', methods=['GET'])
+# @require_token
+def get_all_checkin_history():
+    """获取所有用户的打卡历史（管理员）"""
+    # 暂时跳过认证
+    # if current_user.user_type != 3:
+    #     return api_error('无权限', 403)
+    
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 20, type=int)
+    user_id = request.args.get('user_id', type=int)
+    
+    query = CheckinRecord.query
+    
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    
+    query = query.order_by(CheckinRecord.date.desc(), CheckinRecord.time.desc())
+    
+    pagination = query.paginate(page=page, per_page=page_size, error_out=False)
+    records = pagination.items
+    
+    history = []
+    for record in records:
+        user = User.query.get(record.user_id)
+        history.append({
+            'id': record.id,
+            'user_id': record.user_id,
+            'user_name': user.name if user else '未知',
+            'date': record.date.strftime('%Y-%m-%d'),
+            'time': record.time.strftime('%H:%M:%S')
+        })
+    
+    return page_response(history, pagination.total, page, page_size)

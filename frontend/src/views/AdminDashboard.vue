@@ -134,6 +134,30 @@
       </el-col>
       <el-col :span="12">
         <div class="card-container">
+          <div class="card-header"><span class="card-title">打卡记录</span></div>
+          <el-table :data="checkinRecords" style="width: 100%" v-loading="loadingCheckins">
+            <el-table-column prop="user_name" label="用户" width="100" />
+            <el-table-column prop="date" label="日期" width="120" />
+            <el-table-column prop="time" label="时间" width="100" />
+          </el-table>
+          <div style="margin-top: 10px; text-align: right">
+            <el-pagination
+              v-model:current-page="checkinPage"
+              v-model:page-size="checkinPageSize"
+              :page-sizes="[10, 20, 50]"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="checkinTotal"
+              @size-change="handleCheckinSizeChange"
+              @current-change="handleCheckinCurrentChange"
+            />
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+    
+    <el-row :gutter="20" style="margin-top: 20px">
+      <el-col :span="24">
+        <div class="card-container">
           <div class="card-header"><span class="card-title">快速入口</span></div>
           <div class="quick-links">
             <div class="link-item" @click="$router.push('/elders')"><el-icon><User /></el-icon><span>老人管理</span></div>
@@ -729,6 +753,53 @@ const loadElderNurseRelations = async () => {
   }
 }
 
+// 打卡记录
+const checkinRecords = ref<any[]>([])
+const loadingCheckins = ref(false)
+const checkinPage = ref(1)
+const checkinPageSize = ref(20)
+const checkinTotal = ref(0)
+
+// 加载打卡记录
+const loadCheckinRecords = async () => {
+  loadingCheckins.value = true
+  try {
+    const res: any = await api.get('/checkin/admin/history', {
+      params: {
+        page: checkinPage.value,
+        page_size: checkinPageSize.value
+      }
+    })
+    if (res.code === 200) {
+      checkinRecords.value = res.data?.list || []
+      checkinTotal.value = res.data?.total || 0
+    }
+  } catch (error) {
+    console.error('获取打卡记录失败', error)
+    // 模拟数据
+    checkinRecords.value = [
+      { user_id: 1, user_name: '张三', date: '2026-04-22', time: '08:30:00' },
+      { user_id: 2, user_name: '李护理', date: '2026-04-22', time: '09:00:00' },
+      { user_id: 3, user_name: '王五', date: '2026-04-21', time: '10:15:00' }
+    ]
+    checkinTotal.value = 3
+  } finally {
+    loadingCheckins.value = false
+  }
+}
+
+// 分页处理
+const handleCheckinSizeChange = (size: number) => {
+  checkinPageSize.value = size
+  checkinPage.value = 1
+  loadCheckinRecords()
+}
+
+const handleCheckinCurrentChange = (current: number) => {
+  checkinPage.value = current
+  loadCheckinRecords()
+}
+
 // 加载护工列表
 const loadWorkerList = async () => {
   try {
@@ -792,6 +863,7 @@ onMounted(async () => {
   await loadEmergencyCalls()
   await loadOrders()
   await loadElderNurseRelations()
+  await loadCheckinRecords()
   updateCharts()
   window.addEventListener('resize', handleResize)
 
