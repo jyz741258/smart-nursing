@@ -427,11 +427,24 @@ const allElders = ref([
   },
 ])
 
+// 获取护理员服务的老人ID列表（护理员用）
+const nurseElderIds = computed(() => {
+  // 模拟：护理员服务的老人ID为1和3
+  if (userType.value === 2) {
+    return [1, 3]
+  }
+  return []
+})
+
 // 根据用户类型过滤老人列表
 const visibleElders = computed(() => {
-  // 护理员和管理员可以查看所有老人
-  if (userType.value === 2 || userType.value === 3) {
+  // 管理员可以查看所有老人
+  if (userType.value === 3) {
     return allElders.value
+  }
+  // 护理员只能查看自己服务的老人
+  if (userType.value === 2) {
+    return allElders.value.filter(elder => nurseElderIds.value.includes(elder.id))
   }
   // 家属只能查看绑定的老人
   if (userType.value === 4) {
