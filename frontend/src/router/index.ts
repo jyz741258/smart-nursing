@@ -49,11 +49,15 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/FamilyDashboard.vue'),
         meta: { title: '工作台', roles: [4] }
       },
-      {
-        path: 'admin-dashboard',
+      {        path: 'admin-dashboard',
         name: 'AdminDashboard',
         component: () => import('@/views/AdminDashboard.vue'),
         meta: { title: '管理中心', roles: [3] }
+      },
+      {        path: 'data-dashboard',
+        name: 'DataDashboard',
+        component: () => import('@/views/DataDashboard.vue'),
+        meta: { title: '数据统计大屏', roles: [3] }
       },
       {
         path: 'elders',
@@ -175,6 +179,36 @@ router.beforeEach((to, from, next) => {
   } else if (to.path === '/login' && token) {
     next('/dashboard')
   } else {
+    // 检查角色权限
+    const userInfoStr = localStorage.getItem('userInfo')
+    if (userInfoStr) {
+      try {
+        const user = JSON.parse(userInfoStr)
+        // 确保 user_type 是数字类型
+        const userType = Number(user.user_type)
+
+        // 如果路由配置了角色限制
+        if (to.meta.roles && Array.isArray(to.meta.roles) && to.meta.roles.length > 0) {
+          // 检查用户角色是否在允许列表中
+          if (!to.meta.roles.includes(userType)) {
+            console.log(`[路由权限] 用户类型=${userType}, 允许=${to.meta.roles}, 路径=${to.path}`)
+            // 根据用户类型重定向
+            if (userType === 1) {
+              next('/elder-dashboard')
+            } else if (userType === 2) {
+              next('/nurse-dashboard')
+            } else if (userType === 4) {
+              next('/family-dashboard')
+            } else {
+              next('/admin-dashboard')
+            }
+            return
+          }
+        }
+      } catch (e) {
+        console.error('[路由守卫] 解析用户信息失败', e)
+      }
+    }
     next()
   }
 })

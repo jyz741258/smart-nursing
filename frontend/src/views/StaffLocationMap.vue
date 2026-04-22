@@ -294,7 +294,6 @@
                 :min="50"
                 :max="1000"
                 :step="50"
-                :marks="fenceMarks"
                 show-input
               />
               <span class="radius-display">{{ fenceRadius }} 米</span>
@@ -342,7 +341,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   OfficeBuilding, Guide, LocationInformation, User,
@@ -482,13 +481,6 @@ const fenceRadius = ref(200)
 const fenceCenter = ref<[number, number]>([PIDU_CENTER_LNG, PIDU_CENTER_LAT])
 const alertTypes = ref(['越界告警'])
 
-const fenceMarks = {
-  50: '50m',
-  200: '200m',
-  500: '500m',
-  1000: '1km'
-}
-
 // 设施列表
 const facilities = [
   { name: '主楼', icon: '🏢', position: [PIDU_CENTER_LNG, PIDU_CENTER_LAT] },
@@ -574,8 +566,7 @@ const handleElderChange = (id: number) => {
       generateTrackHistory()
       generateTrackPath()
     } else if (mapMode.value === 'fence') {
-      mapCenter.value = elder.position
-      mapZoom.value = 17
+      mapViewRef.value?.setView(elder.position, 17)
     }
 
     trackStats.value = {
@@ -703,16 +694,14 @@ const zoomOut = () => {
 }
 
 const centerToHome = () => {
-  mapCenter.value = [PIDU_CENTER_LNG, PIDU_CENTER_LAT]
-  mapZoom.value = 16
+  mapViewRef.value?.setView([PIDU_CENTER_LNG, PIDU_CENTER_LAT], 16)
 }
 
 const centerToSelected = () => {
   if (selectedElderId.value) {
     const elder = visibleElders.value.find(e => e.id === selectedElderId.value)
     if (elder) {
-      mapCenter.value = elder.position
-      mapZoom.value = 17
+      mapViewRef.value?.setView(elder.position, 17)
     }
   }
 }
@@ -746,8 +735,8 @@ const handleLocate = () => {
   if (selectedElderId.value) {
     const elder = visibleElders.value.find(e => e.id === selectedElderId.value)
     if (elder) {
-      mapCenter.value = elder.position
-      mapZoom.value = 17
+      // 直接调用地图组件的方法
+      mapViewRef.value?.setView(elder.position, 17)
       ElMessage.success(`已定位到 ${elder.name}`)
     }
   } else {

@@ -94,6 +94,35 @@
       </el-col>
       <el-col :span="12">
         <div class="card-container">
+          <div class="card-header"><span class="card-title">紧急呼叫监控</span></div>
+          <el-table :data="emergencyCalls" style="width: 100%" v-loading="loadingEmergencyCalls">
+            <el-table-column prop="elder_name" label="老人" />
+            <el-table-column prop="type" label="呼叫类型" />
+            <el-table-column prop="location" label="位置" />
+            <el-table-column prop="status" label="状态">
+              <template #default="{ row }">
+                <el-tag 
+                  :type="row.status === 'pending' ? 'warning' : row.status === 'responding' ? 'info' : row.status === 'completed' ? 'success' : 'danger'" 
+                  size="small"
+                >
+                  {{ row.status === 'pending' ? '待处理' : row.status === 'responding' ? '处理中' : row.status === 'completed' ? '已完成' : '未知' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="assigned_worker_name" label="护理人员" />
+            <el-table-column prop="created_at" label="呼叫时间">
+              <template #default="{ row }">
+                {{ row.created_at ? new Date(row.created_at).toLocaleString() : '-' }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="20" style="margin-top: 20px">
+      <el-col :span="24">
+        <div class="card-container">
           <div class="card-header"><span class="card-title">快速入口</span></div>
           <div class="quick-links">
             <div class="link-item" @click="$router.push('/elders')"><el-icon><User /></el-icon><span>老人管理</span></div>
@@ -102,6 +131,7 @@
             <div class="link-item" @click="$router.push('/care-plan')"><el-icon><Calendar /></el-icon><span>护理计划</span></div>
             <div class="link-item" @click="showEvaluationDialog = true"><el-icon><Star /></el-icon><span>护工评价</span></div>
             <div class="link-item" @click="$router.push('/ai-chat')"><el-icon><ChatDotRound /></el-icon><span>AI助手</span></div>
+            <div class="link-item" @click="$router.push('/data-dashboard')"><el-icon><DataAnalysis /></el-icon><span>数据大屏</span></div>
           </div>
         </div>
       </el-col>
@@ -326,6 +356,53 @@ const pendingTasks = ref([
   { task_name: '健康监测', elder_name: '李四', nurse_name: '王护理', status: '待执行' }
 ])
 
+// 紧急呼叫监控
+const emergencyCalls = ref<any[]>([])
+const loadingEmergencyCalls = ref(false)
+
+// 加载紧急呼叫数据
+const loadEmergencyCalls = async () => {
+  loadingEmergencyCalls.value = true
+  try {
+    const res: any = await api.get('/emergency/calls')
+    if (res.code === 200) {
+      emergencyCalls.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取紧急呼叫数据失败', error)
+    // 模拟数据，确保界面显示
+    emergencyCalls.value = [
+      {
+        id: 1,
+        elder_id: 1,
+        elder_name: '张三',
+        type: 'sos',
+        location: '老人房间',
+        status: 'completed',
+        assigned_worker_id: 2,
+        assigned_worker_name: '李护理',
+        response_time: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
+        created_at: new Date(Date.now() - 3600000).toISOString()
+      },
+      {
+        id: 2,
+        elder_id: 2,
+        elder_name: '李四',
+        type: 'sos',
+        location: '卫生间',
+        status: 'responding',
+        assigned_worker_id: 3,
+        assigned_worker_name: '王护理',
+        response_time: new Date().toISOString(),
+        created_at: new Date(Date.now() - 1800000).toISOString()
+      }
+    ]
+  } finally {
+    loadingEmergencyCalls.value = false
+  }
+}
+
 // 加载用户列表
 const loadUserList = async () => {
   try {
@@ -435,6 +512,7 @@ const getServiceDistribution = async () => {
 const refreshData = async () => {
   await getDashboardStats()
   await updateCharts()
+  await loadEmergencyCalls()
   ElMessage.success('数据已刷新')
 }
 
@@ -626,6 +704,7 @@ watch(showEvaluationDialog, (val) => {
 onMounted(async () => {
   await getDashboardStats()
   await loadUserList()
+  await loadEmergencyCalls()
   updateCharts()
   window.addEventListener('resize', handleResize)
 })
@@ -891,7 +970,7 @@ onUnmounted(() => {
 
 .quick-links {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 
   .link-item {

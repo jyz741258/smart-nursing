@@ -279,9 +279,17 @@ watch(() => props.showCircle, () => {
   }
 })
 
+// 监听 center 变化
 watch(() => props.center, (newCenter) => {
-  if (mapInstance) {
+  if (mapInstance && newCenter) {
     mapInstance.setCenter(newCenter)
+  }
+})
+
+// 监听 zoom 变化
+watch(() => props.zoom, (newZoom) => {
+  if (mapInstance && newZoom) {
+    mapInstance.setZoom(newZoom)
   }
 })
 

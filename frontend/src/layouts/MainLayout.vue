@@ -377,9 +377,23 @@ const handleFontCommand = (command: string) => {
 }
 
 const getUserType = () => {
-  const info = userInfo.value
+  // 优先从 localStorage 读取，因为登录时已经保存了用户信息
+  const storedUserInfo = localStorage.getItem('userInfo')
+  if (storedUserInfo) {
+    try {
+      const user = JSON.parse(storedUserInfo)
+      userType.value = Number(user.user_type) || 3
+      console.log('[Layout] 从localStorage获取用户类型:', userType.value)
+      return
+    } catch (e) {
+      console.error('[Layout] 解析用户信息失败', e)
+    }
+  }
+  // 如果 localStorage 没有，则从 authStore 获取
+  const info = authStore.userInfo
   if (info) {
-    userType.value = info.user_type || 3
+    userType.value = Number(info.user_type) || 3
+    console.log('[Layout] 从authStore获取用户类型:', userType.value)
   }
 }
 

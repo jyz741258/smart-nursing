@@ -12,9 +12,13 @@ order_bp = Blueprint('order', __name__, url_prefix='/api/orders')
 evaluation_bp = Blueprint('evaluation', __name__, url_prefix='/api/evaluations')
 ai_bp = Blueprint('ai', __name__, url_prefix='/api/ai')
 bigdata_bp = Blueprint('bigdata', __name__, url_prefix='/api/bigdata')
+emergency_bp = Blueprint('emergency', __name__, url_prefix='/api/emergency')
+medication_bp = Blueprint('medication', __name__, url_prefix='/api/medication')
+checkin_bp = Blueprint('checkin', __name__, url_prefix='/api/checkin')
+location_bp = Blueprint('location', __name__, url_prefix='/api/location')
 
 # 导入路由（payment.py会导入payment_bp）
-from . import users, nursing, health, care, notifications, statistics, service, order, ai, bigdata
+from . import users, nursing, health, care, notifications, statistics, service, order, ai, bigdata, emergency, medication, checkin, location
 
 # 导入payment蓝图（必须先导入payment.py，因为它定义了payment_bp）
 from . import payment

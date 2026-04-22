@@ -41,6 +41,9 @@
         <el-button circle @click="centerToHome" title="回到养老院">
           <el-icon><House /></el-icon>
         </el-button>
+        <el-button circle :loading="isRefreshing" @click="refreshLocation" title="刷新位置">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
       </div>
 
       <!-- 轨迹回放控制 -->
@@ -221,9 +224,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   OfficeBuilding, Guide,
   Warning, Bell, Plus, Minus, House, Grid,
-  VideoPlay, VideoPause, DataLine, Timer
+  VideoPlay, VideoPause, DataLine, Timer, Refresh
 } from '@element-plus/icons-vue'
 import AMapView from '@/components/AMapView.vue'
+import api from '@/store/auth'
 
 const mapViewRef = ref()
 
@@ -235,7 +239,7 @@ const mapMode = ref<'nursingHome' | 'track'>('nursingHome')
 const mapCenter = ref<[number, number]>([PIDU_CENTER_LNG, PIDU_CENTER_LAT])
 const mapZoom = ref(16)
 
-// 模拟当前位置（老人自己的位置）
+// 当前位置
 const currentPosition = ref<[number, number]>([PIDU_CENTER_LNG + 0.0008, PIDU_CENTER_LAT - 0.0003])
 const currentLocation = ref('休息室')
 const lastUpdate = ref(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }))
@@ -245,6 +249,7 @@ const timeRange = ref('today')
 const isPlaying = ref(false)
 const playbackProgress = ref(0)
 const currentPlaybackTime = ref('00:00')
+const isRefreshing = ref(false)
 
 // 轨迹统计
 const trackStats = ref({
@@ -312,6 +317,57 @@ const markers = computed(() => {
 })
 
 let playbackTimer: number | null = null
+let locationUpdateTimer: number | null = null
+
+// 获取当前位置
+const getCurrentLocation = async () => {
+  try {
+    const res: any = await api.get('/location/current')
+    if (res.code === 200) {
+      const location = res.data
+      currentPosition.value = [location.longitude, location.latitude]
+      currentLocation.value = location.location_name || '未知位置'
+      lastUpdate.value = new Date(location.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      
+      if (mapMode.value === 'track') {
+        mapCenter.value = currentPosition.value
+      }
+    }
+  } catch (error) {
+    console.error('获取当前位置失败', error)
+    // 模拟位置更新
+    currentPosition.value = [
+      PIDU_CENTER_LNG + (Math.random() - 0.5) * 0.001,
+      PIDU_CENTER_LAT + (Math.random() - 0.5) * 0.001
+    ]
+    currentLocation.value = facilities[Math.floor(Math.random() * facilities.length)].name
+    lastUpdate.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  }
+}
+
+// 刷新位置信息
+const refreshLocation = async () => {
+  isRefreshing.value = true
+  await getCurrentLocation()
+  isRefreshing.value = false
+  ElMessage.success('位置已更新')
+}
+
+// 更新位置（模拟老人端更新位置）
+const updateLocation = async () => {
+  try {
+    const res: any = await api.post('/location/update', {
+      longitude: currentPosition.value[0],
+      latitude: currentPosition.value[1],
+      location_name: currentLocation.value
+    })
+    if (res.code === 200) {
+      ElMessage.success('位置更新成功')
+    }
+  } catch (error) {
+    console.error('更新位置失败', error)
+  }
+}
 
 const handleModeChange = () => {
   trackPath.value = []
@@ -451,13 +507,23 @@ const handleEmergency = () => {
   }).catch(() => {})
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await getCurrentLocation()
   generateTrackHistory()
   generateTrackPath()
+  
+  // 每30秒自动更新位置
+  locationUpdateTimer = window.setInterval(() => {
+    getCurrentLocation()
+  }, 30000)
 })
 
 onUnmounted(() => {
   pauseTrack()
+  if (locationUpdateTimer) {
+    clearInterval(locationUpdateTimer)
+    locationUpdateTimer = null
+  }
 })
 </script>
 

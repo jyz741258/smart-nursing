@@ -268,11 +268,9 @@
                 v-model="fenceRadius" 
                 :min="50" 
                 :max="1000" 
-                :step="50" 
-                :marks="fenceMarks"
+                :step="50"
                 show-input 
               />
-              <span class="radius-display">{{ fenceRadius }} 米</span>
             </el-form-item>
             <el-form-item label="告警类型">
               <el-checkbox-group v-model="alertTypes">
@@ -432,12 +430,7 @@ const fenceRadius = ref(200)
 const fenceCenter = ref<[number, number]>([PIDU_CENTER_LNG, PIDU_CENTER_LAT])
 const alertTypes = ref(['越界告警'])
 
-const fenceMarks = {
-  50: '50m',
-  200: '200m',
-  500: '500m',
-  1000: '1km'
-}
+
 
 // 设施列表
 const facilities = [
