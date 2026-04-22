@@ -201,3 +201,54 @@ def create_care_task_for_plan(current_user, plan_id):
     db.session.commit()
 
     return api_response({'id': task.id}, '护理任务添加成功')
+
+
+@care_bp.route('/plans/today', methods=['GET'])
+@require_token
+def get_today_care_plans(current_user):
+    """获取今日护理计划"""
+    today = datetime.utcnow().date()
+    
+    # 根据用户类型过滤
+    query = CarePlan.query.filter(
+        CarePlan.status == 1,
+        CarePlan.start_date <= today,
+        CarePlan.end_date >= today
+    )
+    
+    # 老人只能看到自己的护理计划
+    if current_user.user_type == 1:
+        query = query.filter_by(elder_id=current_user.id)
+    # 家属只能看到绑定老人的护理计划
+    elif current_user.user_type == 4:
+        if current_user.binding_elder_id:
+            query = query.filter_by(elder_id=current_user.binding_elder_id)
+        else:
+            return api_response([])
+    
+    plans = query.all()
+    
+    result = []
+    for plan in plans:
+        tasks = CareTask.query.filter_by(care_plan_id=plan.id).all()
+        result.append({
+            'id': plan.id,
+            'elder_id': plan.elder_id,
+            'elder_name': plan.elder.name if plan.elder else None,
+            'title': plan.title,
+            'description': plan.description,
+            'start_date': plan.start_date.isoformat() if plan.start_date else None,
+            'end_date': plan.end_date.isoformat() if plan.end_date else None,
+            'status': plan.status,
+            'status_name': plan.get_status_display(),
+            'tasks': [{
+                'id': t.id,
+                'task_name': t.task_name,
+                'task_type': t.task_type,
+                'frequency': t.frequency,
+                'status': t.status,
+                'status_name': t.get_status_display()
+            } for t in tasks]
+        })
+    
+    return api_response(result)

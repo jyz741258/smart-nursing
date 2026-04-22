@@ -78,6 +78,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '健康管理与护理计划' }
       },
       {
+        path: 'orders',
+        name: 'Orders',
+        component: () => import('@/views/ElderOrders.vue'),
+        meta: { title: '我的订单' }
+      },
+      {
         path: 'care-plan',
         name: 'CarePlan',
         component: () => import('@/views/CarePlan.vue'),

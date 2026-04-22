@@ -128,6 +128,10 @@
                   <el-icon :size="28"><Star /></el-icon>
                   <span>评价护工</span>
                 </div>
+                <div class="action-btn orders" @click="$router.push('/orders')">
+                  <el-icon :size="28"><Document /></el-icon>
+                  <span>我的订单</span>
+                </div>
                 <div class="action-btn ai" @click="$router.push('/ai-chat')">
                   <el-icon :size="28"><ChatDotRound /></el-icon>
                   <span>AI助手</span>
@@ -864,6 +868,10 @@ onMounted(async () => {
 
       &.ai {
         background: linear-gradient(135deg, #06b6d4, #0891b2);
+      }
+
+      &.orders {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
       }
 
       &:hover {

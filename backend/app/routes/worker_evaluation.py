@@ -97,10 +97,13 @@ def get_worker_evaluations(current_user):
     if order_id:
         query = query.filter_by(order_id=order_id)
 
-    # 管理��可以查看所有，其他人只能查看自己相关的
+    # 管理员可以查看所有，其他人只能查看自己相关的
     if current_user.user_type != 3:  # 非管理员
         if current_user.user_type == 1:  # 老人
             query = query.filter_by(elder_id=current_user.id)
+        elif current_user.user_type == 2:  # 护理员
+            # 护理员只能查看与自己相关的评价
+            query = query.filter_by(worker_id=current_user.id)
         elif current_user.user_type == 4:  # 家属
             # 家属只能查看绑定老人的评价
             if current_user.binding_elder_id:
@@ -126,6 +129,9 @@ def get_worker_evaluation_detail(current_user, evaluation_id):
     if current_user.user_type != 3:  # 非管理员
         if current_user.user_type == 1:  # 老人
             if evaluation.elder_id != current_user.id:
+                return api_error('无权查看', 403)
+        elif current_user.user_type == 2:  # 护理员
+            if evaluation.worker_id != current_user.id:
                 return api_error('无权查看', 403)
         elif current_user.user_type == 4:  # 家属
             if current_user.binding_elder_id and evaluation.elder_id != current_user.binding_elder_id:
