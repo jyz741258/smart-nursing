@@ -139,18 +139,7 @@
               </div>
             </div>
 
-            <div class="emergency-qr">
-              <div class="section-title">床头紧急呼叫</div>
-              <div class="qr-content">
-                <div class="qr-code">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=emergency_call://elder_id={{ elderId }}" alt="紧急呼叫二维码">
-                </div>
-                <div class="qr-info">
-                  <p>将此二维码打印并贴在床头</p>
-                  <p>扫描二维码即可发起紧急呼叫</p>
-                </div>
-              </div>
-            </div>
+
 
             <!-- 我的护理员 -->
             <div class="my-nurse">
@@ -934,44 +923,7 @@ onMounted(async () => {
   }
 }
 
-// 紧急呼叫二维码
-.emergency-qr {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 24px;
-  margin-bottom: 20px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
-  .qr-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-
-    .qr-code {
-      background: #f8fafc;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-
-      img {
-        width: 150px;
-        height: 150px;
-      }
-    }
-
-    .qr-info {
-      text-align: center;
-
-      p {
-        font-size: 0.9rem;
-        color: #64748b;
-        margin-bottom: 8px;
-      }
-    }
-  }
-}
 
 // 我的护理员
 .my-nurse {
