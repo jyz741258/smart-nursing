@@ -282,11 +282,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore } from '@/store/settings'
 import { ZoomIn, BellFilled, Loading, Check } from '@element-plus/icons-vue'
+
+const router = useRouter()
 
 const emergencyDialog = ref(false)
 const emergencyStatus = ref('idle') // idle, calling, responding, completed
@@ -390,7 +393,7 @@ const loadMyNurse = async () => {
 
 // 查看护理员服务订单
 const viewNurseOrders = () => {
-  $router.push('/orders')
+  router.push('/orders')
 }
 
 // 加载护工列表

@@ -140,9 +140,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
 import { useAuthStore } from '@/store/auth'
+
+const router = useRouter()
 
 const authStore = useAuthStore()
 
@@ -262,7 +265,7 @@ const loadServiceElders = async () => {
 
 // 查看老人订单
 const viewElderOrders = (elderId: number) => {
-  $router.push({ path: '/orders', query: { elder_id: elderId } })
+  router.push({ path: '/orders', query: { elder_id: elderId } })
 }
 
 const startTask = (task: any) => {
