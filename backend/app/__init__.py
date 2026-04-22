@@ -49,7 +49,7 @@ def create_app(config_name='default'):
         redis_client = None
 
     # 注册蓝图
-    from .routes import user_bp, nursing_bp, health_bp, care_bp, notification_bp, statistics_bp, service_bp, order_bp, ai_bp, payment_bp, emergency_bp, medication_bp, checkin_bp, location_bp
+    from .routes import user_bp, nursing_bp, health_bp, care_bp, notification_bp, statistics_bp, service_bp, order_bp, ai_bp, payment_bp, emergency_bp, medication_bp, checkin_bp, location_bp, evaluation_bp
     from .routes import bigdata_bp
 
     app.register_blueprint(user_bp)
@@ -60,6 +60,7 @@ def create_app(config_name='default'):
     app.register_blueprint(statistics_bp)
     app.register_blueprint(service_bp)
     app.register_blueprint(order_bp)
+    app.register_blueprint(evaluation_bp)
     app.register_blueprint(ai_bp)
     app.register_blueprint(bigdata_bp)
     app.register_blueprint(payment_bp)
