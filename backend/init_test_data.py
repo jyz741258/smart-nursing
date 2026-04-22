@@ -18,9 +18,9 @@ def init_test_data():
                 user_type=3,  # 管理员
                 status=1
             )
-            admin.set_password('admin123')
+            admin.set_password('123456')
             db.session.add(admin)
-            print('已创建管理员账号: 13800138000 / admin123')
+            print('已创建管理员账号: 13800138000 / 123456')
 
         # 创建老人账号
         if not User.query.filter_by(phone='13900139000').first():

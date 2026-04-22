@@ -142,7 +142,7 @@ def get_profile(current_user):
         'id': current_user.id,
         'phone': current_user.phone,
         'email': current_user.email,
-        'name': current_user.name,
+        'name': current_user.real_name or current_user.username,
         'gender': current_user.gender,
         'age': current_user.age,
         'id_card': current_user.id_card,
@@ -165,7 +165,7 @@ def update_profile(current_user):
     data = request.get_json()
 
     if 'name' in data:
-        current_user.name = data['name']
+        current_user.real_name = data['name']
     if 'gender' in data:
         current_user.gender = data['gender']
     if 'age' in data:
@@ -261,14 +261,24 @@ def bind_elder(current_user):
 
     data = request.get_json()
     elder_id = data.get('elder_id')
+    username = data.get('username')
+    password = data.get('password')
 
     if not elder_id:
         return api_error('请选择要绑定的老人')
+    if not username:
+        return api_error('请输入老人账号')
+    if not password:
+        return api_error('请输入老人密码')
 
     # 检查老人是否存在且确实是老人类型
     elder = User.query.filter_by(id=elder_id, user_type=1).first()
     if not elder:
         return api_error('老人不存在或用户类型不正确')
+
+    # 验证老人账号和密码
+    if elder.username != username or not elder.check_password(password):
+        return api_error('老人账号或密码错误')
 
     # 检查是否已经绑定
     if current_user.binding_elder_id:

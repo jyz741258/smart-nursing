@@ -171,6 +171,10 @@
                   <el-icon><ChatDotRound /></el-icon>
                   AI助手
                 </el-button>
+                <el-button type="primary" @click="$router.push('/orders')">
+                  <el-icon><ShoppingCart /></el-icon>
+                  我的订单
+                </el-button>
               </div>
             </div>
           </div>
@@ -190,6 +194,12 @@
               :value="elder.id"
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="老人账号">
+          <el-input v-model="bindForm.username" placeholder="请输入老人的账号" />
+        </el-form-item>
+        <el-form-item label="老人密码">
+          <el-input v-model="bindForm.password" type="password" placeholder="请输入老人的密码" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -287,7 +297,9 @@ const elderList = ref<Elder[]>([])
 const showBindDialog = ref(false)
 const binding = ref(false)
 const bindForm = reactive({
-  elder_id: null as number | null
+  elder_id: null as number | null,
+  username: '',
+  password: ''
 })
 
 const healthData = reactive({
@@ -527,15 +539,28 @@ const confirmBind = async () => {
     ElMessage.warning('请选择老人')
     return
   }
+  if (!bindForm.username) {
+    ElMessage.warning('请输入老人账号')
+    return
+  }
+  if (!bindForm.password) {
+    ElMessage.warning('请输入老人密码')
+    return
+  }
 
   binding.value = true
   try {
     const res: any = await api.post('/users/binding-elder', {
-      elder_id: bindForm.elder_id
+      elder_id: bindForm.elder_id,
+      username: bindForm.username,
+      password: bindForm.password
     })
     if (res.code === 200) {
       ElMessage.success('绑定成功')
       showBindDialog.value = false
+      // 重置表单
+      bindForm.username = ''
+      bindForm.password = ''
       // 重新加载绑定信息和数据
       await loadBindingElder()
       await getHealthData()
@@ -595,7 +620,7 @@ onMounted(async () => {
   position: relative;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #0a141e 0%, #1a2332 50%, #121a24 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 50%, #f0f4f8 100%);
 
   &::before {
     content: '';
@@ -605,10 +630,10 @@ onMounted(async () => {
     width: 300%;
     height: 300%;
     background: 
-      radial-gradient(ellipse at 20% 20%, rgba(64, 158, 255, 0.15) 0%, transparent 45%),
-      radial-gradient(ellipse at 80% 80%, rgba(102, 177, 255, 0.1) 0%, transparent 45%),
-      radial-gradient(ellipse at 40% 60%, rgba(64, 158, 255, 0.12) 0%, transparent 55%),
-      radial-gradient(ellipse at 60% 40%, rgba(102, 177, 255, 0.08) 0%, transparent 55%);
+      radial-gradient(ellipse at 20% 20%, rgba(64, 158, 255, 0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 80%, rgba(102, 177, 255, 0.05) 0%, transparent 45%),
+      radial-gradient(ellipse at 40% 60%, rgba(64, 158, 255, 0.06) 0%, transparent 55%),
+      radial-gradient(ellipse at 60% 40%, rgba(102, 177, 255, 0.04) 0%, transparent 55%);
     animation: familyBgFloat 28s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
@@ -619,8 +644,8 @@ onMounted(async () => {
     position: fixed;
     inset: 0;
     background-image: 
-      linear-gradient(rgba(64, 158, 255, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(64, 158, 255, 0.02) 1px, transparent 1px);
+      linear-gradient(rgba(64, 158, 255, 0.01) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(64, 158, 255, 0.01) 1px, transparent 1px);
     background-size: 50px 50px;
     animation: gridMove 30s linear infinite;
     pointer-events: none;
@@ -771,20 +796,19 @@ onMounted(async () => {
   .section-title {
     font-size: 18px;
     font-weight: 600;
-    color: #ffffff;
+    color: #333333;
     padding-left: 10px;
     border-left: 4px solid #409eff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 }
 
 .health-cards {
   .health-card {
-    background: rgba(45, 55, 70, 0.95);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 16px;
     padding: 24px;
     text-align: center;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(64, 158, 255, 0.25);
     transition: all 0.3s ease;
     position: relative;
@@ -805,7 +829,7 @@ onMounted(async () => {
 
     &:hover {
       transform: translateY(-6px);
-      box-shadow: 0 12px 32px rgba(64, 158, 255, 0.4);
+      box-shadow: 0 12px 32px rgba(64, 158, 255, 0.2);
       border-color: rgba(64, 158, 255, 0.5);
 
       &::before {
@@ -831,16 +855,15 @@ onMounted(async () => {
     .card-value {
       font-size: 28px;
       font-weight: 700;
-      color: #ffffff;
+      color: #333333;
       margin-bottom: 6px;
       position: relative;
       z-index: 1;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .card-label {
       font-size: 14px;
-      color: #b8c5d6;
+      color: #666666;
       position: relative;
       z-index: 1;
     }
@@ -884,7 +907,7 @@ onMounted(async () => {
 .nursing-records {
   position: relative;
   z-index: 1;
-  background: rgba(45, 55, 70, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   padding: 24px;
   border: 1px solid rgba(64, 158, 255, 0.25);
@@ -897,7 +920,7 @@ onMounted(async () => {
   :deep(.el-card) {
     border: none;
     box-shadow: none;
-    background: rgba(35, 45, 60, 0.9);
+    background: rgba(245, 247, 250, 0.9);
     border-radius: 12px;
     margin-bottom: 16px;
     padding: 20px;
@@ -907,27 +930,26 @@ onMounted(async () => {
     &:hover {
       transform: translateX(10px);
       box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
-      background: rgba(40, 50, 65, 0.95);
+      background: rgba(235, 240, 245, 0.95);
     }
   }
 
   h4 {
     font-size: 16px;
     font-weight: 600;
-    color: #66b1ff;
+    color: #409eff;
     margin-bottom: 10px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 
   p {
     font-size: 14px;
-    color: #9aafc0;
+    color: #666666;
     margin-bottom: 6px;
     line-height: 1.5;
   }
 
   .record-nurse {
-    color: #66b1ff;
+    color: #409eff;
     font-weight: 500;
   }
 }
@@ -935,7 +957,7 @@ onMounted(async () => {
 .side-section > div {
   position: relative;
   z-index: 1;
-  background: rgba(40, 50, 60, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 20px;
@@ -952,14 +974,14 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     padding: 16px;
-    background: rgba(30, 40, 50, 0.9);
+    background: rgba(245, 247, 250, 0.9);
     border-radius: 12px;
     margin-bottom: 12px;
     border: 1px solid rgba(64, 158, 255, 0.15);
     transition: all 0.3s ease;
 
     &:hover {
-      background: rgba(50, 60, 70, 0.95);
+      background: rgba(235, 240, 245, 0.95);
       border-color: rgba(64, 158, 255, 0.3);
       transform: translateX(8px);
     }
@@ -978,7 +1000,7 @@ onMounted(async () => {
 
       .week {
         font-size: 12px;
-        color: #9aafc0;
+        color: #666666;
       }
     }
 
@@ -988,14 +1010,13 @@ onMounted(async () => {
       .plan-name {
         font-size: 14px;
         font-weight: 600;
-        color: #ffffff;
+        color: #333333;
         margin-bottom: 4px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
 
       .plan-time {
         font-size: 12px;
-        color: #9aafc0;
+        color: #666666;
       }
     }
   }

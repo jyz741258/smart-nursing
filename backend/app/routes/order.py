@@ -446,6 +446,24 @@ def update_order(current_user, order_id):
             print(f"自动创建护理记录失败：{e}")
             import traceback
             traceback.print_exc()
+    
+    # 当订单状态变为已完成时，更新护理员的收入
+    if old_status != 4 and order.status == 4 and order.nurse_id:
+        try:
+            # 获取护理员
+            nurse = User.query.get(order.nurse_id)
+            if nurse:
+                # 计算收入（这里假设护理员获得订单金额的80%）
+                income_amount = float(order.actual_amount) * 0.8
+                # 更新护理员收入
+                nurse.total_income += income_amount
+                nurse.pending_income += income_amount
+                db.session.commit()
+                print(f"更新护理员收入成功：护理员ID={nurse.id}, 姓名={nurse.name}, 收入金额={income_amount}")
+        except Exception as e:
+            print(f"更新护理员收入失败：{e}")
+            import traceback
+            traceback.print_exc()
 
     # 发送通知（如果发生了重要变更）
     try:
