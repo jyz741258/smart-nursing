@@ -47,6 +47,24 @@
               </div>
               <el-empty v-if="todayTasks.length === 0" description="今日暂无任务" />
             </div>
+
+            <!-- 新订单提醒 -->
+            <div v-if="pendingOrders.length > 0" class="new-orders-section">
+              <div class="section-header">
+                <span class="section-title">待处理订单</span>
+                <el-badge :value="pendingOrders.length" type="danger" />
+              </div>
+              <div class="order-list">
+                <div v-for="order in pendingOrders" :key="order.id" class="order-item">
+                  <div class="order-info">
+                    <span class="order-service">{{ order.service_name }}</span>
+                    <span class="order-elder">老人：{{ order.elder_name }}</span>
+                  </div>
+                  <div class="order-time">{{ formatDate(order.appointment_date) }} {{ order.appointment_time }}</div>
+                  <el-button type="primary" size="small" @click="acceptOrder(order)">接单</el-button>
+                </div>
+              </div>
+            </div>
           </div>
         </el-col>
 
@@ -106,13 +124,87 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/store/auth'
+import { useAuthStore } from '@/store/auth'
+
+const authStore = useAuthStore()
 
 const taskDialog = ref(false)
 const currentTask = ref<any>(null)
 const taskForm = reactive({ content: '', status: '2' })
+
+// 订单相关
+const pendingOrders = ref<any[]>([])
+let orderTimer: any = null
+
+// 加载待接订单
+const loadOrders = async () => {
+  try {
+    const res: any = await api.get('/orders/', { params: { status: 2, page: 1, page_size: 10 } })
+    if (res.code === 200) {
+      const oldCount = pendingOrders.value.length
+      pendingOrders.value = res.data.items || []
+      if (pendingOrders.value.length > oldCount && oldCount > 0) {
+        ElMessage.success(`收到 ${pendingOrders.value.length - oldCount} 个新订单`)
+      }
+    }
+  } catch (error) {
+    console.error('获取订单列表失败', error)
+  }
+}
+
+// 接单
+const acceptOrder = async (order: any) => {
+  try {
+    // 更新订单状态
+    const res: any = await api.put(`/orders/${order.id}`, { nurse_id: authStore.userInfo?.id, status: 3 })
+    if (res.code === 200) {
+      // 自动创建护理记录
+      try {
+        await api.post('/nursing/records', {
+          elder_id: order.elder_id,
+          nursing_type: getNursingTypeFromService(order.service_name),
+          description: `服务内容：${order.service_name}`
+        })
+      } catch (error) {
+        console.error('创建护理记录失败', error)
+      }
+      ElMessage.success('接单成功')
+      loadOrders()
+    }
+  } catch (error) {
+    console.error('接单失败', error)
+    ElMessage.error('接单失败')
+  }
+}
+
+// 根据服务名称获取护理类型
+const getNursingTypeFromService = (serviceName: string): number => {
+  const typeMap: Record<string, number> = {
+    '日常照护': 1,
+    '医疗护理': 2,
+    '康复训练': 3,
+    '心理疏导': 4,
+    '饮食护理': 5,
+    '清洁护理': 6,
+    '安全护理': 7
+  }
+  
+  for (const [key, value] of Object.entries(typeMap)) {
+    if (serviceName.includes(key)) {
+      return value
+    }
+  }
+  return 1 // 默认日常照护
+}
+
+// 格式化日期
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '待定'
+  return dateStr
+}
 
 const currentDate = computed(() => {
   const now = new Date()
@@ -147,7 +239,17 @@ const completeTask = async () => {
 
 const syncHealth = () => ElMessage.success('健康数据同步成功')
 
-onMounted(() => {})
+onMounted(() => {
+  loadOrders()
+  // 每30秒轮询检查新订单
+  orderTimer = setInterval(loadOrders, 30000)
+})
+
+onUnmounted(() => {
+  if (orderTimer) {
+    clearInterval(orderTimer)
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -516,6 +618,43 @@ onMounted(() => {})
       background: rgba(64, 158, 255, 0.15);
       border-color: rgba(64, 158, 255, 0.4);
       transform: translateX(8px);
+    }
+  }
+}
+
+.new-orders-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(64, 158, 255, 0.2);
+
+  .order-list {
+    .order-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      background: rgba(245, 108, 108, 0.1);
+      border: 1px solid rgba(245, 108, 108, 0.3);
+      border-radius: 10px;
+      margin-bottom: 10px;
+
+      .order-info {
+        flex: 1;
+        .order-service {
+          font-weight: 600;
+          color: #fff;
+          margin-right: 15px;
+        }
+        .order-elder {
+          color: #9aafc0;
+          font-size: 13px;
+        }
+      }
+
+      .order-time {
+        color: #f56c6c;
+        font-size: 13px;
+        margin-right: 15px;
+      }
     }
   }
 }

@@ -94,25 +94,21 @@
       </el-col>
       <el-col :span="12">
         <div class="card-container">
-          <div class="card-header"><span class="card-title">紧急呼叫监控</span></div>
-          <el-table :data="emergencyCalls" style="width: 100%" v-loading="loadingEmergencyCalls">
-            <el-table-column prop="elder_name" label="老人" />
-            <el-table-column prop="type" label="呼叫类型" />
-            <el-table-column prop="location" label="位置" />
-            <el-table-column prop="status" label="状态">
-              <template #default="{ row }">
-                <el-tag 
-                  :type="row.status === 'pending' ? 'warning' : row.status === 'responding' ? 'info' : row.status === 'completed' ? 'success' : 'danger'" 
-                  size="small"
-                >
-                  {{ row.status === 'pending' ? '待处理' : row.status === 'responding' ? '处理中' : row.status === 'completed' ? '已完成' : '未知' }}
-                </el-tag>
-              </template>
+          <div class="card-header">
+            <span class="card-title">待处理订单</span>
+            <el-badge :value="newOrderCount" :hidden="newOrderCount === 0" type="primary">
+              <el-button size="small" @click="loadOrders">刷新</el-button>
+            </el-badge>
+          </div>
+          <el-table :data="pendingOrders" style="width: 100%" v-loading="loadingOrders" max-height="200">
+            <el-table-column prop="service_name" label="服务" min-width="100" show-overflow-tooltip />
+            <el-table-column prop="elder_name" label="老人" width="80" />
+            <el-table-column prop="total_amount" label="金额" width="70">
+              <template #default="{ row }">¥{{ row.total_amount }}</template>
             </el-table-column>
-            <el-table-column prop="assigned_worker_name" label="护理人员" />
-            <el-table-column prop="created_at" label="呼叫时间">
+            <el-table-column prop="created_at" label="下单时间" width="140">
               <template #default="{ row }">
-                {{ row.created_at ? new Date(row.created_at).toLocaleString() : '-' }}
+                {{ formatDate(row.created_at) }}
               </template>
             </el-table-column>
           </el-table>
@@ -359,6 +355,55 @@ const pendingTasks = ref([
 // 紧急呼叫监控
 const emergencyCalls = ref<any[]>([])
 const loadingEmergencyCalls = ref(false)
+
+// 订单相关
+const pendingOrders = ref<any[]>([])
+const loadingOrders = ref(false)
+const newOrderCount = ref(0)
+
+// 加载待处理订单
+const loadOrders = async () => {
+  loadingOrders.value = true
+  try {
+    const res: any = await api.get('/orders/', { params: { status: 1, page: 1, page_size: 10 } })
+    if (res.code === 200) {
+      const orders = res.data.items || []
+      // 检查是否有新订单
+      const oldCount = pendingOrders.value.length
+      pendingOrders.value = orders
+      if (orders.length > oldCount && oldCount > 0) {
+        ElMessage.success(`新增 ${orders.length - oldCount} 个待处理订单`)
+      }
+      newOrderCount.value = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取订单列表失败', error)
+  } finally {
+    loadingOrders.value = false
+  }
+}
+
+// 格式化日期
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+}
+
+// 通知轮询
+let notificationTimer: any = null
+const pollNotifications = async () => {
+  try {
+    const res: any = await api.get('/notifications/unread-count')
+    if (res.code === 200) {
+      const count = res.data.count || 0
+      // 可以通过 store 更新全局通知数量
+      // notificationStore.updateCount(count)
+    }
+  } catch (error) {
+    console.error('获取通知数量失败', error)
+  }
+}
 
 // 加载紧急呼叫数据
 const loadEmergencyCalls = async () => {
@@ -705,14 +750,24 @@ onMounted(async () => {
   await getDashboardStats()
   await loadUserList()
   await loadEmergencyCalls()
+  await loadOrders()
   updateCharts()
   window.addEventListener('resize', handleResize)
+
+  // 启动轮询：每30秒检查新订单和新通知
+  notificationTimer = setInterval(() => {
+    loadOrders()
+    pollNotifications()
+  }, 30000)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   nursingChart?.dispose()
   pieChart?.dispose()
+  if (notificationTimer) {
+    clearInterval(notificationTimer)
+  }
 })
 </script>
 

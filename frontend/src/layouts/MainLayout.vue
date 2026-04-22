@@ -38,6 +38,11 @@
               <el-icon><FirstAidKit /></el-icon>
               <span>护理工作</span>
             </template>
+            <el-menu-item index="/nurse-orders">
+              <el-badge :value="pendingOrderCount" :hidden="pendingOrderCount === 0" type="danger">
+                <span>待接订单</span>
+              </el-badge>
+            </el-menu-item>
             <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
@@ -223,6 +228,11 @@
                 <el-icon><FirstAidKit /></el-icon>
                 <span>护理工作</span>
               </template>
+              <el-menu-item index="/nurse-orders">
+                <el-badge :value="pendingOrderCount" :hidden="pendingOrderCount === 0" type="danger">
+                  <span>待接订单</span>
+                </el-badge>
+              </el-menu-item>
               <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
               <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
               <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
@@ -292,6 +302,7 @@ const userType = ref(3)
 const isMobile = ref(false)
 const showMobileMenu = ref(false)
 const showFontMenu = ref(false)
+const pendingOrderCount = ref(0)
 
 const fontSizeLabel = computed(() => {
   const labels: Record<string, string> = {
@@ -408,6 +419,27 @@ const getUnreadCount = async () => {
   }
 }
 
+// 获取护理人员待接订单数量
+const getPendingOrderCount = async () => {
+  if (userType.value !== 2) return
+  try {
+    const res: any = await api.get('/orders/', { params: { page: 1, page_size: 1 } })
+    if (res.code === 200) {
+      // 计算待支付和待服务的订单总数
+      const orders = res.data.items || []
+      const pendingCount = orders.filter((o: any) => o.status === 1 || o.status === 2).length
+      // 如果总数大于当前页，说明还有更多
+      if (res.data.total > orders.length) {
+        pendingOrderCount.value = res.data.total // 使用总数估算
+      } else {
+        pendingOrderCount.value = pendingCount
+      }
+    }
+  } catch (error) {
+    console.error('获取待接订单数量失败', error)
+  }
+}
+
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
 }
@@ -416,10 +448,13 @@ onMounted(() => {
   authStore.getProfile()
   getUserType()
   getUnreadCount()
+  getPendingOrderCount()
   checkMobile()
   // 初始化字体设置
   settingsStore.initSettings()
   window.addEventListener('resize', checkMobile)
+  // 每30秒刷新待接订单数量
+  setInterval(getPendingOrderCount, 30000)
 })
 
 // 组件卸载时移除事件监听器

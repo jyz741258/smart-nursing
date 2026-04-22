@@ -137,30 +137,6 @@
         <el-button type="primary" plain @click="$router.push('/nursing')">查看护理记录</el-button>
       </div>
 
-      <div v-if="userType === 3" class="profile-card admin-section">
-        <div class="card-header">
-          <h3>系统管理</h3>
-        </div>
-        <div class="admin-stats">
-          <div class="stat-item">
-            <div class="stat-value">{{ stats.elderCount || 0 }}</div>
-            <div class="stat-label">老人总数</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ stats.nurseCount || 0 }}</div>
-            <div class="stat-label">护理人员</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ stats.todayOrders || 0 }}</div>
-            <div class="stat-label">今日订单</div>
-          </div>
-        </div>
-        <div class="admin-actions">
-          <el-button type="primary" @click="$router.push('/elders')">老人管理</el-button>
-          <el-button type="success" @click="$router.push('/statistics')">数据统计</el-button>
-        </div>
-      </div>
-
       <div v-if="userType === 4" class="profile-card family-section">
         <div class="card-header">
           <h3>关注的老人</h3>
@@ -191,11 +167,6 @@ import api from '@/store/auth'
 const formRef = ref<FormInstance>()
 const pwdFormRef = ref<FormInstance>()
 const userType = ref(3)
-const stats = ref({
-  elderCount: 0,
-  nurseCount: 0,
-  todayOrders: 0
-})
 
 const watchedElders = ref([
   { id: 1, name: '张三', relation: '父亲', healthStatus: 'normal', healthStatusText: '健康', color: '#67c23a' }

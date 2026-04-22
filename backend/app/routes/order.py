@@ -1,5 +1,6 @@
 from flask import request
 from datetime import datetime
+from sqlalchemy import or_, and_
 import uuid
 from . import order_bp
 from ..extensions import db
@@ -105,8 +106,15 @@ def get_orders(current_user):
                 # 老人只能看到自己的订单
                 query = query.filter_by(elder_id=current_user.id)
             elif current_user.user_type == 2:
-                # 护理人员只能看到自己的订单
-                query = query.filter_by(nurse_id=current_user.id)
+                # 护理人员可以看到：
+                # 1. 分配给自己的订单
+                # 2. 未分配的待服务订单（status=2且nurse_id为NULL）
+                from sqlalchemy import or_, and_, is_
+                nurse_filter = or_(
+                    Order.nurse_id == current_user.id,
+                    and_(Order.status == 2, Order.nurse_id.is_(None))
+                )
+                query = query.filter(nurse_filter)
             elif current_user.user_type == 4:
                 # 家属只能看到自己绑定的老人的订单
                 # 通过 current_user.binding_elder_id 过滤
@@ -272,15 +280,14 @@ def create_order(current_user):
         try:
             # 获取管理员（user_type=3）
             admins = User.query.filter_by(user_type=3, status=1).all()
-            # 获取负责该老人的护理人员（通过nurse_id，如果有的话）
-            # 这里先发送给管理员，管理员再分配给护理人员
-            # 或者根据服务类型查找对应区域的护理人员
+            # 获取所有护理人员（user_type=2）
+            nurses = User.query.filter_by(user_type=2, status=1).all()
 
             # 构建通知内容
             notification_title = "新订单预约"
             notification_content = f"用户 {current_user.real_name or current_user.username} 预约了服务「{service.name}」，服务时间：{appointment_date or '待定'} {appointment_time or ''}，服务对象：{elder.real_name if elder else '未知'}"
 
-            # 发送给所有在线管理员
+            # 发送给所有管理员
             for admin in admins:
                 notification = Notification(
                     user_id=admin.id,
@@ -292,9 +299,17 @@ def create_order(current_user):
                 )
                 db.session.add(notification)
 
-            # 如果有指定的护理人员（nurse_id字段），也发送通知
-            # 但当前订单刚创建，nurse_id为空，需要管理员分配
-            # 所以暂时只通知管理员
+            # 发送给所有护理人员
+            for nurse in nurses:
+                notification = Notification(
+                    user_id=nurse.id,
+                    title=notification_title,
+                    content=notification_content,
+                    notification_type=4,  # 任务通知
+                    priority=1,  # 重要
+                    created_by=current_user.id
+                )
+                db.session.add(notification)
 
             db.session.commit()
         except Exception as e:
@@ -330,19 +345,19 @@ def update_order(current_user, order_id):
     # 记录变更用于通知
     changes = []
     
+    old_status = order.status
+    old_nurse = order.nurse_id
+    
     if 'status' in data:
-        old_status = order.status
         order.status = data['status']
         if old_status != data['status']:
             status_map = {0: '已取消', 1: '待支付', 2: '待服务', 3: '服务中', 4: '已完成', 5: '已退款'}
             changes.append(f"订单状态变更为：{status_map.get(data['status'], '未知')}")
     
     if 'nurse_id' in data:
-        old_nurse = order.nurse_id
-        new_nurse = data['nurse_id']
-        order.nurse_id = new_nurse
-        if old_nurse != new_nurse:
-            nurse = User.query.get(new_nurse)
+        order.nurse_id = data['nurse_id']
+        if old_nurse != data['nurse_id']:
+            nurse = User.query.get(data['nurse_id'])
             nurse_name = nurse.name if nurse else "未知"
             changes.append(f"护理人员已分配：{nurse_name}")
     
@@ -356,6 +371,52 @@ def update_order(current_user, order_id):
         order.remark = data['remark']
 
     db.session.commit()
+
+    # 当订单状态从待服务(2)变为服务中(3)且分配了护理人员时，自动创建护理记录
+    if old_status == 2 and order.status == 3 and order.nurse_id:
+        try:
+            from ..models import NursingRecord
+            from datetime import datetime
+            
+            # 获取服务信息
+            service = Service.query.get(order.service_id)
+            service_name = service.name if service else order.service_name
+            
+            # 确定护理类型
+            nursing_type = 1  # 默认日常照护
+            type_map = {
+                '日常照护': 1,
+                '医疗护理': 2,
+                '康复训练': 3,
+                '心理疏导': 4,
+                '饮食护理': 5,
+                '清洁护理': 6,
+                '安全护理': 7
+            }
+            
+            for key, value in type_map.items():
+                if key in service_name:
+                    nursing_type = value
+                    break
+            
+            # 创建护理记录
+            nursing_record = NursingRecord(
+                elder_id=order.elder_id,
+                staff_id=order.nurse_id,
+                nursing_type=nursing_type,
+                description=f'服务内容：{service_name}',
+                status=1,  # 待完成
+                start_time=datetime.now(),
+                created_by=order.nurse_id
+            )
+            
+            db.session.add(nursing_record)
+            db.session.commit()
+            print(f"自动创建护理记录成功：订单ID={order.id}, 护理记录ID={nursing_record.id}")
+        except Exception as e:
+            print(f"自动创建护理记录失败：{e}")
+            import traceback
+            traceback.print_exc()
 
     # 发送通知（如果发生了重要变更）
     try:
