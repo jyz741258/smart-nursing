@@ -978,12 +978,18 @@ const updateCharts = async () => {
         pieChart = echarts.init(pieChartRef.value)
         pieChart.setOption({
           tooltip: { trigger: 'item' },
-          legend: { bottom: 0, textStyle: { color: '#b8c5d6' } },
+          legend: { bottom: 10, textStyle: { color: '#b8c5d6' } },
           series: [{
             type: 'pie',
-            radius: ['40%', '70%'],
+            radius: ['50%', '75%'],
             data: [],
-            label: { color: '#b8c5d6' }
+            label: { show: false },
+            emphasis: {
+              label: {
+                show: true,
+                color: '#b8c5d6'
+              }
+            }
           }]
         })
         getServiceDistribution()

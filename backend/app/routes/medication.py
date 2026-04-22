@@ -28,7 +28,8 @@ def get_medication_reminders(current_user):
 
 
 @medication_bp.route('/reminders', methods=['POST'])
-def create_medication_reminder():
+@require_token
+def create_medication_reminder(current_user):
     """创建用药提醒"""
     data = request.get_json()
     medication_name = data.get('medication_name')
@@ -36,12 +37,14 @@ def create_medication_reminder():
     dosage = data.get('dosage')
     days = data.get('days', [])
     notes = data.get('notes', '')
+    user_id = data.get('user_id', current_user.id)
     
     if not medication_name or not time or not dosage or not days:
         return api_error('请填写完整信息')
     
-    # 假设当前用户ID为1，实际应该从token中获取
-    user_id = 1
+    # 管理员可以为其他用户创建提醒，普通用户只能为自己创建
+    if current_user.user_type != 3 and user_id != current_user.id:
+        return api_error('无权限为其他用户创建提醒')
     
     reminder = MedicationReminder(
         user_id=user_id,
