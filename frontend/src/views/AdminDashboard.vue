@@ -55,6 +55,46 @@
       </el-col>
     </el-row>
 
+    <!-- 订单统计卡片 -->
+    <el-row :gutter="20" class="stats-row" style="margin-top: 20px;">
+      <el-col :xs="24" :sm="12" :lg="6">
+        <div class="stats-card total-orders">
+          <div class="card-icon"><el-icon><Document /></el-icon></div>
+          <div class="card-content">
+            <div class="card-value">{{ orderStats.totalOrders }}</div>
+            <div class="card-label">总订单数</div>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <div class="stats-card sales">
+          <div class="card-icon"><el-icon><Money /></el-icon></div>
+          <div class="card-content">
+            <div class="card-value">¥{{ Math.round(orderStats.totalSales) }}</div>
+            <div class="card-label">总销售额</div>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <div class="stats-card completed">
+          <div class="card-icon"><el-icon><Check /></el-icon></div>
+          <div class="card-content">
+            <div class="card-value">{{ orderStats.completedOrders }}</div>
+            <div class="card-label">已完成订单</div>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <div class="stats-card pending">
+          <div class="card-icon"><el-icon><Timer /></el-icon></div>
+          <div class="card-content">
+            <div class="card-value">{{ orderStats.pendingOrders }}</div>
+            <div class="card-label">待处理订单</div>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
     <el-row :gutter="20">
       <el-col :span="16">
         <div class="card-container">
@@ -158,6 +198,58 @@
     <el-row :gutter="20" style="margin-top: 20px">
       <el-col :span="24">
         <div class="card-container">
+          <div class="card-header">
+            <span class="card-title">订单管理</span>
+            <el-button type="primary" @click="loadAllOrders"><el-icon><Refresh /></el-icon>刷新</el-button>
+          </div>
+          <el-table :data="allOrders" style="width: 100%" v-loading="loadingAllOrders">
+            <el-table-column prop="order_no" label="订单号" width="180" show-overflow-tooltip />
+            <el-table-column prop="service_name" label="服务项目" width="120" show-overflow-tooltip />
+            <el-table-column prop="elder_name" label="老人" width="100" />
+            <el-table-column prop="nurse_name" label="护理员" width="100" />
+            <el-table-column prop="total_amount" label="金额" width="80">
+              <template #default="{ row }">¥{{ row.total_amount }}</template>
+            </el-table-column>
+            <el-table-column prop="appointment_date" label="预约日期" width="120" />
+            <el-table-column prop="appointment_time" label="预约时间" width="100" />
+            <el-table-column prop="status_name" label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)">{{ row.status_name }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="created_at" label="创建时间" width="160" />
+            <el-table-column label="操作" width="200" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" @click="handleEditOrder(row)" type="primary" :disabled="row.status === 4 || row.status === 0 || row.status === 5">
+                  编辑
+                </el-button>
+                <el-button size="small" @click="handleCompleteOrder(row)" type="success" :disabled="row.status !== 3">
+                  完成
+                </el-button>
+                <el-button size="small" @click="handleDeleteOrder(row.id)" type="danger">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="margin-top: 10px; text-align: right">
+            <el-pagination
+              v-model:current-page="orderPage"
+              v-model:page-size="orderPageSize"
+              :page-sizes="[10, 20, 50]"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="orderTotal"
+              @size-change="handleOrderSizeChange"
+              @current-change="handleOrderCurrentChange"
+            />
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="20" style="margin-top: 20px">
+      <el-col :span="24">
+        <div class="card-container">
           <div class="card-header"><span class="card-title">快速入口</span></div>
           <div class="quick-links">
             <div class="link-item" @click="$router.push('/elders')"><el-icon><User /></el-icon><span>老人管理</span></div>
@@ -171,6 +263,48 @@
         </div>
       </el-col>
     </el-row>
+
+    <!-- 编辑订单对话框 -->
+    <el-dialog v-model="showEditOrderDialog" title="编辑订单" width="600px">
+      <el-form :model="editOrderForm" label-width="100px">
+        <el-form-item label="服务项目">
+          <el-input v-model="editOrderForm.service_name" disabled />
+        </el-form-item>
+        <el-form-item label="老人">
+          <el-input v-model="editOrderForm.elder_name" disabled />
+        </el-form-item>
+        <el-form-item label="护理员">
+          <el-select v-model="editOrderForm.nurse_id" placeholder="选择护理员">
+            <el-option v-for="nurse in nurseList" :key="nurse.id" :label="nurse.name" :value="nurse.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="预约日期">
+          <el-date-picker v-model="editOrderForm.appointment_date" type="date" placeholder="选择日期" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="预约时间">
+          <el-time-picker v-model="editOrderForm.appointment_time" placeholder="选择时间" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="订单状态">
+          <el-select v-model="editOrderForm.status" placeholder="选择状态">
+            <el-option label="已取消" :value="0" />
+            <el-option label="待支付" :value="1" />
+            <el-option label="待服务" :value="2" />
+            <el-option label="服务中" :value="3" />
+            <el-option label="已完成" :value="4" />
+            <el-option label="已退款" :value="5" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="editOrderForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditOrderDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitEditOrder" :loading="submittingEdit">
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
 
     <!-- 护工评价管理对话框 -->
     <el-dialog v-model="showEvaluationDialog" title="护工评价管理" width="900px">
@@ -373,6 +507,7 @@ let pieChart: echarts.ECharts | null = null
 
 const userName = ref('管理员')
 const stats = reactive({ elderCount: 0, nurseCount: 0, familyCount: 0, todayOrders: 0 })
+const orderStats = reactive({ totalOrders: 0, totalSales: 0, completedOrders: 0, pendingOrders: 0 })
 
 // 发送通知相关
 const showSendNotificationDialog = ref(false)
@@ -399,6 +534,26 @@ const loadingEmergencyCalls = ref(false)
 const pendingOrders = ref<any[]>([])
 const loadingOrders = ref(false)
 const newOrderCount = ref(0)
+
+// 订单管理相关
+const allOrders = ref<any[]>([])
+const loadingAllOrders = ref(false)
+const orderPage = ref(1)
+const orderPageSize = ref(20)
+const orderTotal = ref(0)
+const showEditOrderDialog = ref(false)
+const editOrderForm = reactive({
+  id: 0,
+  service_name: '',
+  elder_name: '',
+  nurse_id: null,
+  appointment_date: '',
+  appointment_time: '',
+  status: 0,
+  remark: ''
+})
+const submittingEdit = ref(false)
+const nurseList = ref<any[]>([])
 
 // 加载待处理订单
 const loadOrders = async () => {
@@ -427,6 +582,156 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+}
+
+// 获取状态类型（用于标签样式）
+const getStatusType = (status: number) => {
+  const typeMap = {
+    0: 'danger',  // 已取消
+    1: 'warning', // 待支付
+    2: 'info',    // 待服务
+    3: 'primary', // 服务中
+    4: 'success', // 已完成
+    5: 'danger'   // 已退款
+  }
+  return typeMap[status] || 'info'
+}
+
+// 加载订单统计数据
+const loadOrderStats = async () => {
+  try {
+    const res: any = await api.get('/orders/summary')
+    if (res.code === 200) {
+      orderStats.totalOrders = res.data.total_orders || 0
+      orderStats.totalSales = res.data.total_sales || 0
+      orderStats.completedOrders = res.data.completed_orders || 0
+      orderStats.pendingOrders = res.data.pending_orders || 0
+    }
+  } catch (error) {
+    console.error('获取订单统计数据失败', error)
+  }
+}
+
+// 加载所有订单
+const loadAllOrders = async () => {
+  loadingAllOrders.value = true
+  try {
+    const res: any = await api.get('/orders/', {
+      params: {
+        page: orderPage.value,
+        page_size: orderPageSize.value
+      }
+    })
+    if (res.code === 200) {
+      allOrders.value = res.data.items || []
+      orderTotal.value = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取订单列表失败', error)
+  } finally {
+    loadingAllOrders.value = false
+  }
+}
+
+// 加载护理员列表
+const loadNurseList = async () => {
+  try {
+    const res: any = await api.get('/users/workers')
+    if (res.code === 200) {
+      nurseList.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取护理员列表失败', error)
+  }
+}
+
+// 处理订单编辑
+const handleEditOrder = (order: any) => {
+  editOrderForm.id = order.id
+  editOrderForm.service_name = order.service_name
+  editOrderForm.elder_name = order.elder_name
+  editOrderForm.nurse_id = order.nurse_id
+  editOrderForm.appointment_date = order.appointment_date
+  editOrderForm.appointment_time = order.appointment_time
+  editOrderForm.status = order.status
+  editOrderForm.remark = order.remark
+  showEditOrderDialog.value = true
+  loadNurseList()
+}
+
+// 提交编辑订单
+const submitEditOrder = async () => {
+  submittingEdit.value = true
+  try {
+    const res: any = await api.put(`/orders/${editOrderForm.id}`, {
+      nurse_id: editOrderForm.nurse_id,
+      appointment_date: editOrderForm.appointment_date,
+      appointment_time: editOrderForm.appointment_time,
+      status: editOrderForm.status,
+      remark: editOrderForm.remark
+    })
+    if (res.code === 200) {
+      ElMessage.success('订单编辑成功')
+      showEditOrderDialog.value = false
+      loadAllOrders()
+      loadOrderStats()
+    } else {
+      ElMessage.error(res.message || '编辑失败')
+    }
+  } catch (error) {
+    console.error('编辑订单失败', error)
+    ElMessage.error('编辑订单失败')
+  } finally {
+    submittingEdit.value = false
+  }
+}
+
+// 处理订单完成
+const handleCompleteOrder = async (order: any) => {
+  try {
+    const res: any = await api.put(`/orders/${order.id}`, {
+      status: 4 // 已完成
+    })
+    if (res.code === 200) {
+      ElMessage.success('订单已完成')
+      loadAllOrders()
+      loadOrderStats()
+    } else {
+      ElMessage.error(res.message || '操作失败')
+    }
+  } catch (error) {
+    console.error('完成订单失败', error)
+    ElMessage.error('完成订单失败')
+  }
+}
+
+// 处理订单删除
+const handleDeleteOrder = async (orderId: number) => {
+  try {
+    const res: any = await api.delete(`/orders/${orderId}`)
+    if (res.code === 200) {
+      ElMessage.success('订单删除成功')
+      loadAllOrders()
+      loadOrderStats()
+    } else {
+      ElMessage.error(res.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除订单失败', error)
+    ElMessage.error('删除订单失败')
+  }
+}
+
+// 订单分页处理
+const handleOrderSizeChange = (size: number) => {
+  orderPageSize.value = size
+  orderPage.value = 1
+  loadAllOrders()
+}
+
+const handleOrderCurrentChange = (current: number) => {
+  orderPage.value = current
+  loadAllOrders()
 }
 
 // 通知轮询
@@ -595,8 +900,10 @@ const getServiceDistribution = async () => {
 
 const refreshData = async () => {
   await getDashboardStats()
+  await loadOrderStats()
   await updateCharts()
   await loadEmergencyCalls()
+  await loadAllOrders()
   ElMessage.success('数据已刷新')
 }
 
@@ -859,9 +1166,11 @@ watch(showEvaluationDialog, (val) => {
 
 onMounted(async () => {
   await getDashboardStats()
+  await loadOrderStats()
   await loadUserList()
   await loadEmergencyCalls()
   await loadOrders()
+  await loadAllOrders()
   await loadElderNurseRelations()
   await loadCheckinRecords()
   updateCharts()
@@ -1101,6 +1410,26 @@ onUnmounted(() => {
   }
 
   &.order .card-icon { 
+    background: linear-gradient(135deg, #e6a23c, #f0a030);
+    box-shadow: 0 4px 20px rgba(230, 162, 60, 0.4);
+  }
+
+  &.total-orders .card-icon { 
+    background: linear-gradient(135deg, #67c23a, #85ce61);
+    box-shadow: 0 4px 20px rgba(103, 194, 58, 0.4);
+  }
+
+  &.sales .card-icon { 
+    background: linear-gradient(135deg, #409eff, #66b1ff);
+    box-shadow: 0 4px 20px rgba(64, 158, 255, 0.4);
+  }
+
+  &.completed .card-icon { 
+    background: linear-gradient(135deg, #67c23a, #85ce61);
+    box-shadow: 0 4px 20px rgba(103, 194, 58, 0.4);
+  }
+
+  &.pending .card-icon { 
     background: linear-gradient(135deg, #e6a23c, #f0a030);
     box-shadow: 0 4px 20px rgba(230, 162, 60, 0.4);
   }

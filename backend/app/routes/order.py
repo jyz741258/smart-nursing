@@ -70,8 +70,8 @@ def get_orders_summary(current_user):
     # 获取已完成订单数（状态为4）
     completed_orders = query.filter_by(status=4).count()
 
-    # 获取待处理订单数（状态为1）
-    pending_orders = query.filter_by(status=1).count()
+    # 获取待处理订单数（状态为1、2、3的订单）
+    pending_orders = query.filter(Order.status.in_([1, 2, 3])).count()
 
     # 调试日志
     print(f"[Order Summary] user_type={current_user.user_type}, filters: status={status}")
@@ -455,11 +455,15 @@ def update_order(current_user, order_id):
             if nurse:
                 # 计算收入（这里假设护理员获得订单金额的80%）
                 income_amount = float(order.actual_amount) * 0.8
-                # 更新护理员收入
-                nurse.total_income += income_amount
-                nurse.pending_income += income_amount
-                db.session.commit()
-                print(f"更新护理员收入成功：护理员ID={nurse.id}, 姓名={nurse.name}, 收入金额={income_amount}")
+                # 检查护理员对象是否有收入字段
+                if hasattr(nurse, 'total_income') and hasattr(nurse, 'pending_income'):
+                    # 更新护理员收入
+                    nurse.total_income += income_amount
+                    nurse.pending_income += income_amount
+                    db.session.commit()
+                    print(f"更新护理员收入成功：护理员ID={nurse.id}, 姓名={nurse.name}, 收入金额={income_amount}")
+                else:
+                    print(f"护理员对象没有收入字段，跳过收入更新：护理员ID={nurse.id}, 姓名={nurse.name}")
         except Exception as e:
             print(f"更新护理员收入失败：{e}")
             import traceback
