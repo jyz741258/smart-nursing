@@ -98,7 +98,15 @@
       <el-col :xs="24" :lg="16">
         <div class="card-container">
           <div class="card-header">
-            <span class="card-title">健康指标统计</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="card-title">健康指标统计</span>
+              <el-tag v-if="selectedElderId" size="small" type="primary">
+                {{ elderList.find(e => e.id === selectedElderId)?.name || '未知老人' }}
+              </el-tag>
+              <el-tag v-else size="small" type="info">
+                所有老人
+              </el-tag>
+            </div>
             <el-radio-group v-model="selectedMetric" size="small">
               <el-radio-button label="heart">心率</el-radio-button>
               <el-radio-button label="blood_pressure_systolic">血压(收缩)</el-radio-button>
@@ -152,7 +160,15 @@
       <el-col :xs="24" :lg="12">
         <div class="card-container">
           <div class="card-header">
-            <span class="card-title">趋势预测</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="card-title">趋势预测</span>
+              <el-tag v-if="selectedElderId" size="small" type="primary">
+                {{ elderList.find(e => e.id === selectedElderId)?.name || '未知老人' }}
+              </el-tag>
+              <el-tag v-else size="small" type="info">
+                所有老人
+              </el-tag>
+            </div>
             <el-select v-model="predictMetricType" size="small" style="width: 120px">
               <el-option label="心率" :value="4" />
               <el-option label="血压(收)" :value="2" />
@@ -210,7 +226,15 @@
       <el-col :span="24">
         <div class="card-container">
           <div class="card-header">
-            <span class="card-title">活动模式分析</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="card-title">活动模式分析</span>
+              <el-tag v-if="selectedElderId" size="small" type="primary">
+                {{ elderList.find(e => e.id === selectedElderId)?.name || '未知老人' }}
+              </el-tag>
+              <el-tag v-else size="small" type="info">
+                所有老人
+              </el-tag>
+            </div>
           </div>
           <el-row :gutter="20">
             <el-col :xs="24" :lg="12">
@@ -229,7 +253,15 @@
       <el-col :span="24">
         <div class="card-container">
           <div class="card-header">
-            <span class="card-title">异常告警</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="card-title">异常告警</span>
+              <el-tag v-if="selectedElderId" size="small" type="primary">
+                {{ elderList.find(e => e.id === selectedElderId)?.name || '未知老人' }}
+              </el-tag>
+              <el-tag v-else size="small" type="info">
+                所有老人
+              </el-tag>
+            </div>
             <el-badge :value="anomalyAlerts.length" :hidden="anomalyAlerts.length === 0">
               <el-button size="small">查看全部</el-button>
             </el-badge>
@@ -614,8 +646,9 @@ const updatePredictionChart = (data: any) => {
     console.log('预测数据:', { historical, predictions })
     
     if (historical.length === 0 && predictions.length === 0) {
+      const titleText = selectedElderId.value === null ? '暂无所有老人的预测数据' : '暂无预测数据'
       predictionChart.setOption({
-        title: { text: '暂无预测数据（请先选择老人）', left: 'center', top: 'center', textStyle: { color: '#9aafc0', fontSize: 14 } },
+        title: { text: titleText, left: 'center', top: 'center', textStyle: { color: '#9aafc0', fontSize: 14 } },
         xAxis: { type: 'category', data: [] },
         yAxis: { type: 'value' },
         series: []
