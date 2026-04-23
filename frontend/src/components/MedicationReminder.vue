@@ -73,7 +73,7 @@
           <el-input v-model="reminderForm.medication_name" placeholder="请输入药品名称" />
         </el-form-item>
         <el-form-item label="服用时间">
-          <el-time-picker v-model="reminderForm.time" format="HH:mm" placeholder="选择时间" style="width: 100%" />
+          <el-time-picker v-model="reminderForm.time" format="HH:mm" value-format="HH:mm" placeholder="选择时间" style="width: 100%" />
         </el-form-item>
         <el-form-item label="服用剂量">
           <el-input v-model="reminderForm.dosage" placeholder="如：1片" />
@@ -201,9 +201,12 @@ const addReminder = async () => {
 
   try {
     // 准备发送的数据，老人用户不传递user_id字段
-    const formData = { ...reminderForm.value }
+    const formData: any = { ...reminderForm.value }
     if (!isAdmin.value) {
       delete formData.user_id
+    } else if (formData.user_id) {
+      // 管理员选择老人时，确保user_id是数字
+      formData.user_id = Number(formData.user_id)
     }
     
     const res: any = await api.post('/medication/reminders', formData)
@@ -221,9 +224,9 @@ const addReminder = async () => {
         notes: ''
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('添加用药提醒失败', error)
-    ElMessage.error('添加失败')
+    ElMessage.error('添加失败: ' + (error.response?.data?.message || error.message))
     // 模拟添加成功
     const newReminder: Reminder = {
       id: Date.now(),

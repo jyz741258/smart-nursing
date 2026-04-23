@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">老人管理</h2>
-      <el-button type="primary" @click="showAddDialog = true">
+      <el-button type="primary" @click="addElder">
         <el-icon><Plus /></el-icon>
         添加老人
       </el-button>
@@ -237,6 +237,25 @@ const deleteElder = async (row: Elder) => {
       ElMessage.error(error.response?.data?.message || '删除失败')
     }
   }
+}
+
+const addElder = () => {
+  // 重置为添加模式
+  isEdit.value = false
+  // 清空表单数据
+  Object.assign(elderForm, {
+    id: null,
+    name: '',
+    phone: '',
+    gender: 1,
+    age: null,
+    id_card: '',
+    address: '',
+    emergency_contact: '',
+    emergency_phone: ''
+  })
+  // 显示对话框
+  showAddDialog.value = true
 }
 
 const submitForm = async () => {
