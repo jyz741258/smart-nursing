@@ -176,42 +176,64 @@ const refreshData = async () => {
   ])
 }
 
-const exportCSV = () => {
-  if (orders.value.length === 0) {
-    ElMessage.warning('没有数据可导出')
-    return
+const exportCSV = async () => {
+  loading.value = true
+  try {
+    // 获取所有订单数据（不分页）
+    const params: any = { page: 1, page_size: 10000 } // 设置一个很大的page_size来获取所有数据
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.start_date = dateRange.value[0]
+      params.end_date = dateRange.value[1]
+    }
+    if (orderStatus.value) {
+      params.status = orderStatus.value
+    }
+    
+    const res: any = await api.get('/orders/', { params })
+    if (res.code === 200 && res.data.items.length > 0) {
+      const allOrders = res.data.items
+      
+      // 生成CSV内容
+      const headers = ['订单ID', '服务名称', '老人姓名', '价格', '订单时间', '预约服务时间', '状态', '备注', '护理员']
+      const rows = allOrders.map((order: any) => [
+        order.id,
+        order.service_name,
+        order.elder_name,
+        order.actual_amount || order.total_amount,
+        order.created_at,
+        (order.appointment_date || '') + ' ' + (order.appointment_time || ''),
+        order.status_name,
+        order.remark || '',
+        order.nurse_name || ''
+      ])
+
+      // 组合CSV内容
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n')
+
+      // 创建下载链接
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `账目_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      ElMessage.success('导出成功')
+    } else {
+      ElMessage.warning('没有数据可导出')
+    }
+  } catch (error) {
+    console.error('导出CSV失败', error)
+    ElMessage.error('导出失败，请稍后重试')
+  } finally {
+    loading.value = false
   }
-
-  // 生成CSV内容
-  const headers = ['订单ID', '服务名称', '老人姓名', '价格', '订单时间', '预约服务时间', '状态', '备注', '护理员']
-  const rows = orders.value.map(order => [
-    order.id,
-    order.service_name,
-    order.elder_name,
-    order.actual_amount || order.total_amount,
-    order.created_at,
-    (order.appointment_date || '') + ' ' + (order.appointment_time || ''),
-    order.status_name,
-    order.remark || '',
-    order.nurse_name || ''
-  ])
-
-  // 组合CSV内容
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.join(','))
-  ].join('\n')
-
-  // 创建下载链接
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', `账目_${new Date().toISOString().split('T')[0]}.csv`)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
 }
 
 const resetSearch = () => {

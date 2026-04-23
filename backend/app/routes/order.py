@@ -109,12 +109,18 @@ def get_orders(current_user):
                 # 护理人员可以看到：
                 # 1. 分配给自己的订单
                 # 2. 所有待服务订单（status=2），不管是否已分配
-                from sqlalchemy import or_, and_, is_
-                nurse_filter = or_(
-                    Order.nurse_id == current_user.id,
-                    Order.status == 2
-                )
-                query = query.filter(nurse_filter)
+                # 3. 如果指定了elder_id，显示该老人的所有订单
+                from sqlalchemy import or_
+                if elder_id:
+                    # 如果指定了老人ID，显示该老人的所有订单
+                    pass  # 后续会通过elder_id过滤
+                else:
+                    # 否则显示分配给自己的订单和待服务订单
+                    nurse_filter = or_(
+                        Order.nurse_id == current_user.id,
+                        Order.status == 2
+                    )
+                    query = query.filter(nurse_filter)
             elif current_user.user_type == 4:
                 # 家属只能看到自己绑定的老人的订单
                 # 通过 current_user.binding_elder_id 过滤
@@ -198,8 +204,17 @@ def get_order_detail(current_user, order_id):
     if current_user.user_type != 3:
         if current_user.user_type == 1 and order.elder_id != current_user.id:
             return api_error('无权限', 403)
-        elif current_user.user_type == 2 and order.nurse_id != current_user.id:
-            return api_error('无权限', 403)
+        elif current_user.user_type == 2:
+            # 护理员可以查看：
+            # 1. 分配给自己的订单
+            # 2. 待服务订单（status=2）
+            # 3. 自己服务的老人的订单
+            from ..models import User
+            # 获取护理员服务的老人列表
+            service_elders = User.query.filter_by(user_type=1, family_id=current_user.id).all()
+            service_elder_ids = [elder.id for elder in service_elders]
+            if order.nurse_id != current_user.id and order.status != 2 and order.elder_id not in service_elder_ids:
+                return api_error('无权限', 403)
         elif current_user.user_type == 4:
             elder = User.query.get(order.elder_id)
             if elder and elder.family_id != current_user.id:

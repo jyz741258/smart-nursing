@@ -64,6 +64,9 @@ def get_nursing_records(current_user):
             return api_error('无权限查看其他老人的护理记录', 403)
         # 强制使用老人自己的ID
         elder_id = current_user.id
+    elif current_user.user_type == 2:  # 护理员
+        # 护理员只能查看自己创建的护理记录
+        query = query.filter_by(staff_id=current_user.id)
 
     if elder_id:
         query = query.filter_by(elder_id=elder_id)
@@ -98,6 +101,12 @@ def get_nursing_record_detail(current_user, record_id):
     """获取护理记录详情"""
     record = NursingRecord.query.get_or_404(record_id)
 
+    # 权限控制
+    if current_user.user_type == 2:  # 护理员
+        # 护理员只能查看自己创建的护理记录
+        if record.staff_id != current_user.id:
+            return api_error('无权限查看该护理记录', 403)
+
     return api_response({
         'id': record.id,
         'elder_id': record.elder_id,
@@ -124,6 +133,12 @@ def update_nursing_record(current_user, record_id):
     record = NursingRecord.query.get_or_404(record_id)
     data = request.get_json()
 
+    # 权限控制
+    if current_user.user_type == 2:  # 护理员
+        # 护理员只能更新自己创建的护理记录
+        if record.staff_id != current_user.id:
+            return api_error('无权限更新该护理记录', 403)
+
     if 'nursing_type' in data:
         record.nursing_type = data['nursing_type']
     if 'description' in data:
@@ -147,6 +162,12 @@ def complete_nursing_record(current_user, record_id):
     """完成护理记录"""
     record = NursingRecord.query.get_or_404(record_id)
     data = request.get_json()
+
+    # 权限控制
+    if current_user.user_type == 2:  # 护理员
+        # 护理员只能完成自己创建的护理记录
+        if record.staff_id != current_user.id:
+            return api_error('无权限完成该护理记录', 403)
 
     record.status = 2  # 已完成
     record.end_time = datetime.utcnow()
