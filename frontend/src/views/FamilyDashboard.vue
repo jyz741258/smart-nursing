@@ -11,17 +11,8 @@
         <p v-if="bindingElder">您关心的 {{ bindingElder.name }} 健康状况一切正常</p>
         <p v-else>请先绑定要关心的老人</p>
       </div>
-      <div class="elder-select">
-        <el-select
-          v-if="bindingElder"
-          v-model="selectedElderId"
-          placeholder="选择老人"
-          size="large"
-          @change="onElderChange"
-        >
-          <el-option :label="bindingElder.name" :value="bindingElder.id" />
-        </el-select>
-        <el-button v-else type="primary" size="large" @click="showBindDialog = true">
+      <div class="elder-select" v-if="!bindingElder">
+        <el-button type="primary" size="large" @click="showBindDialog = true">
           绑定老人
         </el-button>
       </div>
