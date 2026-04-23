@@ -11,6 +11,9 @@
         :circle-center="fenceCenter"
         :circle-radius="fenceRadius * 1000"
         :show-circle="mapMode === 'fence' && selectedElderId"
+        :track-playback="isPlaying"
+        :playback-progress="playbackProgress"
+        :playback-path="trackPath"
         class="map-view"
         @click="handleMapClick"
         @marker-click="handleMarkerClick"
@@ -132,7 +135,7 @@
           @change="handleElderChange"
         >
           <el-option
-            v-for="elder in elders"
+            v-for="elder in filteredElders"
             :key="elder.id"
             :label="elder.name"
             :value="elder.id"
@@ -456,6 +459,26 @@ const trackStats = ref({
   sleepHours: 0
 })
 
+// 获取当前用户类型
+const currentUser = computed(() => {
+  return JSON.parse(localStorage.getItem('user') || '{}')
+})
+
+// 判断是否为家属用户
+const isFamily = computed(() => {
+  return currentUser.value.user_type === 2
+})
+
+// 过滤后的老人列表
+const filteredElders = computed(() => {
+  // 如果是家属用户，只显示绑定的老人
+  if (isFamily.value && bindingElder.value) {
+    return [bindingElder.value]
+  }
+  // 其他用户显示所有老人
+  return elders.value
+})
+
 // 围栏相关
 const fenceName = ref('')
 const fenceRadius = ref(200)
@@ -500,7 +523,7 @@ const markers = computed(() => {
 
   // 老人位置
   if (mapMode.value === 'track' || mapMode.value === 'fence') {
-    elders.value.forEach(elder => {
+    filteredElders.value.forEach(elder => {
       result.push({
         position: elder.position,
         title: elder.name,
@@ -544,7 +567,7 @@ const handleTimeRangeChange = () => {
 
 // 老人选择变更
 const handleElderChange = (id: number) => {
-  const elder = elders.value.find(e => e.id === id)
+  const elder = filteredElders.value.find(e => e.id === id)
   if (elder) {
     currentLocation.value = elder.location
     lastUpdate.value = elder.lastUpdate
@@ -574,7 +597,7 @@ const handleElderChange = (id: number) => {
 
 // 生成详细的轨迹历史
 const generateTrackHistory = () => {
-  const elder = elders.value.find(e => e.id === selectedElderId.value)
+  const elder = filteredElders.value.find(e => e.id === selectedElderId.value)
   if (!elder) return
 
   const baseLng = PIDU_CENTER_LNG
@@ -640,6 +663,8 @@ const playTrack = () => {
     if (playbackProgress.value < trackHistory.value.length - 1) {
       playbackProgress.value++
       updatePlaybackTime()
+      // 确保轨迹路径与历史记录同步
+      generateTrackPath()
     } else {
       pauseTrack()
     }
@@ -659,6 +684,8 @@ const pauseTrack = () => {
 const seekTrack = (index: number) => {
   playbackProgress.value = index
   updatePlaybackTime()
+  // 确保轨迹路径与历史记录同步
+  generateTrackPath()
 }
 
 // 更新播放时间显示
@@ -685,7 +712,7 @@ const handleMarkerClick = (index: number) => {
     }
   } else if (mapMode.value !== 'nursingHome' && index > 0) {
     // 老人标记
-    const elder = elders.value[index - 1]
+    const elder = filteredElders.value[index - 1]
     if (elder) {
       selectedElderId.value = elder.id
       handleElderChange(elder.id)
@@ -738,7 +765,7 @@ const handleEmergency = () => {
 // 定位老人
 const handleLocate = () => {
   if (selectedElderId.value) {
-    const elder = elders.value.find(e => e.id === selectedElderId.value)
+    const elder = filteredElders.value.find(e => e.id === selectedElderId.value)
     if (elder) {
       mapCenter.value = elder.position
       mapZoom.value = 17

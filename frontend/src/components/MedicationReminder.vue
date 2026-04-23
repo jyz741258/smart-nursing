@@ -200,7 +200,13 @@ const addReminder = async () => {
   }
 
   try {
-    const res: any = await api.post('/medication/reminders', reminderForm.value)
+    // 准备发送的数据，老人用户不传递user_id字段
+    const formData = { ...reminderForm.value }
+    if (!isAdmin.value) {
+      delete formData.user_id
+    }
+    
+    const res: any = await api.post('/medication/reminders', formData)
     if (res.code === 200) {
       ElMessage.success('添加成功')
       showAddReminderDialog.value = false

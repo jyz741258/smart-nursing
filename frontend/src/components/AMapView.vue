@@ -21,6 +21,9 @@ interface Props {
   circleCenter?: [number, number]
   circleRadius?: number
   showCircle?: boolean
+  trackPlayback?: boolean
+  playbackProgress?: number
+  playbackPath?: [number, number][]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,7 +33,10 @@ const props = withDefaults(defineProps<Props>(), {
   polylinePath: () => [],
   circleCenter: () => [116.427428, 39.92923],
   circleRadius: 200,
-  showCircle: false
+  showCircle: false,
+  trackPlayback: false,
+  playbackProgress: 0,
+  playbackPath: () => []
 })
 
 const emit = defineEmits<{
@@ -44,6 +50,8 @@ let AMap: any = null
 let markerList: any[] = []
 let polylineInstance: any = null
 let circleInstance: any = null
+let playbackMarker: any = null
+let playbackPolyline: any = null
 
 // 加载高德地图 SDK
 const loadAMap = (): Promise<any> => {
@@ -205,6 +213,117 @@ const createCircle = () => {
   })
 }
 
+// 创建轨迹播放标记和路线
+const createPlayback = () => {
+  // 清除旧的播放标记和路线
+  if (playbackMarker) {
+    playbackMarker.setMap(null)
+    playbackMarker = null
+  }
+  if (playbackPolyline) {
+    playbackPolyline.setMap(null)
+    playbackPolyline = null
+  }
+
+  if (!props.trackPlayback || props.playbackPath.length === 0) return
+
+  // 创建播放路线
+  playbackPolyline = new AMap.Polyline({
+    path: props.playbackPath,
+    strokeColor: '#22c55e',
+    strokeWeight: 4,
+    strokeStyle: 'solid',
+    lineJoin: 'round',
+    lineCap: 'round',
+    showDir: true,
+    map: mapInstance
+  })
+
+  // 创建播放标记
+  updatePlaybackProgress()
+}
+
+// 更新轨迹播放进度
+const updatePlaybackProgress = () => {
+  if (!props.trackPlayback || props.playbackPath.length === 0) return
+
+  const progress = Math.min(props.playbackProgress, props.playbackPath.length - 1)
+  const currentPosition = props.playbackPath[progress]
+
+  if (!currentPosition) return
+
+  // 创建或更新播放标记
+  if (!playbackMarker) {
+    // 创建自定义播放标记
+    const markerContent = document.createElement('div')
+    markerContent.className = 'playback-marker'
+    markerContent.style.cssText = `
+      position: relative;
+      width: 40px;
+      height: 40px;
+    `
+
+    // 标记图标
+    const iconDiv = document.createElement('div')
+    iconDiv.style.cssText = `
+      width: 40px;
+      height: 40px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(34, 197, 94, 0.5);
+      border: 3px solid white;
+      animation: pulse 1.5s infinite;
+    `
+    
+    // 标记内的符号
+    const iconText = document.createElement('span')
+    iconText.textContent = '👤'
+    iconText.style.cssText = `
+      font-size: 18px;
+    `
+    iconDiv.appendChild(iconText)
+    markerContent.appendChild(iconDiv)
+
+    playbackMarker = new AMap.Marker({
+      position: currentPosition,
+      content: markerContent,
+      offset: new AMap.Pixel(-20, -40),
+      title: '当前位置'
+    })
+
+    playbackMarker.setMap(mapInstance)
+  } else {
+    // 更新标记位置
+    playbackMarker.setPosition(currentPosition)
+  }
+
+  // 移动地图视野到当前位置
+  mapInstance.panTo(currentPosition)
+}
+
+// 动画样式
+const style = document.createElement('style')
+style.textContent = `
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    70% {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+  }
+`
+document.head.appendChild(style)
+
 // 初始化地图
 const initMap = async () => {
   try {
@@ -228,10 +347,11 @@ const initMap = async () => {
       emit('click', e.lnglat.getLng(), e.lnglat.getLat())
     })
 
-    // 创建标记、轨迹、围栏
+    // 创建标记、轨迹、围栏、轨迹播放
     createMarkers()
     createPolyline()
     createCircle()
+    createPlayback()
 
   } catch (error) {
     console.error('地图初始化失败:', error)
@@ -292,6 +412,27 @@ watch(() => props.zoom, (newZoom) => {
     mapInstance.setZoom(newZoom)
   }
 })
+
+// 监听轨迹播放状态变化
+watch(() => props.trackPlayback, () => {
+  if (mapInstance && AMap) {
+    createPlayback()
+  }
+})
+
+// 监听播放进度变化
+watch(() => props.playbackProgress, () => {
+  if (mapInstance && AMap) {
+    updatePlaybackProgress()
+  }
+})
+
+// 监听播放路径变化
+watch(() => props.playbackPath, () => {
+  if (mapInstance && AMap) {
+    createPlayback()
+  }
+}, { deep: true })
 
 onMounted(() => {
   initMap()

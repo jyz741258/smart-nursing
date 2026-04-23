@@ -120,7 +120,7 @@
                   <el-icon :size="28"><TrendCharts /></el-icon>
                   <span>健康数据</span>
                 </div>
-                <div class="action-btn contact" @click="$router.push('/health')">
+                <div class="action-btn contact" @click="$router.push('/health-management')">
                   <el-icon :size="28"><Phone /></el-icon>
                   <span>护理记录</span>
                 </div>

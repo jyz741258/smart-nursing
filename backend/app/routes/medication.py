@@ -37,7 +37,11 @@ def create_medication_reminder(current_user):
     dosage = data.get('dosage')
     days = data.get('days', [])
     notes = data.get('notes', '')
-    user_id = data.get('user_id', current_user.id)
+    user_id = data.get('user_id')
+    
+    # 如果没有提供user_id或user_id为空，使用当前用户的ID
+    if not user_id:
+        user_id = current_user.id
     
     if not medication_name or not time or not dosage or not days:
         return api_error('请填写完整信息')

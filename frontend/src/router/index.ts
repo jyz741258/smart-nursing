@@ -74,6 +74,12 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'health',
         name: 'Health',
+        component: () => import('@/views/Health.vue'),
+        meta: { title: '健康指标' }
+      },
+      {
+        path: 'health-management',
+        name: 'HealthManagement',
         component: () => import('@/views/HealthManagement.vue'),
         meta: { title: '健康管理与护理计划' }
       },

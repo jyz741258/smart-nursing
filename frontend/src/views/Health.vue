@@ -109,9 +109,21 @@ import type { HealthMetric, Elder } from '@/types'
 
 const authStore = useAuthStore()
 
-const isAdminOrNurse = computed(() => {
-  const userType = authStore.userInfo?.user_type
-  return userType === 2 || userType === 3
+// 判断用户类型
+const isAdmin = computed(() => authStore.userInfo?.user_type === 3)
+const isNurse = computed(() => authStore.userInfo?.user_type === 2)
+const isElder = computed(() => authStore.userInfo?.user_type === 1)
+const isFamily = computed(() => authStore.userInfo?.user_type === 4)
+
+// 管理员或护工
+const isAdminOrNurse = computed(() => isAdmin.value || isNurse.value)
+
+// 获取当前老人ID（如果是老人用户）
+const currentElderId = computed(() => {
+  if (isElder.value) {
+    return authStore.userInfo?.id
+  }
+  return null
 })
 
 const loading = ref(false)
@@ -298,9 +310,16 @@ watch(() => searchForm.elder_id, () => {
   getLatestMetrics()
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await getElders()
+  
+  // 如果是老人用户，自动选择当前老人
+  if (isElder.value && currentElderId.value) {
+    searchForm.elder_id = currentElderId.value
+    await getLatestMetrics()
+  }
+  
   getMetrics()
-  getElders()
 })
 </script>
 
