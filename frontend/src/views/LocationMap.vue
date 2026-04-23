@@ -663,8 +663,6 @@ const playTrack = () => {
     if (playbackProgress.value < trackHistory.value.length - 1) {
       playbackProgress.value++
       updatePlaybackTime()
-      // 确保轨迹路径与历史记录同步
-      generateTrackPath()
     } else {
       pauseTrack()
     }
