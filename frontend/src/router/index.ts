@@ -155,12 +155,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/StaffLocationMap.vue'),
         meta: { title: '位置地图', roles: [2, 3, 4] }
       },
-      {
-        path: 'nurse-orders',
-        name: 'NurseOrders',
-        component: () => import('@/views/NurseOrders.vue'),
-        meta: { title: '待接订单', roles: [2] }
-      },
+
       {
         path: 'payment/mock',
         name: 'MockPayment',

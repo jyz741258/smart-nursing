@@ -323,6 +323,7 @@ import {
   Check, Delete, VideoPlay, VideoPause, DataLine, Timer
 } from '@element-plus/icons-vue'
 import AMapView from '@/components/AMapView.vue'
+import api from '@/store/auth'
 
 // 地图组件引用
 const mapViewRef = ref()
@@ -335,6 +336,8 @@ const mapMode = ref<'nursingHome' | 'track' | 'fence'>('nursingHome')
 const mapCenter = ref<[number, number]>([PIDU_CENTER_LNG, PIDU_CENTER_LAT])
 const mapZoom = ref(16)
 
+// 绑定的老人信息
+const bindingElder = ref<any>(null)
 // 老人数据 - 郫都区华迪公寓附近
 const elders = ref([
   { 
@@ -392,9 +395,38 @@ const elders = ref([
     gender: '男',
     age: 76
   },
+  // 添加张三老人
+  { 
+    id: 6, 
+    name: '张三', 
+    avatar: '', 
+    status: 'normal', 
+    location: '休息室', 
+    lastUpdate: '10:30', 
+    position: [PIDU_CENTER_LNG + 0.0005, PIDU_CENTER_LAT - 0.0005] as [number, number],
+    gender: '男',
+    age: 75
+  }
 ])
 
 const selectedElderId = ref<number | null>(null)
+
+// 加载绑定的老人信息
+const loadBindingElder = async () => {
+  try {
+    const res: any = await api.get('/users/binding-elder')
+    if (res.code === 200) {
+      bindingElder.value = res.data
+      if (res.data) {
+        // 自动选择绑定的老人
+        selectedElderId.value = res.data.id
+        handleElderChange(res.data.id)
+      }
+    }
+  } catch (error) {
+    console.error('获取绑定老人信息失败', error)
+  }
+}
 
 // 轨迹相关
 const trackPath = ref<[number, number][]>([])
@@ -483,6 +515,8 @@ const markers = computed(() => {
 
 // 初始化地图
 onMounted(() => {
+  // 加载绑定的老人信息
+  loadBindingElder()
   // 地图将在 AMapView 组件中自动初始化
 })
 

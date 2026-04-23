@@ -223,7 +223,7 @@
                 <el-button size="small" @click="handleEditOrder(row)" type="primary" :disabled="row.status === 4 || row.status === 0 || row.status === 5">
                   编辑
                 </el-button>
-                <el-button size="small" @click="handleCompleteOrder(row)" type="success" :disabled="row.status !== 3">
+                <el-button size="small" @click="handleCompleteOrder(row)" type="success" :disabled="row.status === 4 || row.status === 0 || row.status === 5">
                   完成
                 </el-button>
                 <el-button size="small" @click="handleDeleteOrder(row.id)" type="danger">
@@ -437,6 +437,22 @@
             <el-radio :label="2">紧急</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="关联订单">
+          <el-select
+            v-model="notificationForm.order_id"
+            placeholder="可选：选择要关联的订单"
+            style="width: 100%"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="order in orderList"
+              :key="order.id"
+              :label="`${order.order_no} - ${order.service_name} (${order.elder_name})`"
+              :value="order.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="选择接收人">
           <el-select
             v-model="notificationForm.user_ids"
@@ -513,10 +529,12 @@ const orderStats = reactive({ totalOrders: 0, totalSales: 0, completedOrders: 0,
 const showSendNotificationDialog = ref(false)
 const sendingNotification = ref(false)
 const userList = ref<any[]>([])
+const orderList = ref<any[]>([])
 const notificationForm = reactive({
   notification_type: 1,
   priority: 0,
   user_ids: [] as number[],
+  order_id: null as number | null,
   title: '',
   content: ''
 })
@@ -804,6 +822,19 @@ const loadUserList = async () => {
   }
 }
 
+// 加载订单列表（用于发送通知时关联订单）
+const loadOrderList = async () => {
+  try {
+    const res: any = await api.get('/orders/', { params: { page_size: 1000 } })
+    if (res.code === 200) {
+      // 只显示"待服务"和"服务中"的订单
+      orderList.value = (res.data.items || []).filter((order: any) => order.status === 2 || order.status === 3)
+    }
+  } catch (error) {
+    console.error('获取订单列表失败', error)
+  }
+}
+
 // 发送通知
 const handleSendNotification = async () => {
   if (!notificationForm.title.trim()) {
@@ -817,13 +848,20 @@ const handleSendNotification = async () => {
 
   sendingNotification.value = true
   try {
-    const res: any = await api.post('/notifications/create', {
+    const payload: any = {
       user_ids: notificationForm.user_ids,
       title: notificationForm.title,
       content: notificationForm.content,
       notification_type: notificationForm.notification_type,
       priority: notificationForm.priority
-    })
+    }
+
+    // 如果选择了关联订单，添加到payload
+    if (notificationForm.order_id) {
+      payload.order_id = notificationForm.order_id
+    }
+
+    const res: any = await api.post('/notifications/broadcast', payload)
     if (res.code === 200) {
       ElMessage.success(res.message || '通知发送成功')
       showSendNotificationDialog.value = false
@@ -831,6 +869,7 @@ const handleSendNotification = async () => {
       notificationForm.title = ''
       notificationForm.content = ''
       notificationForm.user_ids = []
+      notificationForm.order_id = null
       notificationForm.notification_type = 1
       notificationForm.priority = 0
     } else {
@@ -1162,6 +1201,14 @@ const loadWorkerStats = async () => {
   }
 }
 
+// 监听发送通知对话框打开，加载用户列表和订单列表
+watch(showSendNotificationDialog, (val) => {
+  if (val) {
+    loadUserList()
+    loadOrderList()
+  }
+})
+
 // 监听对话框打开，加载护工列表
 watch(showEvaluationDialog, (val) => {
   if (val) {
@@ -1204,9 +1251,9 @@ onUnmounted(() => {
   position: relative;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #0a0e14 0%, #12151c 50%, #0d1117 100%);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
 
-  // 多层动态背景效果
+  // 轻微的背景效果
   &::before {
     content: '';
     position: fixed;
@@ -1215,11 +1262,9 @@ onUnmounted(() => {
     width: 300%;
     height: 300%;
     background: 
-      radial-gradient(ellipse at 20% 20%, rgba(230, 162, 60, 0.12) 0%, transparent 40%),
-      radial-gradient(ellipse at 80% 80%, rgba(245, 147, 251, 0.08) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 10% 90%, rgba(240, 147, 251, 0.05) 0%, transparent 30%),
-      radial-gradient(circle at 90% 10%, rgba(230, 162, 60, 0.05) 0%, transparent 30%);
+      radial-gradient(ellipse at 20% 20%, rgba(230, 162, 60, 0.05) 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 80%, rgba(64, 158, 255, 0.05) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 50%, rgba(103, 194, 58, 0.05) 0%, transparent 50%);
     animation: adminBgFloat 25s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
@@ -1231,8 +1276,8 @@ onUnmounted(() => {
     position: fixed;
     inset: 0;
     background-image: 
-      linear-gradient(rgba(102, 126, 234, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(102, 126, 234, 0.03) 1px, transparent 1px);
+      linear-gradient(rgba(102, 126, 234, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(102, 126, 234, 0.02) 1px, transparent 1px);
     background-size: 50px 50px;
     animation: gridMove 20s linear infinite;
     pointer-events: none;
@@ -1308,18 +1353,17 @@ onUnmounted(() => {
   align-items: center; 
   margin-bottom: 28px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(230, 162, 60, 0.2);
+  border-bottom: 1px solid rgba(230, 162, 60, 0.3);
   
   .page-title { 
     font-size: 26px; 
     font-weight: 700; 
-    color: #ffffff;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    color: #333333;
   }
   
   .page-desc { 
     font-size: 14px; 
-    color: #a8b4c4;
+    color: #666666;
     margin-top: 4px;
   }
 
@@ -1338,7 +1382,7 @@ onUnmounted(() => {
 
 .stats-card {
   position: relative;
-  background: rgba(35, 45, 55, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   padding: 26px;
   display: flex;
@@ -1347,6 +1391,7 @@ onUnmounted(() => {
   border: 1px solid rgba(102, 126, 234, 0.2);
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   // 悬停顶部光效
   &::before {
@@ -1356,14 +1401,14 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
     transform: scaleX(0);
     transition: transform 0.3s ease;
   }
 
   &:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 16px 40px rgba(102, 126, 234, 0.25);
+    box-shadow: 0 16px 40px rgba(102, 126, 234, 0.15);
     border-color: rgba(102, 126, 234, 0.4);
 
     &::before {
@@ -1380,21 +1425,19 @@ onUnmounted(() => {
     justify-content: center;
     font-size: 30px;
     color: #fff;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   }
 
   .card-content {
     .card-value {
       font-size: 34px;
       font-weight: 800;
-      color: #ffffff;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.3));
+      color: #333333;
     }
 
     .card-label {
       font-size: 14px;
-      color: #9aafc0;
+      color: #666666;
       margin-top: 4px;
       font-weight: 500;
     }
@@ -1444,15 +1487,16 @@ onUnmounted(() => {
 .card-container { 
   position: relative;
   z-index: 1;
-  background: rgba(35, 45, 55, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(102, 126, 234, 0.1);
   transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 
   &:hover {
-    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.15);
-    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.2);
   }
 
   .card-header {
@@ -1464,7 +1508,7 @@ onUnmounted(() => {
     .card-title {
       font-size: 17px;
       font-weight: 600;
-      color: #ffffff;
+      color: #333333;
       padding-left: 12px;
       border-left: 3px solid #e6a23c;
     }
@@ -1481,11 +1525,12 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: center;
     padding: 22px;
-    background: rgba(30, 40, 50, 0.9);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 14px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-    border: 1px solid rgba(102, 126, 234, 0.15);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
     .el-icon {
       font-size: 32px;
@@ -1496,16 +1541,16 @@ onUnmounted(() => {
 
     span {
       font-size: 14px;
-      color: #b8c5d6;
+      color: #666666;
       font-weight: 500;
       transition: all 0.3s ease;
     }
 
     &:hover {
-      background: rgba(50, 60, 70, 0.95);
+      background: rgba(248, 249, 250, 0.95);
       border-color: rgba(230, 162, 60, 0.4);
       transform: translateY(-4px);
-      box-shadow: 0 10px 24px rgba(230, 162, 60, 0.2);
+      box-shadow: 0 10px 24px rgba(230, 162, 60, 0.15);
 
       .el-icon {
         transform: scale(1.15);
@@ -1513,7 +1558,7 @@ onUnmounted(() => {
       }
 
       span {
-        color: #ffffff;
+        color: #333333;
       }
     }
   }
@@ -1566,19 +1611,21 @@ onUnmounted(() => {
     align-items: center;
     margin-bottom: 16px;
     padding: 10px 12px;
-    background: rgba(30, 40, 50, 0.8);
+    background: rgba(248, 249, 250, 0.8);
     border-radius: 10px;
     transition: all 0.3s ease;
+    border: 1px solid rgba(102, 126, 234, 0.1);
 
     &:hover {
-      background: rgba(40, 50, 60, 0.9);
+      background: rgba(233, 236, 239, 0.9);
       transform: translateX(4px);
+      border-color: rgba(102, 126, 234, 0.2);
     }
 
     .dim-label {
       width: 90px;
       font-size: 14px;
-      color: #b8c5d6;
+      color: #666666;
       font-weight: 500;
     }
 
@@ -1600,12 +1647,12 @@ onUnmounted(() => {
 .rating-distribution {
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid rgba(102, 126, 234, 0.15);
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
 
   .dist-title {
     font-size: 16px;
     font-weight: 600;
-    color: #ffffff;
+    color: #333333;
     margin-bottom: 16px;
     padding-left: 10px;
     border-left: 3px solid #e6a23c;
@@ -1620,14 +1667,14 @@ onUnmounted(() => {
       .dist-label {
         width: 45px;
         font-size: 13px;
-        color: #9aafc0;
+        color: #666666;
         font-weight: 500;
       }
 
       .dist-bar-bg {
         flex: 1;
         height: 22px;
-        background: rgba(30, 40, 50, 0.9);
+        background: rgba(248, 249, 250, 0.9);
         border-radius: 11px;
         overflow: hidden;
         margin: 0 12px;
@@ -1639,14 +1686,14 @@ onUnmounted(() => {
         background: linear-gradient(90deg, #e6a23c, #f0a030);
         border-radius: 11px;
         transition: width 0.5s cubic-bezier(0.25, 0.8, 0.5, 1);
-        box-shadow: 0 0 12px rgba(230, 162, 60, 0.4);
+        box-shadow: 0 0 12px rgba(230, 162, 60, 0.3);
       }
 
       .dist-count {
         width: 45px;
         text-align: right;
         font-size: 14px;
-        color: #b8c5d6;
+        color: #666666;
         font-weight: 600;
       }
     }

@@ -82,7 +82,7 @@
     </div>
 
     <!-- 通知详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="通知详情" width="500px">
+    <el-dialog v-model="showDetailDialog" title="通知详情" width="600px">
       <el-descriptions :column="1" border>
         <el-descriptions-item label="标题">{{ currentNotification.title }}</el-descriptions-item>
         <el-descriptions-item label="发送者">{{ currentNotification.created_by_name }}</el-descriptions-item>
@@ -96,13 +96,40 @@
         <el-descriptions-item label="时间">{{ currentNotification.created_at }}</el-descriptions-item>
         <el-descriptions-item label="内容">{{ currentNotification.content }}</el-descriptions-item>
       </el-descriptions>
+
+      <!-- 关联订单信息 -->
+      <div v-if="currentNotification.orderId && relatedOrder" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <h4 style="margin-bottom: 10px;">关联订单详情</h4>
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="订单号">{{ relatedOrder.order_no }}</el-descriptions-item>
+          <el-descriptions-item label="服务项目">{{ relatedOrder.service_name }}</el-descriptions-item>
+          <el-descriptions-item label="服务对象">{{ relatedOrder.elder_name }}</el-descriptions-item>
+          <el-descriptions-item label="护理员">{{ relatedOrder.nurse_name || '未分配' }}</el-descriptions-item>
+          <el-descriptions-item label="订单状态">
+            <el-tag :type="getOrderStatusType(relatedOrder.status)">{{ relatedOrder.status_name }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="金额">¥{{ relatedOrder.total_amount }}</el-descriptions-item>
+          <el-descriptions-item label="预约时间">{{ relatedOrder.appointment_date }} {{ relatedOrder.appointment_time }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+
+      <template #footer>
+        <el-button @click="showDetailDialog = false">关闭</el-button>
+        <el-button 
+          v-if="(userInfo.value?.user_type === 2 || userInfo.value?.user_type === 3) && currentNotification.orderId && relatedOrder?.status === 3" 
+          type="primary" 
+          @click="completeOrder"
+        >
+          完成订单
+        </el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/store/auth'
 import type { Notification } from '@/types'
 
@@ -113,6 +140,7 @@ const unreadCount = ref(0)
 
 const notifications = ref<Notification[]>([])
 const currentNotification = ref<any>({})
+const relatedOrder = ref<any>(null)
 
 const pagination = reactive({
   page: 1,
@@ -164,7 +192,20 @@ const getUnreadCount = async () => {
 
 const handleRowClick = async (row: Notification) => {
   currentNotification.value = row
+  relatedOrder.value = null
   showDetailDialog.value = true
+
+  // 加载关联的订单信息
+  if (row.orderId) {
+    try {
+      const res: any = await api.get(`/orders/${row.orderId}`)
+      if (res.code === 200) {
+        relatedOrder.value = res.data
+      }
+    } catch (error) {
+      console.error('加载订单信息失败', error)
+    }
+  }
 
   if (!row.is_read) {
     try {
@@ -188,6 +229,77 @@ const markAllRead = async () => {
   } catch (error) {
     console.error('标记全部已读失败', error)
   }
+}
+
+const completeOrder = async () => {
+  try {
+    // 检查通知是否关联了订单
+    if (!currentNotification.value.orderId) {
+      ElMessage.warning('此通知未关联订单，无法完成')
+      return
+    }
+
+    // 获取关联的订单
+    const orderId = currentNotification.value.orderId
+    const res: any = await api.get(`/orders/${orderId}`)
+    
+    if (res.code !== 200) {
+      ElMessage.error('订单不存在')
+      return
+    }
+
+    const order = res.data
+    
+    // 验证订单状态
+    if (order.status !== 3) {
+      ElMessage.warning(`订单状态为「${order.status_name}」，只有「服务中」的订单才能完成`)
+      return
+    }
+
+    // 确认完成
+    const confirmRes = await ElMessageBox.confirm(
+      `确定要完成订单「${order.service_name}」吗？`,
+      '确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    ).catch(() => false)
+
+    if (!confirmRes) return
+
+    // 调用API完成订单
+    const updateRes: any = await api.put(`/orders/${orderId}`, {
+      status: 4  // 已完成
+    })
+
+    if (updateRes.code === 200) {
+      ElMessage.success('订单已完成')
+      showDetailDialog.value = false
+      // 重新加载通知列表
+      getNotifications()
+    } else {
+      ElMessage.error(updateRes.message || '完成订单失败')
+    }
+  } catch (error: any) {
+    console.error('完成订单失败', error)
+    if (error.message !== 'cancel') {
+      ElMessage.error('完成订单失败，请稍后重试')
+    }
+  }
+}
+
+const getOrderStatusType = (status: number): string => {
+  const statusTypeMap: Record<number, string> = {
+    0: 'info',    // 已取消
+    1: 'warning', // 待支付
+    2: 'info',    // 待服务
+    3: 'warning', // 服务中
+    4: 'success', // 已完成
+    5: 'danger'   // 已退款
+  }
+  return statusTypeMap[status] || 'info'
 }
 
 watch(activeTab, () => {

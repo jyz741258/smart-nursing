@@ -38,11 +38,7 @@
               <el-icon><FirstAidKit /></el-icon>
               <span>护理工作</span>
             </template>
-            <el-menu-item index="/nurse-orders">
-              <el-badge :value="pendingOrderCount" :hidden="pendingOrderCount === 0" type="danger">
-                <span>待接订单</span>
-              </el-badge>
-            </el-menu-item>
+
             <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
             <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
             <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>
@@ -228,11 +224,7 @@
                 <el-icon><FirstAidKit /></el-icon>
                 <span>护理工作</span>
               </template>
-              <el-menu-item index="/nurse-orders">
-                <el-badge :value="pendingOrderCount" :hidden="pendingOrderCount === 0" type="danger">
-                  <span>待接订单</span>
-                </el-badge>
-              </el-menu-item>
+
               <el-menu-item index="/services"><el-icon><Collection /></el-icon>服务列表</el-menu-item>
               <el-menu-item index="/nursing"><el-icon><Document /></el-icon>护理记录</el-menu-item>
               <el-menu-item index="/health"><el-icon><TrendCharts /></el-icon>健康与护理</el-menu-item>

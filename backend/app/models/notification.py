@@ -8,6 +8,7 @@ class Notification(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, nullable=False, comment='用户ID')
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), comment='关联订单ID')
     title = db.Column(db.String(100), nullable=False, comment='通知标题')
     content = db.Column(db.Text, comment='通知内容')
 
@@ -27,6 +28,7 @@ class Notification(db.Model):
         return {
             'id': self.id,
             'userId': self.user_id,
+            'orderId': self.order_id,
             'title': self.title,
             'content': self.content,
             'notificationType': self.notification_type,

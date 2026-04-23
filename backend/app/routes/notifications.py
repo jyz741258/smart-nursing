@@ -60,6 +60,7 @@ def get_notifications(current_user):
 
         notifications.append({
             'id': n.id,
+            'orderId': n.order_id,
             'title': n.title,
             'content': n.content,
             'notification_type': n.notification_type,
@@ -137,10 +138,12 @@ def broadcast_notification(current_user):
     """广播通知给所有用户"""
     data = request.get_json()
     user_ids = data.get('user_ids', [])
+    order_id = data.get('order_id')
 
     for user_id in user_ids:
         notification = Notification(
             user_id=user_id,
+            order_id=order_id,
             title=data.get('title'),
             content=data.get('content'),
             notification_type=data.get('notification_type', 1),

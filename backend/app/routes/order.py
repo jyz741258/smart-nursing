@@ -108,11 +108,11 @@ def get_orders(current_user):
             elif current_user.user_type == 2:
                 # 护理人员可以看到：
                 # 1. 分配给自己的订单
-                # 2. 未分配的待服务订单（status=2且nurse_id为NULL）
+                # 2. 所有待服务订单（status=2），不管是否已分配
                 from sqlalchemy import or_, and_, is_
                 nurse_filter = or_(
                     Order.nurse_id == current_user.id,
-                    and_(Order.status == 2, Order.nurse_id.is_(None))
+                    Order.status == 2
                 )
                 query = query.filter(nurse_filter)
             elif current_user.user_type == 4:
@@ -320,6 +320,7 @@ def create_order(current_user):
             for admin in admins:
                 notification = Notification(
                     user_id=admin.id,
+                    order_id=order.id,
                     title=notification_title,
                     content=notification_content,
                     notification_type=4,  # 任务通知
@@ -332,6 +333,7 @@ def create_order(current_user):
             for nurse in nurses:
                 notification = Notification(
                     user_id=nurse.id,
+                    order_id=order.id,
                     title=notification_title,
                     content=notification_content,
                     notification_type=4,  # 任务通知
@@ -359,17 +361,20 @@ def create_order(current_user):
 def update_order(current_user, order_id):
     """更新订单"""
     order = Order.query.get_or_404(order_id)
+    data = request.get_json()
     # 检查权限
     if current_user.user_type != 3:
         if current_user.user_type == 1 and order.elder_id != current_user.id:
             return api_error('无权限', 403)
-        elif current_user.user_type == 2 and order.nurse_id != current_user.id:
-            return api_error('无权限', 403)
-        elif current_user.user_type == 4:
-            elder = User.query.get(order.elder_id)
-            if elder and elder.family_id != current_user.id:
+        elif current_user.user_type == 2:
+            # 护理员可以更新分配给自己的订单，或者将订单状态更新为已完成
+            if order.nurse_id != current_user.id and data.get('status') != 4:
                 return api_error('无权限', 403)
-    data = request.get_json()
+        elif current_user.user_type == 4:
+            # 家属可以更新自己绑定老人的订单，或者将订单状态更新为已完成
+            elder = User.query.get(order.elder_id)
+            if elder and elder.family_id != current_user.id and data.get('status') != 4:
+                return api_error('无权限', 403)
 
     # 记录变更用于通知
     changes = []
@@ -478,6 +483,7 @@ def update_order(current_user, order_id):
                 if nurse:
                     notification = Notification(
                         user_id=nurse.id,
+                        order_id=order.id,
                         title="订单更新通知",
                         content=f"订单「{order.service_name}」已更新：{'; '.join(changes)}",
                         notification_type=4,  # 任务通知
@@ -492,6 +498,7 @@ def update_order(current_user, order_id):
                 if elder:
                     notification = Notification(
                         user_id=elder.id,
+                        order_id=order.id,
                         title="订单状态更新",
                         content=f"您的订单「{order.service_name}」状态已更新为：{status_map.get(data['status'], '未知')}",
                         notification_type=2,  # 护理提醒

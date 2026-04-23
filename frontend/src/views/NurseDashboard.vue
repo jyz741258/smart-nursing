@@ -48,23 +48,7 @@
               <el-empty v-if="todayTasks.length === 0" description="今日暂无任务" />
             </div>
 
-            <!-- 新订单提醒 -->
-            <div v-if="pendingOrders.length > 0" class="new-orders-section">
-              <div class="section-header">
-                <span class="section-title">待处理订单</span>
-                <el-badge :value="pendingOrders.length" type="danger" />
-              </div>
-              <div class="order-list">
-                <div v-for="order in pendingOrders" :key="order.id" class="order-item">
-                  <div class="order-info">
-                    <span class="order-service">{{ order.service_name }}</span>
-                    <span class="order-elder">老人：{{ order.elder_name }}</span>
-                  </div>
-                  <div class="order-time">{{ formatDate(order.appointment_date) }} {{ order.appointment_time }}</div>
-                  <el-button type="primary" size="small" @click="acceptOrder(order)">接单</el-button>
-                </div>
-              </div>
-            </div>
+
           </div>
         </el-col>
 
@@ -153,70 +137,7 @@ const taskDialog = ref(false)
 const currentTask = ref<any>(null)
 const taskForm = reactive({ content: '', status: '2' })
 
-// 订单相关
-const pendingOrders = ref<any[]>([])
-let orderTimer: any = null
 
-// 加载待接订单
-const loadOrders = async () => {
-  try {
-    const res: any = await api.get('/orders/', { params: { status: 2, page: 1, page_size: 10 } })
-    if (res.code === 200) {
-      const oldCount = pendingOrders.value.length
-      pendingOrders.value = res.data.items || []
-      if (pendingOrders.value.length > oldCount && oldCount > 0) {
-        ElMessage.success(`收到 ${pendingOrders.value.length - oldCount} 个新订单`)
-      }
-    }
-  } catch (error) {
-    console.error('获取订单列表失败', error)
-  }
-}
-
-// 接单
-const acceptOrder = async (order: any) => {
-  try {
-    // 更新订单状态
-    const res: any = await api.put(`/orders/${order.id}`, { nurse_id: authStore.userInfo?.id, status: 3 })
-    if (res.code === 200) {
-      // 自动创建护理记录
-      try {
-        await api.post('/nursing/records', {
-          elder_id: order.elder_id,
-          nursing_type: getNursingTypeFromService(order.service_name),
-          description: `服务内容：${order.service_name}`
-        })
-      } catch (error) {
-        console.error('创建护理记录失败', error)
-      }
-      ElMessage.success('接单成功')
-      loadOrders()
-    }
-  } catch (error) {
-    console.error('接单失败', error)
-    ElMessage.error('接单失败')
-  }
-}
-
-// 根据服务名称获取护理类型
-const getNursingTypeFromService = (serviceName: string): number => {
-  const typeMap: Record<string, number> = {
-    '日常照护': 1,
-    '医疗护理': 2,
-    '康复训练': 3,
-    '心理疏导': 4,
-    '饮食护理': 5,
-    '清洁护理': 6,
-    '安全护理': 7
-  }
-  
-  for (const [key, value] of Object.entries(typeMap)) {
-    if (serviceName.includes(key)) {
-      return value
-    }
-  }
-  return 1 // 默认日常照护
-}
 
 // 格式化日期
 const formatDate = (dateStr: string) => {
@@ -283,16 +204,10 @@ const completeTask = async () => {
 const syncHealth = () => ElMessage.success('健康数据同步成功')
 
 onMounted(() => {
-  loadOrders()
   loadServiceElders()
-  // 每30秒轮询检查新订单
-  orderTimer = setInterval(loadOrders, 30000)
 })
 
 onUnmounted(() => {
-  if (orderTimer) {
-    clearInterval(orderTimer)
-  }
 })
 </script>
 
@@ -301,7 +216,7 @@ onUnmounted(() => {
   position: relative;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #0a0e14 0%, #12151c 50%, #0d1117 100%);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
 
   // 多层动态背景效果
   &::before {
@@ -312,11 +227,9 @@ onUnmounted(() => {
     width: 300%;
     height: 300%;
     background: 
-      radial-gradient(ellipse at 20% 20%, rgba(64, 158, 255, 0.12) 0%, transparent 40%),
-      radial-gradient(ellipse at 80% 80%, rgba(102, 126, 234, 0.08) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 50%, rgba(64, 158, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 10% 90%, rgba(102, 126, 234, 0.05) 0%, transparent 30%),
-      radial-gradient(circle at 90% 10%, rgba(64, 158, 255, 0.05) 0%, transparent 30%);
+      radial-gradient(ellipse at 20% 20%, rgba(64, 158, 255, 0.05) 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 80%, rgba(102, 126, 234, 0.05) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 50%, rgba(64, 158, 255, 0.05) 0%, transparent 50%);
     animation: nurseBgFloat 25s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
@@ -328,8 +241,8 @@ onUnmounted(() => {
     position: fixed;
     inset: 0;
     background-image: 
-      linear-gradient(rgba(64, 158, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(64, 158, 255, 0.03) 1px, transparent 1px);
+      linear-gradient(rgba(64, 158, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(64, 158, 255, 0.02) 1px, transparent 1px);
     background-size: 55px 55px;
     animation: gridMove 22s linear infinite;
     pointer-events: none;
@@ -478,10 +391,9 @@ onUnmounted(() => {
 .section-title {
   font-size: 19px;
   font-weight: 700;
-  color: #ffffff;
+  color: #333333;
   padding-left: 12px;
   border-left: 4px solid #409eff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .section-header {
@@ -492,17 +404,18 @@ onUnmounted(() => {
 }
 
 .task-list {
-  background: rgba(40, 50, 60, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid rgba(64, 158, 255, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   .task-item {
     display: flex;
     align-items: center;
     padding: 20px;
-    background: rgba(30, 40, 50, 0.9);
-    border: 1px solid rgba(64, 158, 255, 0.15);
+    background: rgba(248, 249, 250, 0.9);
+    border: 1px solid rgba(64, 158, 255, 0.1);
     border-radius: 14px;
     margin-bottom: 14px;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
@@ -512,10 +425,10 @@ onUnmounted(() => {
     }
 
     &:hover {
-      background: rgba(50, 60, 70, 0.95);
-      border-color: rgba(64, 158, 255, 0.4);
+      background: rgba(233, 236, 239, 0.9);
+      border-color: rgba(64, 158, 255, 0.3);
       transform: translateX(8px);
-      box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(64, 158, 255, 0.15);
     }
 
     &.completed {
@@ -523,7 +436,7 @@ onUnmounted(() => {
 
       .elder-name {
         text-decoration: line-through;
-        color: #7a9ab5;
+        color: #6c757d;
       }
     }
 
@@ -538,12 +451,11 @@ onUnmounted(() => {
         font-weight: 700;
         color: #409eff;
         display: block;
-        text-shadow: 0 0 8px rgba(64, 158, 255, 0.3);
       }
 
       .duration {
         font-size: 12px;
-        color: #7a9ab5;
+        color: #6c757d;
       }
     }
 
@@ -559,13 +471,13 @@ onUnmounted(() => {
         .elder-name {
           font-size: 17px;
           font-weight: 600;
-          color: #e8eef5;
+          color: #333333;
         }
       }
 
       .task-address {
         font-size: 13px;
-        color: #9aafc0;
+        color: #6c757d;
         margin-bottom: 5px;
         display: flex;
         align-items: center;
@@ -574,7 +486,7 @@ onUnmounted(() => {
 
       .task-notes {
         font-size: 13px;
-        color: #7a9ab5;
+        color: #6c757d;
       }
     }
 
@@ -587,15 +499,16 @@ onUnmounted(() => {
 .side-section > div {
   position: relative;
   z-index: 1;
-  background: rgba(40, 50, 60, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 20px;
-  border: 1px solid rgba(64, 158, 255, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.1);
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   &:hover {
-    box-shadow: 0 12px 32px rgba(64, 158, 255, 0.15);
+    box-shadow: 0 12px 32px rgba(64, 158, 255, 0.1);
   }
 }
 
@@ -608,15 +521,15 @@ onUnmounted(() => {
   .stat-item {
     text-align: center;
     padding: 18px;
-    background: rgba(30, 40, 50, 0.9);
+    background: rgba(248, 249, 250, 0.9);
     border-radius: 12px;
-    border: 1px solid rgba(64, 158, 255, 0.15);
+    border: 1px solid rgba(64, 158, 255, 0.1);
     transition: all 0.3s ease;
 
     &:hover {
       transform: translateY(-4px);
-      border-color: rgba(64, 158, 255, 0.4);
-      box-shadow: 0 8px 20px rgba(64, 158, 255, 0.2);
+      border-color: rgba(64, 158, 255, 0.3);
+      box-shadow: 0 8px 20px rgba(64, 158, 255, 0.15);
     }
 
     .stat-value {
@@ -624,12 +537,11 @@ onUnmounted(() => {
       font-weight: 700;
       color: #409eff;
       margin-bottom: 6px;
-      text-shadow: 0 0 10px rgba(64, 158, 255, 0.3);
     }
 
     .stat-label {
       font-size: 13px;
-      color: #9aafc0;
+      color: #6c757d;
       font-weight: 500;
     }
   }
@@ -643,9 +555,9 @@ onUnmounted(() => {
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: rgba(30, 40, 50, 0.9);
+    background: rgba(248, 249, 250, 0.9);
     margin-bottom: 10px;
-    border: 1px solid rgba(64, 158, 255, 0.15);
+    border: 1px solid rgba(64, 158, 255, 0.1);
 
     .el-icon {
       font-size: 20px;
@@ -655,12 +567,12 @@ onUnmounted(() => {
 
     span {
       font-size: 15px;
-      color: #e8eef5;
+      color: #333333;
     }
 
     &:hover {
-      background: rgba(64, 158, 255, 0.15);
-      border-color: rgba(64, 158, 255, 0.4);
+      background: rgba(64, 158, 255, 0.05);
+      border-color: rgba(64, 158, 255, 0.3);
       transform: translateX(8px);
     }
   }
@@ -670,24 +582,24 @@ onUnmounted(() => {
 .elder-list {
   position: relative;
   z-index: 1;
-  background: rgba(40, 50, 60, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 20px;
-  border: 1px solid rgba(64, 158, 255, 0.2);
+  border: 1px solid rgba(64, 158, 255, 0.1);
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   &:hover {
-    box-shadow: 0 12px 32px rgba(64, 158, 255, 0.15);
+    box-shadow: 0 12px 32px rgba(64, 158, 255, 0.1);
   }
 
   .section-title {
     font-size: 19px;
     font-weight: 700;
-    color: #ffffff;
+    color: #333333;
     padding-left: 12px;
     border-left: 4px solid #409eff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     margin-bottom: 18px;
   }
 
@@ -697,17 +609,17 @@ onUnmounted(() => {
       align-items: center;
       justify-content: space-between;
       padding: 16px;
-      background: rgba(30, 40, 50, 0.9);
-      border: 1px solid rgba(64, 158, 255, 0.15);
+      background: rgba(248, 249, 250, 0.9);
+      border: 1px solid rgba(64, 158, 255, 0.1);
       border-radius: 12px;
       margin-bottom: 12px;
       transition: all 0.3s ease;
 
       &:hover {
-        background: rgba(50, 60, 70, 0.95);
-        border-color: rgba(64, 158, 255, 0.4);
+        background: rgba(233, 236, 239, 0.9);
+        border-color: rgba(64, 158, 255, 0.3);
         transform: translateX(8px);
-        box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+        box-shadow: 0 8px 24px rgba(64, 158, 255, 0.15);
       }
 
       .elder-info {
@@ -716,13 +628,13 @@ onUnmounted(() => {
         .elder-name {
           font-size: 16px;
           font-weight: 600;
-          color: #e8eef5;
+          color: #333333;
           margin-bottom: 4px;
         }
 
         .elder-phone {
           font-size: 13px;
-          color: #9aafc0;
+          color: #6c757d;
         }
       }
     }
