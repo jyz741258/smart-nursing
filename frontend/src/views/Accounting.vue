@@ -55,26 +55,27 @@
 
     <el-table :data="orders" v-loading="loading" style="margin-top: 20px">
       <el-table-column prop="id" label="订单ID" width="100" />
-      <el-table-column prop="serviceName" label="服务名称" />
-      <el-table-column prop="elderName" label="老人姓名" width="120" />
-      <el-table-column prop="actualAmount" label="价格" width="100">
-        <template #default="{ row }">¥{{ row.actualAmount }}</template>
+      <el-table-column prop="service_name" label="服务名称" />
+      <el-table-column prop="elder_name" label="老人姓名" width="120" />
+      <el-table-column prop="actual_amount" label="价格" width="100">
+        <template #default="{ row }">¥{{ row.actual_amount }}</template>
       </el-table-column>
-      <el-table-column prop="orderTime" label="订单时间" width="180" />
+      <el-table-column prop="created_at" label="订单时间" width="180" />
       <el-table-column label="预约服务时间" width="180">
         <template #default="{ row }">
-          {{ row.appointmentDate }} {{ row.appointmentTime }}
+          {{ row.appointment_date }} {{ row.appointment_time }}
         </template>
       </el-table-column>
-      <el-table-column prop="statusName" label="状态" width="100">
+      <el-table-column prop="status_name" label="状态" width="100">
         <template #default="{ row }">
-          <el-tag v-if="row.status === 1" type="warning">{{ row.statusName }}</el-tag>
-          <el-tag v-else-if="row.status === 2" type="primary">{{ row.statusName }}</el-tag>
-          <el-tag v-else-if="row.status === 4" type="success">{{ row.statusName }}</el-tag>
-          <el-tag v-else type="info">{{ row.statusName }}</el-tag>
+          <el-tag v-if="row.status === 1" type="warning">{{ row.status_name }}</el-tag>
+          <el-tag v-else-if="row.status === 2" type="primary">{{ row.status_name }}</el-tag>
+          <el-tag v-else-if="row.status === 4" type="success">{{ row.status_name }}</el-tag>
+          <el-tag v-else type="info">{{ row.status_name }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="notes" label="备注" show-overflow-tooltip />
+      <el-table-column prop="remark" label="备注" show-overflow-tooltip />
+      <el-table-column prop="nurse_name" label="护理员" width="120" />
     </el-table>
 
     <el-pagination
@@ -182,16 +183,17 @@ const exportCSV = () => {
   }
 
   // 生成CSV内容
-  const headers = ['订单ID', '服务名称', '老人姓名', '价格', '订单时间', '预约服务时间', '状态', '备注']
+  const headers = ['订单ID', '服务名称', '老人姓名', '价格', '订单时间', '预约服务时间', '状态', '备注', '护理员']
   const rows = orders.value.map(order => [
     order.id,
-    order.serviceName,
-    order.elderName,
-    order.actualAmount || order.totalAmount,
-    order.orderTime,
-    (order.appointmentDate || '') + ' ' + (order.appointmentTime || ''),
-    order.statusName,
-    order.notes || ''
+    order.service_name,
+    order.elder_name,
+    order.actual_amount || order.total_amount,
+    order.created_at,
+    (order.appointment_date || '') + ' ' + (order.appointment_time || ''),
+    order.status_name,
+    order.remark || '',
+    order.nurse_name || ''
   ])
 
   // 组合CSV内容
