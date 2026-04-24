@@ -217,6 +217,7 @@ const loadServiceElders = async () => {
     // 模拟数据
     serviceElders.value = [
       { id: 1, name: '张三', phone: '13900001001' },
+      { id: 2, name: '李奶奶', phone: '13900001002' },
       { id: 3, name: '王五', phone: '13900001003' }
     ]
   }

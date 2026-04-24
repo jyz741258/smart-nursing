@@ -477,7 +477,7 @@ const loadNurseElderIds = async () => {
   } catch (error) {
     console.error('获取护理员服务老人失败', error)
     // 使用与NurseDashboard相同的模拟数据
-    nurseElderIds.value = [1, 3]
+    nurseElderIds.value = [1, 2, 3]
   }
 }
 
@@ -487,10 +487,9 @@ const visibleElders = computed(() => {
   if (userType.value === 3) {
     return allElders.value
   }
-  // 护理员只能查看自己服务的老人（张三和王五）
+  // 护理员只能查看自己服务的老人
   if (userType.value === 2) {
-    // 确保只返回张三和王五
-    return allElders.value.filter(elder => [1, 3].includes(elder.id))
+    return allElders.value.filter(elder => nurseElderIds.value.includes(elder.id))
   }
   // 家属只能查看绑定的老人
   if (userType.value === 4) {
