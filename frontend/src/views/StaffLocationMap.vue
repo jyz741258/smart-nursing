@@ -601,6 +601,27 @@ const markers = computed(() => {
     })
   }
 
+  // 轨迹起点和终点标记
+  if (mapMode.value === 'track' && trackHistory.value.length > 0) {
+    // 起点
+    const startPoint = trackHistory.value[0]
+    result.push({
+      position: startPoint.position,
+      title: '起点',
+      icon: '📍',
+      color: 'green' as const
+    })
+    
+    // 终点
+    const endPoint = trackHistory.value[trackHistory.value.length - 1]
+    result.push({
+      position: endPoint.position,
+      title: '终点',
+      icon: '🏁',
+      color: 'red' as const
+    })
+  }
+
   return result
 })
 
