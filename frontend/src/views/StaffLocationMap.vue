@@ -350,6 +350,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/auth'
 import AMapView from '@/components/AMapView.vue'
+import api from '@/store/auth'
 
 const authStore = useAuthStore()
 const mapViewRef = ref()
@@ -369,81 +370,121 @@ const userTypeLabel = computed(() => {
   return labels[userType.value] || '用户'
 })
 
-// 获取用户绑定的老人ID列表（家属用）
-const boundElderIds = computed(() => {
-  // 模拟：家属绑定老人ID为6（张三）
-  if (userType.value === 4) {
-    return [6]
-  }
-  return []
-})
+// 家属绑定的老人ID列表
+const boundElderIds = ref<number[]>([])
 
-// 所有老人数据
-const allElders = ref([
-  {
-    id: 1,
-    name: '王建国',
-    avatar: '',
-    status: 'normal',
-    location: '休息室',
-    lastUpdate: '10:30',
-    position: [PIDU_CENTER_LNG + 0.0008, PIDU_CENTER_LAT - 0.0003] as [number, number],
-  },
-  {
-    id: 2,
-    name: '李秀英',
-    avatar: '',
-    status: 'normal',
-    location: '花园',
-    lastUpdate: '10:25',
-    position: [PIDU_CENTER_LNG + 0.0012, PIDU_CENTER_LAT + 0.0005] as [number, number],
-  },
-  {
-    id: 3,
-    name: '张德明',
-    avatar: '',
-    status: 'warning',
-    location: '外出',
-    lastUpdate: '09:15',
-    position: [PIDU_CENTER_LNG + 0.003, PIDU_CENTER_LAT - 0.001] as [number, number],
-  },
-  {
-    id: 4,
-    name: '陈桂兰',
-    avatar: '',
-    status: 'normal',
-    location: '餐厅',
-    lastUpdate: '10:45',
-    position: [PIDU_CENTER_LNG - 0.0005, PIDU_CENTER_LAT - 0.0008] as [number, number],
-  },
-  {
-    id: 5,
-    name: '刘永华',
-    avatar: '',
-    status: 'normal',
-    location: '活动室',
-    lastUpdate: '10:20',
-    position: [PIDU_CENTER_LNG + 0.0015, PIDU_CENTER_LAT + 0.0002] as [number, number],
-  },
-  {
-    id: 6,
-    name: '张三',
-    avatar: '',
-    status: 'normal',
-    location: '花园',
-    lastUpdate: '10:35',
-    position: [PIDU_CENTER_LNG + 0.0005, PIDU_CENTER_LAT + 0.0008] as [number, number],
-  },
-])
+// 护理员服务的老人ID列表
+const nurseElderIds = ref<number[]>([])
 
-// 获取护理员服务的老人ID列表（护理员用）
-const nurseElderIds = computed(() => {
-  // 模拟：护理员服务的老人ID为1和3（王建国和张德明）
-  if (userType.value === 2) {
-    return [1, 3]
+// 所有老人数据 - 从数据库获取
+const allElders = ref<any[]>([])
+
+// 养老院内置位置名称
+const indoorLocations = ['休息室', '花园', '餐厅', '活动室', '走廊', '医务室', '主楼大厅']
+
+// 加载老人列表数据
+const loadElders = async () => {
+  try {
+    const res: any = await api.get('/users/elder/list?page_size=200')
+    if (res.code === 200 && res.data) {
+      const elders = res.data.items || res.data || []
+      // 转换为地图需要的数据格式
+      allElders.value = elders.map((elder: any) => {
+        // 为每个老人生成随机但固定的位置（在养老院范围内）
+        const position = getElderPosition(elder.id)
+        const locationName = indoorLocations[elder.id % indoorLocations.length]
+        
+        return {
+          id: elder.id,
+          name: elder.name,
+          avatar: elder.avatar || '',
+          status: 'normal',
+          location: locationName,
+          lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+          position: position,
+          gender: elder.gender
+        }
+      })
+      ElMessage.success(`已加载 ${allElders.value.length} 位老人的位置信息`)
+    }
+  } catch (error) {
+    console.error('获取老人列表失败', error)
+    ElMessage.error('获取老人列表失败，使用默认数据')
+    // 使用默认数据，包含护理员服务的老人
+    allElders.value = [
+      {
+        id: 1,
+        name: '张三',
+        avatar: '',
+        status: 'normal',
+        location: '花园',
+        lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        position: getElderPosition(1),
+        gender: '男'
+      },
+      {
+        id: 3,
+        name: '王五',
+        avatar: '',
+        status: 'normal',
+        location: '活动室',
+        lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        position: getElderPosition(3),
+        gender: '男'
+      },
+      {
+        id: 2,
+        name: '李奶奶',
+        avatar: '',
+        status: 'normal',
+        location: '休息室',
+        lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        position: getElderPosition(2),
+        gender: '女'
+      }
+    ]
   }
-  return []
-})
+}
+
+// 根据老人ID生成固定的位置坐标（在养老院范围内）
+const getElderPosition = (elderId: number): [number, number] => {
+  // 使用老人ID作为种子，生成固定范围内的随机偏移
+  const seed = elderId * 12345
+  const offsetX = ((seed % 1000) / 10000) - 0.05  // 范围: -0.05 到 0.05
+  const offsetY = (((seed * 7) % 1000) / 10000) - 0.05
+  
+  return [
+    PIDU_CENTER_LNG + offsetX,
+    PIDU_CENTER_LAT + offsetY
+  ]
+}
+
+// 加载家属绑定的老人ID
+const loadBoundElderIds = async () => {
+  try {
+    const res: any = await api.get('/users/binding-elder')
+    if (res.code === 200 && res.data) {
+      boundElderIds.value = res.data.id ? [res.data.id] : []
+    }
+  } catch (error) {
+    console.error('获取绑定老人失败', error)
+    boundElderIds.value = []
+  }
+}
+
+// 加载护理员的老人ID列表
+const loadNurseElderIds = async () => {
+  try {
+    const res: any = await api.get('/users/service-elders')
+    if (res.code === 200 && res.data) {
+      nurseElderIds.value = res.data.map((e: any) => e.id) || []
+    }
+  } catch (error) {
+    console.error('获取护理员服务老人失败', error)
+    // 使用与NurseDashboard相同的模拟数据
+    nurseElderIds.value = [1, 3]
+  }
+}
 
 // 根据用户类型过滤老人列表
 const visibleElders = computed(() => {
@@ -587,91 +628,19 @@ const handleElderChange = (id: number) => {
     currentLocation.value = elder.location
     lastUpdate.value = elder.lastUpdate
     
-    // 为每个老人设置独特的统计数据
-    switch (elder.id) {
-      case 1: // 王建国
-        todayDistance.value = 1200
-        totalStayTime.value = 180
-        activityRange.value = 150
-        activityStatus.value = '活跃'
-        trackStats.value = {
-          steps: 8500,
-          calories: 320,
-          heartRate: 72,
-          sleepHours: 7.5
-        }
-        break
-      case 2: // 李秀英
-        todayDistance.value = 800
-        totalStayTime.value = 210
-        activityRange.value = 120
-        activityStatus.value = '活跃'
-        trackStats.value = {
-          steps: 6200,
-          calories: 250,
-          heartRate: 68,
-          sleepHours: 8.2
-        }
-        break
-      case 3: // 张德明
-        todayDistance.value = 1500
-        totalStayTime.value = 150
-        activityRange.value = 200
-        activityStatus.value = '活跃'
-        trackStats.value = {
-          steps: 9800,
-          calories: 380,
-          heartRate: 75,
-          sleepHours: 6.8
-        }
-        break
-      case 4: // 陈桂兰
-        todayDistance.value = 600
-        totalStayTime.value = 240
-        activityRange.value = 100
-        activityStatus.value = '静止'
-        trackStats.value = {
-          steps: 4500,
-          calories: 180,
-          heartRate: 65,
-          sleepHours: 9.0
-        }
-        break
-      case 5: // 刘永华
-        todayDistance.value = 1000
-        totalStayTime.value = 190
-        activityRange.value = 130
-        activityStatus.value = '活跃'
-        trackStats.value = {
-          steps: 7200,
-          calories: 280,
-          heartRate: 70,
-          sleepHours: 7.8
-        }
-        break
-      case 6: // 张三
-        todayDistance.value = 1300
-        totalStayTime.value = 200
-        activityRange.value = 140
-        activityStatus.value = '活跃'
-        trackStats.value = {
-          steps: 8000,
-          calories: 300,
-          heartRate: 73,
-          sleepHours: 7.5
-        }
-        break
-      default:
-        todayDistance.value = Math.floor(Math.random() * 2000) + 500
-        totalStayTime.value = Math.floor(Math.random() * 120) + 30
-        activityRange.value = Math.floor(Math.random() * 200) + 50
-        activityStatus.value = Math.random() > 0.2 ? '活跃' : '静止'
-        trackStats.value = {
-          steps: Math.floor(Math.random() * 5000) + 3000,
-          calories: Math.floor(Math.random() * 300) + 150,
-          heartRate: Math.floor(Math.random() * 30) + 65,
-          sleepHours: Math.floor(Math.random() * 3) + 6
-        }
+    // 使用基于老人ID的确定性算法生成统计数据
+    const seed = elder.id * 12345
+    todayDistance.value = 500 + (seed % 2000)
+    totalStayTime.value = 100 + ((seed * 7) % 200)
+    activityRange.value = 50 + ((seed * 13) % 200)
+    activityStatus.value = seed % 5 === 0 ? '静止' : '活跃'
+    
+    // 基于ID生成唯一的健康数据
+    trackStats.value = {
+      steps: 3000 + ((seed * 11) % 7000),
+      calories: 150 + ((seed * 17) % 300),
+      heartRate: 60 + ((seed * 19) % 25),
+      sleepHours: 6 + (((seed * 23) % 40) / 10)
     }
 
     fenceCenter.value = elder.position
@@ -691,68 +660,28 @@ const generateTrackHistory = () => {
   const baseLng = PIDU_CENTER_LNG
   const baseLat = PIDU_CENTER_LAT
 
-  // 为每个老人定义独特的活动轨迹
-  const elderLocations = {
-    1: [ // 王建国
-      { name: '休息室', type: 'stay' as const, duration: 45 },
-      { name: '走廊', type: 'move' as const },
-      { name: '餐厅', type: 'stay' as const, duration: 30 },
-      { name: '花园', type: 'stay' as const, duration: 60 },
-      { name: '活动室', type: 'stay' as const, duration: 40 },
-      { name: '走廊', type: 'move' as const },
-      { name: '休息室', type: 'arrive' as const },
-    ],
-    2: [ // 李秀英
-      { name: '休息室', type: 'stay' as const, duration: 30 },
-      { name: '走廊', type: 'move' as const },
-      { name: '花园', type: 'stay' as const, duration: 90 },
-      { name: '走廊', type: 'move' as const },
-      { name: '餐厅', type: 'stay' as const, duration: 40 },
-      { name: '走廊', type: 'move' as const },
-      { name: '休息室', type: 'arrive' as const },
-    ],
-    3: [ // 张德明
-      { name: '休息室', type: 'stay' as const, duration: 20 },
-      { name: '走廊', type: 'move' as const },
-      { name: '活动室', type: 'stay' as const, duration: 60 },
-      { name: '走廊', type: 'move' as const },
-      { name: '花园', type: 'stay' as const, duration: 30 },
-      { name: '外出', type: 'leave' as const, duration: 120 },
-      { name: '休息室', type: 'arrive' as const },
-    ],
-    4: [ // 陈桂兰
-      { name: '休息室', type: 'stay' as const, duration: 50 },
-      { name: '走廊', type: 'move' as const },
-      { name: '餐厅', type: 'stay' as const, duration: 45 },
-      { name: '走廊', type: 'move' as const },
-      { name: '医务室', type: 'stay' as const, duration: 30 },
-      { name: '走廊', type: 'move' as const },
-      { name: '休息室', type: 'arrive' as const },
-    ],
-    5: [ // 刘永华
-      { name: '休息室', type: 'stay' as const, duration: 35 },
-      { name: '走廊', type: 'move' as const },
-      { name: '活动室', type: 'stay' as const, duration: 75 },
-      { name: '走廊', type: 'move' as const },
-      { name: '餐厅', type: 'stay' as const, duration: 35 },
-      { name: '走廊', type: 'move' as const },
-      { name: '休息室', type: 'arrive' as const },
-    ],
-    6: [ // 张三
-      { name: '休息室', type: 'stay' as const, duration: 40 },
-      { name: '走廊', type: 'move' as const },
-      { name: '花园', type: 'stay' as const, duration: 75 },
-      { name: '走廊', type: 'move' as const },
-      { name: '餐厅', type: 'stay' as const, duration: 35 },
-      { name: '走廊', type: 'move' as const },
-      { name: '活动室', type: 'stay' as const, duration: 50 },
-      { name: '走廊', type: 'move' as const },
-      { name: '休息室', type: 'arrive' as const },
-    ]
+  // 为每个老人生成独特的活动轨迹
+  // 基于老人ID生成固定的轨迹模式
+  const elderId = elder.id
+  const seed = elderId * 12345
+
+  // 随机选择6-8个地点
+  const numLocations = 6 + (seed % 3)
+  const locations = []
+
+  // 生成固定的活动序列
+  for (let i = 0; i < numLocations; i++) {
+    const locationIndex = (seed + i * 7) % indoorLocations.length
+    const duration = 20 + ((seed * (i + 1) * 13) % 60)
+    const type = i === 0 ? 'arrive' : (i === numLocations - 1 ? 'arrive' : ((seed + i) % 3 === 0 ? 'move' : 'stay'))
+
+    locations.push({
+      name: indoorLocations[locationIndex],
+      type: type,
+      duration: duration
+    })
   }
 
-  // 获取当前老人的活动轨迹
-  const locations = elderLocations[elder.id] || elderLocations[1] // 默认使用王建国的轨迹
   const history = []
   let currentTime = new Date()
   currentTime.setHours(6, 0, 0, 0)
@@ -761,9 +690,9 @@ const generateTrackHistory = () => {
     const hours = index * (timeRange.value === 'today' ? 1 : timeRange.value === 'week' ? 2 : 4)
     const time = new Date(currentTime.getTime() + hours * 60 * 60 * 1000)
 
-    // 为每个老人生成独特的位置坐标
-    const offsetX = (elder.id * 0.0003) + ((Math.random() - 0.5) * 0.001)
-    const offsetY = (elder.id * 0.0002) + ((Math.random() - 0.5) * 0.001)
+    // 基于老人ID和索引生成确定性的位置偏移
+    const offsetX = (((seed + index * 17) % 1000) / 100000) - 0.005
+    const offsetY = (((seed + index * 19) % 1000) / 100000) - 0.005
 
     history.push({
       time: formatTime(time),
@@ -908,8 +837,18 @@ const handleLocate = () => {
   }
 }
 
-onMounted(() => {
-  authStore.getProfile()
+onMounted(async () => {
+  await authStore.getProfile()
+  // 根据用户类型加载对应的老人数据
+  if (userType.value === 4) {
+    // 家属 - 加载绑定的老人
+    await loadBoundElderIds()
+  } else if (userType.value === 2) {
+    // 护理员 - 加载服务的老人
+    await loadNurseElderIds()
+  }
+  // 加载所有老人列表
+  await loadElders()
 })
 
 onUnmounted(() => {
