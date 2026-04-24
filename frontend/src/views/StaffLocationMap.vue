@@ -449,9 +449,11 @@ const loadElders = async () => {
 // 根据老人ID生成固定的位置坐标（在养老院范围内）
 const getElderPosition = (elderId: number): [number, number] => {
   // 使用老人ID作为种子，生成固定范围内的随机偏移
+  // 扩大范围以确保111位老人都有独特位置
   const seed = elderId * 12345
-  const offsetX = ((seed % 1000) / 10000) - 0.05  // 范围: -0.05 到 0.05
-  const offsetY = (((seed * 7) % 1000) / 10000) - 0.05
+  // 范围: -0.1 到 0.1，比之前扩大一倍
+  const offsetX = ((seed % 2000) / 10000) - 0.1
+  const offsetY = (((seed * 7) % 2000) / 10000) - 0.1
   
   return [
     PIDU_CENTER_LNG + offsetX,
@@ -691,8 +693,9 @@ const generateTrackHistory = () => {
     const time = new Date(currentTime.getTime() + hours * 60 * 60 * 1000)
 
     // 基于老人ID和索引生成确定性的位置偏移
-    const offsetX = (((seed + index * 17) % 1000) / 100000) - 0.005
-    const offsetY = (((seed + index * 19) % 1000) / 100000) - 0.005
+    // 扩大轨迹点的分布范围，确保不同老人的轨迹不重叠
+    const offsetX = (((seed + index * 17) % 2000) / 100000) - 0.01
+    const offsetY = (((seed + index * 19) % 2000) / 100000) - 0.01
 
     history.push({
       time: formatTime(time),
@@ -730,6 +733,7 @@ const playTrack = () => {
     if (playbackProgress.value < trackHistory.value.length - 1) {
       playbackProgress.value++
       updatePlaybackTime()
+      updatePlaybackPosition()
     } else {
       pauseTrack()
     }
@@ -747,6 +751,21 @@ const pauseTrack = () => {
 const seekTrack = (index: number) => {
   playbackProgress.value = index
   updatePlaybackTime()
+  updatePlaybackPosition()
+}
+
+// 更新播放时的位置和轨迹
+const updatePlaybackPosition = () => {
+  if (trackHistory.value.length === 0 || playbackProgress.value >= trackHistory.value.length) return
+  
+  const currentPoint = trackHistory.value[playbackProgress.value]
+  if (currentPoint) {
+    // 移动地图视图到当前位置
+    mapViewRef.value?.setView(currentPoint.position, 17)
+    
+    // 动态更新轨迹路径，只显示到当前播放点
+    trackPath.value = trackHistory.value.slice(0, playbackProgress.value + 1).map(point => point.position)
+  }
 }
 
 const updatePlaybackTime = () => {
