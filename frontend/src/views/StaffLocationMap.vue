@@ -11,6 +11,9 @@
         :circle-center="fenceCenter"
         :circle-radius="fenceRadius * 1000"
         :show-circle="mapMode === 'fence' && selectedElderId"
+        :track-playback="mapMode === 'track' && isPlaying"
+        :playback-progress="playbackProgress"
+        :playback-path="trackHistory.map(h => h.position)"
         class="map-view"
         @click="handleMapClick"
         @marker-click="handleMarkerClick"
@@ -410,7 +413,7 @@ const loadElders = async () => {
   } catch (error) {
     console.error('获取老人列表失败', error)
     ElMessage.error('获取老人列表失败，使用默认数据')
-    // 使用默认数据，包含护理员服务的老人
+    // 使用默认数据，只包含护理员服务的老人（张三和王五）
     allElders.value = [
       {
         id: 1,
@@ -431,16 +434,6 @@ const loadElders = async () => {
         lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
         position: getElderPosition(3),
         gender: '男'
-      },
-      {
-        id: 2,
-        name: '李奶奶',
-        avatar: '',
-        status: 'normal',
-        location: '休息室',
-        lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-        position: getElderPosition(2),
-        gender: '女'
       }
     ]
   }
@@ -494,9 +487,10 @@ const visibleElders = computed(() => {
   if (userType.value === 3) {
     return allElders.value
   }
-  // 护理员只能查看自己服务的老人
+  // 护理员只能查看自己服务的老人（张三和王五）
   if (userType.value === 2) {
-    return allElders.value.filter(elder => nurseElderIds.value.includes(elder.id))
+    // 确保只返回张三和王五
+    return allElders.value.filter(elder => [1, 3].includes(elder.id))
   }
   // 家属只能查看绑定的老人
   if (userType.value === 4) {

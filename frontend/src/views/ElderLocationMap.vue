@@ -46,25 +46,7 @@
         </el-button>
       </div>
 
-      <!-- 轨迹回放控制 -->
-      <div v-if="mapMode === 'track' && trackHistory.length > 0" class="track-player">
-        <el-button circle size="small" @click="playTrack" :disabled="isPlaying">
-          <el-icon><VideoPlay /></el-icon>
-        </el-button>
-        <el-button circle size="small" @click="pauseTrack" :disabled="!isPlaying">
-          <el-icon><VideoPause /></el-icon>
-        </el-button>
-        <el-slider
-          v-model="playbackProgress"
-          :step="1"
-          :min="0"
-          :max="trackHistory.length - 1"
-          size="small"
-          class="playback-slider"
-          @change="seekTrack"
-        />
-        <span class="playback-time">{{ currentPlaybackTime }}</span>
-      </div>
+
     </div>
 
     <!-- 侧边信息面板 -->
@@ -246,9 +228,6 @@ const lastUpdate = ref(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit',
 const todayDistance = ref(Math.floor(Math.random() * 2000) + 500)
 const totalStayTime = ref(Math.floor(Math.random() * 120) + 30)
 const timeRange = ref('today')
-const isPlaying = ref(false)
-const playbackProgress = ref(0)
-const currentPlaybackTime = ref('00:00')
 const isRefreshing = ref(false)
 
 // 轨迹统计
@@ -268,6 +247,10 @@ const trackHistory = ref<Array<{
   type: 'move' | 'stay' | 'arrive' | 'leave'
   duration?: number
 }>>([])
+
+// 电子围栏
+const fenceCenter = ref<[number, number]>([PIDU_CENTER_LNG, PIDU_CENTER_LAT])
+const fenceRadius = ref(200)
 
 // 设施列表
 const facilities = [
@@ -316,7 +299,6 @@ const markers = computed(() => {
   return result
 })
 
-let playbackTimer: number | null = null
 let locationUpdateTimer: number | null = null
 
 // 获取当前位置
@@ -408,16 +390,23 @@ const generateTrackHistory = () => {
   let currentTime = new Date()
   currentTime.setHours(6, 0, 0, 0)
 
+  // 使用固定种子生成轨迹，确保每次刷新时轨迹一致
+  const seed = 12345 // 固定种子
+
   locations.forEach((loc, index) => {
     const hours = index * (timeRange.value === 'today' ? 1 : timeRange.value === 'week' ? 2 : 4)
     const time = new Date(currentTime.getTime() + hours * 60 * 60 * 1000)
+
+    // 使用种子和索引生成固定的位置偏移
+    const offsetX = ((seed + index * 17) % 1000) / 500000 - 0.001
+    const offsetY = ((seed + index * 19) % 1000) / 500000 - 0.001
 
     history.push({
       time: formatTime(time),
       location: loc.name,
       position: [
-        baseLng + (Math.random() - 0.5) * 0.002,
-        baseLat + (Math.random() - 0.5) * 0.002
+        baseLng + offsetX,
+        baseLat + offsetY
       ] as [number, number],
       type: loc.type,
       duration: loc.duration
@@ -436,39 +425,6 @@ const formatTime = (date: Date): string => {
 const generateTrackPath = () => {
   if (trackHistory.value.length === 0) return
   trackPath.value = trackHistory.value.map(h => h.position)
-}
-
-const playTrack = () => {
-  if (isPlaying.value || trackHistory.value.length === 0) return
-  isPlaying.value = true
-
-  playbackTimer = window.setInterval(() => {
-    if (playbackProgress.value < trackHistory.value.length - 1) {
-      playbackProgress.value++
-      updatePlaybackTime()
-    } else {
-      pauseTrack()
-    }
-  }, 1500)
-}
-
-const pauseTrack = () => {
-  isPlaying.value = false
-  if (playbackTimer) {
-    clearInterval(playbackTimer)
-    playbackTimer = null
-  }
-}
-
-const seekTrack = (index: number) => {
-  playbackProgress.value = index
-  updatePlaybackTime()
-}
-
-const updatePlaybackTime = () => {
-  if (trackHistory.value[playbackProgress.value]) {
-    currentPlaybackTime.value = trackHistory.value[playbackProgress.value].time
-  }
 }
 
 const handleMapClick = (lng: number, lat: number) => {
@@ -519,7 +475,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  pauseTrack()
   if (locationUpdateTimer) {
     clearInterval(locationUpdateTimer)
     locationUpdateTimer = null
@@ -627,57 +582,7 @@ $gray-800: #1e293b;
     }
   }
 
-  .track-player {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: $white;
-    padding: 12px 20px;
-    border-radius: 24px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    z-index: 10;
 
-    .el-button {
-      background: $primary-green;
-      border: none;
-      color: $white;
-
-      &:hover {
-        background: $primary-green-dark;
-      }
-
-      &:disabled {
-        background: $gray-300;
-      }
-    }
-
-    .playback-slider {
-      width: 200px;
-
-      :deep(.el-slider__runway) {
-        background: $gray-200;
-      }
-
-      :deep(.el-slider__bar) {
-        background: $primary-green;
-      }
-
-      :deep(.el-slider__button) {
-        border-color: $primary-green;
-      }
-    }
-
-    .playback-time {
-      font-size: 14px;
-      color: $gray-600;
-      font-weight: 500;
-      min-width: 40px;
-    }
-  }
 }
 
 .info-panel {
