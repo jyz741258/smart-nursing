@@ -45,7 +45,7 @@
             <el-row :gutter="15" class="health-cards">
               <el-col :span="6">
                 <div class="health-card heart">
-                  <div class="card-icon"><el-icon><Odometer /></el-icon></div>
+                  <div class="card-icon"><el-icon><Timer /></el-icon></div>
                   <div class="card-value">{{ healthData.heartRate }}</div>
                   <div class="card-label">心率 BPM</div>
                   <div class="card-status normal">正常</div>
@@ -53,7 +53,7 @@
               </el-col>
               <el-col :span="6">
                 <div class="health-card blood">
-                  <div class="card-icon"><el-icon><Sugar /></el-icon></div>
+                  <div class="card-icon"><el-icon><Monitor /></el-icon></div>
                   <div class="card-value">{{ healthData.bloodPressure }}</div>
                   <div class="card-label">血压 mmHg</div>
                   <div class="card-status" :class="healthData.bloodStatus">偏高</div>
@@ -61,7 +61,7 @@
               </el-col>
               <el-col :span="6">
                 <div class="health-card sleep">
-                  <div class="card-icon"><el-icon><Moon /></el-icon></div>
+                  <div class="card-icon"><el-icon><Sunny /></el-icon></div>
                   <div class="card-value">{{ healthData.sleepHours }}</div>
                   <div class="card-label">睡眠时长 h</div>
                   <div class="card-status normal">良好</div>
@@ -69,13 +69,37 @@
               </el-col>
               <el-col :span="6">
                 <div class="health-card activity">
-                  <div class="card-icon"><el-icon><Basketball /></el-icon></div>
+                  <div class="card-icon"><el-icon><Van /></el-icon></div>
                   <div class="card-value">{{ healthData.steps }}</div>
                   <div class="card-label">今日步数</div>
                   <div class="card-status normal">达标</div>
                 </div>
               </el-col>
             </el-row>
+
+            <div class="section-header" style="margin-top: 30px">
+              <span class="section-title">今日待办</span>
+            </div>
+            <div class="today-tasks">
+              <div v-if="todayTasks.length === 0" class="empty-tasks">
+                <el-empty description="今日暂无待办" :image-size="80" />
+              </div>
+              <div v-else class="tasks-list">
+                <el-card v-for="task in todayTasks" :key="task.id" class="task-item">
+                  <div class="task-header">
+                    <el-checkbox v-model="task.completed" @change="updateTaskStatus(task)"></el-checkbox>
+                    <span class="task-title">{{ task.title }}</span>
+                  </div>
+                  <div class="task-content">
+                    <p>{{ task.description }}</p>
+                    <div class="task-meta">
+                      <span class="task-time">{{ task.time }}</span>
+                      <span class="task-nurse">护理人员：{{ task.nurse }}</span>
+                    </div>
+                  </div>
+                </el-card>
+              </div>
+            </div>
 
             <div class="section-header" style="margin-top: 30px">
               <span class="section-title">护理记录</span>
@@ -293,6 +317,13 @@ const bindForm = reactive({
   password: ''
 })
 
+// 加载状态
+const loading = reactive({
+  health: false,
+  nursing: false,
+  tasks: false
+})
+
 const healthData = reactive({
   heartRate: '--',
   bloodPressure: '--/--',
@@ -302,6 +333,8 @@ const healthData = reactive({
 })
 
 const nursingRecords = ref<any[]>([])
+
+const todayTasks = ref<any[]>([])
 
 const weeklyPlans = ref([
   { id: 1, day: '11', week: '周六', name: '日常护理', time: '09:00-11:00', nurse: '李护理' },
@@ -434,6 +467,7 @@ const getHealthData = async () => {
     return
   }
 
+  loading.health = true
   const elderId = bindingElder.value.id
   console.log('正在获取老人健康数据, elderId:', elderId)
 
@@ -474,6 +508,11 @@ const getHealthData = async () => {
       console.log('解析后的健康数据:', healthData)
     } else {
       console.warn('API返回数据为空或格式错误')
+      // 重置为默认值
+      healthData.heartRate = '--'
+      healthData.bloodPressure = '--/--'
+      healthData.sleepHours = '--'
+      healthData.steps = '--'
     }
   } catch (error: any) {
     console.error('获取健康数据失败', error)
@@ -481,12 +520,20 @@ const getHealthData = async () => {
       console.error('错误状态码:', error.response.status)
       console.error('错误数据:', error.response.data)
     }
+    // 错误时重置为默认值
+    healthData.heartRate = '--'
+    healthData.bloodPressure = '--/--'
+    healthData.sleepHours = '--'
+    healthData.steps = '--'
+  } finally {
+    loading.health = false
   }
 }
 
 const getNursingRecords = async () => {
   if (!bindingElder.value) return
 
+  loading.nursing = true
   try {
     const res: any = await api.get(`/nursing/records?elder_id=${bindingElder.value.id}&page_size=5`)
     if (res.code === 200) {
@@ -498,15 +545,108 @@ const getNursingRecords = async () => {
         nurse: record.staff_name || '未知',
         color: '#409eff'
       }))
+    } else {
+      nursingRecords.value = []
     }
   } catch (error) {
     console.error('获取护理记录失败', error)
+    nursingRecords.value = []
+  } finally {
+    loading.nursing = false
+  }
+}
+
+const getTodayTasks = async () => {
+  if (!bindingElder.value) return
+
+  loading.tasks = true
+  try {
+    const res: any = await api.get(`/tasks/today?elder_id=${bindingElder.value.id}`)
+    if (res.code === 200) {
+      todayTasks.value = res.data || []
+    } else {
+      // 模拟数据，实际项目中应移除
+      todayTasks.value = [
+        {
+          id: 1,
+          title: '测量血压',
+          description: '为老人测量血压并记录数据',
+          time: '09:00',
+          nurse: '李护理',
+          completed: false
+        },
+        {
+          id: 2,
+          title: '服药提醒',
+          description: '提醒老人按时服用降压药',
+          time: '12:00',
+          nurse: '王护理',
+          completed: false
+        },
+        {
+          id: 3,
+          title: '日常护理',
+          description: '协助老人进行日常活动和护理',
+          time: '15:00',
+          nurse: '李护理',
+          completed: false
+        }
+      ]
+    }
+  } catch (error) {
+    console.error('获取今日待办失败', error)
+    // 模拟数据，实际项目中应移除
+    todayTasks.value = [
+      {
+        id: 1,
+        title: '测量血压',
+        description: '为老人测量血压并记录数据',
+        time: '09:00',
+        nurse: '李护理',
+        completed: false
+      },
+      {
+        id: 2,
+        title: '服药提醒',
+        description: '提醒老人按时服用降压药',
+        time: '12:00',
+        nurse: '王护理',
+        completed: false
+      },
+      {
+        id: 3,
+        title: '日常护理',
+        description: '协助老人进行日常活动和护理',
+        time: '15:00',
+        nurse: '李护理',
+        completed: false
+      }
+    ]
+  } finally {
+    loading.tasks = false
+  }
+}
+
+const updateTaskStatus = async (task: any) => {
+  try {
+    const res: any = await api.put(`/tasks/${task.id}/status`, {
+      completed: task.completed ? 1 : 0
+    })
+    if (res.code !== 200) {
+      ElMessage.error('更新任务状态失败')
+      task.completed = !task.completed // 回滚状态
+    }
+  } catch (error) {
+    console.error('更新任务状态失败', error)
+    task.completed = !task.completed // 回滚状态
+    ElMessage.error('更新任务状态失败')
   }
 }
 
 const refreshData = () => {
   getHealthData()
   getNursingRecords()
+  getTodayTasks()
   ElMessage.success('数据已刷新')
 }
 
@@ -602,6 +742,7 @@ onMounted(async () => {
   if (bindingElder.value) {
     getHealthData()
     getNursingRecords()
+    getTodayTasks()
   }
 })
 </script>
@@ -892,6 +1033,80 @@ onMounted(async () => {
     &.blood .card-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
     &.sleep .card-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
     &.activity .card-icon { background: linear-gradient(135deg, #409eff, #66b1ff); }
+  }
+}
+
+.today-tasks {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(64, 158, 255, 0.25);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+  }
+
+  .empty-tasks {
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  .tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .task-item {
+      border: none;
+      box-shadow: none;
+      background: rgba(245, 247, 250, 0.9);
+      border-radius: 12px;
+      border-left: 4px solid #409eff;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateX(10px);
+        box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+        background: rgba(235, 240, 245, 0.95);
+      }
+
+      .task-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+
+        .task-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #333333;
+        }
+      }
+
+      .task-content {
+        p {
+          font-size: 14px;
+          color: #666666;
+          margin-bottom: 12px;
+          line-height: 1.5;
+        }
+
+        .task-meta {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          color: #999999;
+
+          .task-time {
+            color: #409eff;
+            font-weight: 500;
+          }
+        }
+      }
+    }
   }
 }
 

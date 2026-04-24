@@ -371,9 +371,9 @@ const userTypeLabel = computed(() => {
 
 // 获取用户绑定的老人ID列表（家属用）
 const boundElderIds = computed(() => {
-  // 模拟：家属绑定老人ID为1和2
+  // 模拟：家属绑定老人ID为6（张三）
   if (userType.value === 4) {
-    return [1, 2]
+    return [6]
   }
   return []
 })
@@ -425,11 +425,20 @@ const allElders = ref([
     lastUpdate: '10:20',
     position: [PIDU_CENTER_LNG + 0.0015, PIDU_CENTER_LAT + 0.0002] as [number, number],
   },
+  {
+    id: 6,
+    name: '张三',
+    avatar: '',
+    status: 'normal',
+    location: '花园',
+    lastUpdate: '10:35',
+    position: [PIDU_CENTER_LNG + 0.0005, PIDU_CENTER_LAT + 0.0008] as [number, number],
+  },
 ])
 
 // 获取护理员服务的老人ID列表（护理员用）
 const nurseElderIds = computed(() => {
-  // 模拟：护理员服务的老人ID为1和3
+  // 模拟：护理员服务的老人ID为1和3（王建国和张德明）
   if (userType.value === 2) {
     return [1, 3]
   }
@@ -531,10 +540,19 @@ const markers = computed(() => {
   // 可见的老人位置
   if (mapMode.value === 'track' || mapMode.value === 'fence') {
     visibleElders.value.forEach(elder => {
+      // 根据老人性别和状态显示不同的图标
+      let icon = '👴'
+      if (elder.id === 2) { // 李秀英是女性
+        icon = '👵'
+      }
+      if (elder.status !== 'normal') {
+        icon = '⚠️'
+      }
+      
       result.push({
         position: elder.position,
         title: elder.name,
-        icon: elder.status === 'normal' ? '👴' : '⚠️',
+        icon: icon,
         color: elder.status === 'normal' ? 'green' : 'orange' as const
       })
     })
@@ -568,25 +586,100 @@ const handleElderChange = (id: number) => {
   if (elder) {
     currentLocation.value = elder.location
     lastUpdate.value = elder.lastUpdate
-    todayDistance.value = Math.floor(Math.random() * 2000) + 500
-    totalStayTime.value = Math.floor(Math.random() * 120) + 30
-    activityRange.value = Math.floor(Math.random() * 200) + 50
-    activityStatus.value = Math.random() > 0.2 ? '活跃' : '静止'
+    
+    // 为每个老人设置独特的统计数据
+    switch (elder.id) {
+      case 1: // 王建国
+        todayDistance.value = 1200
+        totalStayTime.value = 180
+        activityRange.value = 150
+        activityStatus.value = '活跃'
+        trackStats.value = {
+          steps: 8500,
+          calories: 320,
+          heartRate: 72,
+          sleepHours: 7.5
+        }
+        break
+      case 2: // 李秀英
+        todayDistance.value = 800
+        totalStayTime.value = 210
+        activityRange.value = 120
+        activityStatus.value = '活跃'
+        trackStats.value = {
+          steps: 6200,
+          calories: 250,
+          heartRate: 68,
+          sleepHours: 8.2
+        }
+        break
+      case 3: // 张德明
+        todayDistance.value = 1500
+        totalStayTime.value = 150
+        activityRange.value = 200
+        activityStatus.value = '活跃'
+        trackStats.value = {
+          steps: 9800,
+          calories: 380,
+          heartRate: 75,
+          sleepHours: 6.8
+        }
+        break
+      case 4: // 陈桂兰
+        todayDistance.value = 600
+        totalStayTime.value = 240
+        activityRange.value = 100
+        activityStatus.value = '静止'
+        trackStats.value = {
+          steps: 4500,
+          calories: 180,
+          heartRate: 65,
+          sleepHours: 9.0
+        }
+        break
+      case 5: // 刘永华
+        todayDistance.value = 1000
+        totalStayTime.value = 190
+        activityRange.value = 130
+        activityStatus.value = '活跃'
+        trackStats.value = {
+          steps: 7200,
+          calories: 280,
+          heartRate: 70,
+          sleepHours: 7.8
+        }
+        break
+      case 6: // 张三
+        todayDistance.value = 1300
+        totalStayTime.value = 200
+        activityRange.value = 140
+        activityStatus.value = '活跃'
+        trackStats.value = {
+          steps: 8000,
+          calories: 300,
+          heartRate: 73,
+          sleepHours: 7.5
+        }
+        break
+      default:
+        todayDistance.value = Math.floor(Math.random() * 2000) + 500
+        totalStayTime.value = Math.floor(Math.random() * 120) + 30
+        activityRange.value = Math.floor(Math.random() * 200) + 50
+        activityStatus.value = Math.random() > 0.2 ? '活跃' : '静止'
+        trackStats.value = {
+          steps: Math.floor(Math.random() * 5000) + 3000,
+          calories: Math.floor(Math.random() * 300) + 150,
+          heartRate: Math.floor(Math.random() * 30) + 65,
+          sleepHours: Math.floor(Math.random() * 3) + 6
+        }
+    }
 
     fenceCenter.value = elder.position
 
     if (mapMode.value === 'track') {
       generateTrackHistory()
-      generateTrackPath()
     } else if (mapMode.value === 'fence') {
       mapViewRef.value?.setView(elder.position, 17)
-    }
-
-    trackStats.value = {
-      steps: Math.floor(Math.random() * 5000) + 3000,
-      calories: Math.floor(Math.random() * 300) + 150,
-      heartRate: Math.floor(Math.random() * 30) + 65,
-      sleepHours: Math.floor(Math.random() * 3) + 6
     }
   }
 }
@@ -598,16 +691,68 @@ const generateTrackHistory = () => {
   const baseLng = PIDU_CENTER_LNG
   const baseLat = PIDU_CENTER_LAT
 
-  const locations = [
-    { name: '休息室', type: 'stay' as const, duration: 45 },
-    { name: '走廊', type: 'move' as const },
-    { name: '餐厅', type: 'stay' as const, duration: 30 },
-    { name: '花园', type: 'stay' as const, duration: 60 },
-    { name: '活动室', type: 'stay' as const, duration: 40 },
-    { name: '走廊', type: 'move' as const },
-    { name: '休息室', type: 'arrive' as const },
-  ]
+  // 为每个老人定义独特的活动轨迹
+  const elderLocations = {
+    1: [ // 王建国
+      { name: '休息室', type: 'stay' as const, duration: 45 },
+      { name: '走廊', type: 'move' as const },
+      { name: '餐厅', type: 'stay' as const, duration: 30 },
+      { name: '花园', type: 'stay' as const, duration: 60 },
+      { name: '活动室', type: 'stay' as const, duration: 40 },
+      { name: '走廊', type: 'move' as const },
+      { name: '休息室', type: 'arrive' as const },
+    ],
+    2: [ // 李秀英
+      { name: '休息室', type: 'stay' as const, duration: 30 },
+      { name: '走廊', type: 'move' as const },
+      { name: '花园', type: 'stay' as const, duration: 90 },
+      { name: '走廊', type: 'move' as const },
+      { name: '餐厅', type: 'stay' as const, duration: 40 },
+      { name: '走廊', type: 'move' as const },
+      { name: '休息室', type: 'arrive' as const },
+    ],
+    3: [ // 张德明
+      { name: '休息室', type: 'stay' as const, duration: 20 },
+      { name: '走廊', type: 'move' as const },
+      { name: '活动室', type: 'stay' as const, duration: 60 },
+      { name: '走廊', type: 'move' as const },
+      { name: '花园', type: 'stay' as const, duration: 30 },
+      { name: '外出', type: 'leave' as const, duration: 120 },
+      { name: '休息室', type: 'arrive' as const },
+    ],
+    4: [ // 陈桂兰
+      { name: '休息室', type: 'stay' as const, duration: 50 },
+      { name: '走廊', type: 'move' as const },
+      { name: '餐厅', type: 'stay' as const, duration: 45 },
+      { name: '走廊', type: 'move' as const },
+      { name: '医务室', type: 'stay' as const, duration: 30 },
+      { name: '走廊', type: 'move' as const },
+      { name: '休息室', type: 'arrive' as const },
+    ],
+    5: [ // 刘永华
+      { name: '休息室', type: 'stay' as const, duration: 35 },
+      { name: '走廊', type: 'move' as const },
+      { name: '活动室', type: 'stay' as const, duration: 75 },
+      { name: '走廊', type: 'move' as const },
+      { name: '餐厅', type: 'stay' as const, duration: 35 },
+      { name: '走廊', type: 'move' as const },
+      { name: '休息室', type: 'arrive' as const },
+    ],
+    6: [ // 张三
+      { name: '休息室', type: 'stay' as const, duration: 40 },
+      { name: '走廊', type: 'move' as const },
+      { name: '花园', type: 'stay' as const, duration: 75 },
+      { name: '走廊', type: 'move' as const },
+      { name: '餐厅', type: 'stay' as const, duration: 35 },
+      { name: '走廊', type: 'move' as const },
+      { name: '活动室', type: 'stay' as const, duration: 50 },
+      { name: '走廊', type: 'move' as const },
+      { name: '休息室', type: 'arrive' as const },
+    ]
+  }
 
+  // 获取当前老人的活动轨迹
+  const locations = elderLocations[elder.id] || elderLocations[1] // 默认使用王建国的轨迹
   const history = []
   let currentTime = new Date()
   currentTime.setHours(6, 0, 0, 0)
@@ -616,12 +761,16 @@ const generateTrackHistory = () => {
     const hours = index * (timeRange.value === 'today' ? 1 : timeRange.value === 'week' ? 2 : 4)
     const time = new Date(currentTime.getTime() + hours * 60 * 60 * 1000)
 
+    // 为每个老人生成独特的位置坐标
+    const offsetX = (elder.id * 0.0003) + ((Math.random() - 0.5) * 0.001)
+    const offsetY = (elder.id * 0.0002) + ((Math.random() - 0.5) * 0.001)
+
     history.push({
       time: formatTime(time),
       location: loc.name,
       position: [
-        baseLng + (Math.random() - 0.5) * 0.002,
-        baseLat + (Math.random() - 0.5) * 0.002
+        baseLng + offsetX,
+        baseLat + offsetY
       ] as [number, number],
       type: loc.type,
       duration: loc.duration
@@ -629,6 +778,8 @@ const generateTrackHistory = () => {
   })
 
   trackHistory.value = history
+  // 生成轨迹路径
+  generateTrackPath()
 }
 
 const formatTime = (date: Date): string => {

@@ -617,7 +617,9 @@ const generateTrackHistory = () => {
     { name: '休息室', type: 'arrive' as const },
   ]
 
-  const history = []
+  // 在 generateTrackHistory 函数中修改数组声明
+  const history: typeof trackHistory.value = []
+
   let currentTime = new Date()
   currentTime.setHours(6, 0, 0, 0)
 
