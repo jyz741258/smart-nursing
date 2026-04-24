@@ -45,7 +45,7 @@
             <el-row :gutter="15" class="health-cards">
               <el-col :span="6">
                 <div class="health-card heart">
-                  <div class="card-icon"><el-icon><HeartFilled /></el-icon></div>
+                  <div class="card-icon"><el-icon><Odometer /></el-icon></div>
                   <div class="card-value">{{ healthData.heartRate }}</div>
                   <div class="card-label">心率 BPM</div>
                   <div class="card-status normal">正常</div>
@@ -69,7 +69,7 @@
               </el-col>
               <el-col :span="6">
                 <div class="health-card activity">
-                  <div class="card-icon"><el-icon><Footprinter /></el-icon></div>
+                  <div class="card-icon"><el-icon><Basketball /></el-icon></div>
                   <div class="card-value">{{ healthData.steps }}</div>
                   <div class="card-label">今日步数</div>
                   <div class="card-status normal">达标</div>

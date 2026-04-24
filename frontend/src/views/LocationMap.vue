@@ -466,7 +466,7 @@ const currentUser = computed(() => {
 
 // 判断是否为家属用户
 const isFamily = computed(() => {
-  return currentUser.value.user_type === 2
+  return currentUser.value.user_type === 4
 })
 
 // 过滤后的老人列表
@@ -562,6 +562,7 @@ const handleModeChange = () => {
 const handleTimeRangeChange = () => {
   if (selectedElderId.value) {
     generateTrackHistory()
+    generateTrackPath()
   }
 }
 
@@ -656,6 +657,9 @@ const generateTrackPath = () => {
 // 播放轨迹
 const playTrack = () => {
   if (isPlaying.value || trackHistory.value.length === 0) return
+  
+  // 确保轨迹路径已生成
+  generateTrackPath()
   
   isPlaying.value = true
   

@@ -41,7 +41,7 @@
         <el-table-column label="操作" width="150">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="viewDetail(row)">查看</el-button>
-            <el-button v-if="row.status === 1" type="success" size="small" @click="completeRecord(row)">
+            <el-button v-if="row.status === 1 && (userInfo.value?.user_type === 2 || userInfo.value?.user_type === 3)" type="success" size="small" @click="completeRecord(row)">
               完成
             </el-button>
           </template>

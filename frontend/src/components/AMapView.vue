@@ -300,8 +300,8 @@ const updatePlaybackProgress = () => {
     playbackMarker.setPosition(currentPosition)
   }
 
-  // 移动地图视野到当前位置
-  mapInstance.panTo(currentPosition)
+  // 移动地图视野到当前位置（平滑过渡）
+  mapInstance.panTo(currentPosition, { duration: 500 })
 }
 
 // 动画样式

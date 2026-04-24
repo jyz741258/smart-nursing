@@ -210,8 +210,16 @@
             <el-table-column prop="total_amount" label="金额" width="80">
               <template #default="{ row }">¥{{ row.total_amount }}</template>
             </el-table-column>
-            <el-table-column prop="appointment_date" label="预约日期" width="120" />
-            <el-table-column prop="appointment_time" label="预约时间" width="100" />
+            <el-table-column prop="appointment_date" label="预约日期" width="120">
+              <template #default="{ row }">
+                {{ row.appointment_date || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="appointment_time" label="预约时间" width="100">
+              <template #default="{ row }">
+                {{ row.appointment_time || '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="status_name" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusType(row.status)">{{ row.status_name }}</el-tag>
