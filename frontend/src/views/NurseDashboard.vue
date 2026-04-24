@@ -151,15 +151,53 @@ const currentDate = computed(() => {
 })
 
 const currentDay = computed(() => String(new Date().getDate()).padStart(2, '0'))
-const completedCount = ref(3)
-const pendingCount = ref(5)
-const stats = reactive({ completed: 3, pending: 5, totalHours: 12, rating: 4.8 })
+const completedCount = ref(0)
+const pendingCount = ref(0)
+const stats = reactive({ completed: 0, pending: 0, totalHours: 0, rating: 0 })
 
-const todayTasks = ref([
-  { id: 1, time: '09:00', duration: 60, elderName: '张三', address: '朝阳区建国路88号', notes: '日常清洁护理', type: 1, status: 2 },
-  { id: 2, time: '10:30', duration: 30, elderName: '李四', address: '海淀区中关村大街1号', notes: '血压监测', type: 4, status: 1 },
-  { id: 3, time: '14:00', duration: 45, elderName: '王五', address: '西城区金融街8号', notes: '服药提醒', type: 4, status: 1 }
-])
+const todayTasks = ref<any[]>([])
+
+// 加载今日任务
+const loadTodayTasks = async () => {
+  try {
+    const res: any = await api.get('/nursing/records', {
+      params: {
+        page: 1,
+        page_size: 50
+      }
+    })
+    if (res.code === 200) {
+      // 映射API返回的数据到前端需要的字段
+      todayTasks.value = (res.data.items || []).map((item: any) => ({
+        id: item.id,
+        time: item.start_time ? new Date(item.start_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '待定',
+        duration: 30, // 默认30分钟
+        elderName: item.elder_name || '未知老人',
+        address: '服务地址', // 暂时使用默认地址
+        notes: item.description || '无备注',
+        type: item.nursing_type || 1,
+        status: item.status
+      }))
+      // 计算统计数据
+      completedCount.value = todayTasks.value.filter(task => task.status === 2).length
+      pendingCount.value = todayTasks.value.filter(task => task.status === 1).length
+      stats.completed = completedCount.value
+      stats.pending = pendingCount.value
+    }
+  } catch (error) {
+    console.error('获取今日任务失败', error)
+    // 模拟数据
+    todayTasks.value = [
+      { id: 1, time: '09:00', duration: 60, elderName: '张三', address: '朝阳区建国路88号', notes: '日常清洁护理', type: 1, status: 2 },
+      { id: 2, time: '10:30', duration: 30, elderName: '李四', address: '海淀区中关村大街1号', notes: '血压监测', type: 4, status: 1 },
+      { id: 3, time: '14:00', duration: 45, elderName: '王五', address: '西城区金融街8号', notes: '服药提醒', type: 4, status: 1 }
+    ]
+    completedCount.value = todayTasks.value.filter(task => task.status === 2).length
+    pendingCount.value = todayTasks.value.filter(task => task.status === 1).length
+    stats.completed = completedCount.value
+    stats.pending = pendingCount.value
+  }
+}
 
 // 服务老人列表
 const serviceElders = ref<any[]>([])
@@ -197,14 +235,42 @@ const startTask = (task: any) => {
 }
 
 const completeTask = async () => {
-  ElMessage.success('任务已完成')
-  taskDialog.value = false
+  if (currentTask.value) {
+    try {
+      // 调用API完成任务
+      const res: any = await api.post(`/nursing/records/${currentTask.value.id}/complete`, {
+        notes: taskForm.content
+      })
+      if (res.code === 200) {
+        // 更新本地任务状态
+        const taskIndex = todayTasks.value.findIndex(task => task.id === currentTask.value.id)
+        if (taskIndex !== -1) {
+          todayTasks.value[taskIndex].status = parseInt(taskForm.status)
+        }
+        // 更新统计数据
+        if (taskForm.status === '2') {
+          completedCount.value++
+          pendingCount.value--
+          stats.completed++
+          stats.pending--
+        }
+        ElMessage.success('服务已完成')
+        taskDialog.value = false
+      } else {
+        ElMessage.error('完成服务失败')
+      }
+    } catch (error) {
+      console.error('完成服务失败', error)
+      ElMessage.error('完成服务失败，请稍后重试')
+    }
+  }
 }
 
 const syncHealth = () => ElMessage.success('健康数据同步成功')
 
 onMounted(() => {
   loadServiceElders()
+  loadTodayTasks()
 })
 
 onUnmounted(() => {
