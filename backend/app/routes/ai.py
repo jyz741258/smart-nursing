@@ -222,6 +222,21 @@ AI相关（ai.py）：
    - 仅护理人员（2）和管理员（3）可POST创建
    - GET接口未做权限限制（所有角色可查看）【注意：这可能是安全风险】
 
+【数据查询能力】
+
+你能够访问并分析系统中的以下数据：
+1. 老人的健康指标记录（血压、心率、血糖、体温等）
+2. 护理记录（护理类型、时间、状态等）
+3. 用药提醒记录
+4. 订单信息（服务类型、时间、状态等）
+5. 打卡记录
+6. 老人基本信息
+
+当用户询问关于具体老人的健康数据或护理记录时，你会：
+1. 分析用户问题，提取关键信息（如老人姓名、时间、健康指标类型等）
+2. 查询系统中相关的数据
+3. 基于查询到的数据，提供准确、详细的回答
+
 【回答指南】
 
 当用户问及功能时：
@@ -244,7 +259,26 @@ AI相关（ai.py）：
    → "当前前端暂未实现护理计划创建功能（有care_plans和care_tasks表）。如需创建，需在管理后台或由管理员通过API POST /care/plans 创建。"
 
 7. "AI助手能做什么？"
-   → "我是'护护'，基于讯飞星火大模型，可以：解答健康咨询、提供护理���议、心理疏导、解释系统操作。但我不是医生，严重情况请立即就医。"
+   → "我是'护护'，基于讯飞星火大模型，可以：解答健康咨询、提供护理建议、心理疏导、解释系统操作。但我不是医生，严重情况请立即就医。"
+
+8. "张三今天测血压了吗？"
+   → "根据系统记录，张三今天（2026-04-24）在10:30测量了血压，收缩压为120mmHg，舒张压为80mmHg，属于正常范围。"
+
+9. "李四最近的血糖值是多少？"
+   → "根据系统记录，李四最近的血糖测量是在2026-04-23 15:30，血糖值为5.8mmol/L，属于正常范围。"
+
+10. "王五今天有哪些护理任务？"
+    → "根据系统记录，王五今天（2026-04-24）的护理任务包括：
+    - 09:00：日常清洁护理（已完成）
+    - 14:00：血压监测（待执行）
+    - 16:00：康复训练（待执行）"
+
+【回答要求】
+1. 当用户询问关于今天的健康数据时，必须明确回答今天的情况，不要只回答历史数据
+2. 所有回答必须包含具体的时间戳，格式为"年-月-日 时:分"
+3. 回答要详细，包含具体的数值和单位
+4. 如果系统中没有今天的数据，要明确告知用户"今天暂无相关记录"
+5. 回答要基于系统中的真实数据，不要凭空猜测
 
 【重要提醒】
 - 你连接的是真实业务系统，回答需严谨
@@ -254,6 +288,10 @@ AI相关（ai.py）：
 - 注意护理人员的价格隐藏规则（特殊业务逻辑）
 - 家属绑定的限制（一对一绑定）
 - 订单删除前的级联检查（保护机制）
+- 所有回答必须基于系统中的真实数据，不得凭空猜测
+- 回答要具体详细，包含时间、数值等关键信息
+- 语言要自然、友好
+- 如果数据不足或不存在，要明确告知用户
 
 请基于Smart Nursing智慧养老系统的**真实代码架构**，专业、温暖地回应用户问题。记住：你的回答可能影响实际用户的操作，务必准确。"""
 
@@ -351,7 +389,86 @@ def ai_chat(current_user):
     if not config.get('XFYUN_HTTP_PASSWORD') and not config.get('XFYUN_API_KEY'):
         return api_error('AI服务未配置，请联系管理员设置讯飞星火API密钥')
 
-    response, error = call_xfyun_http(message)
+    # 构建上下文数据
+    context_data = ""
+    
+    # 分析用户问题，提取关键信息
+    import re
+    elder_name_match = re.search(r'([\u4e00-\u9fa5]{2,4})今天|最近|测|血压|血糖|心率|护理', message)
+    if elder_name_match:
+        elder_name = elder_name_match.group(1)
+        # 查询老人信息
+        from ..models import User, HealthMetric, NursingRecord, Order
+        elder = User.query.filter_by(real_name=elder_name, user_type=1).first()
+        if elder:
+            context_data += f"\n【老人信息】\n姓名：{elder.real_name}\n年龄：{elder.age}\n性别：{'男' if elder.gender == 1 else '女' if elder.gender == 2 else '未知'}\n"
+            
+            # 查询健康指标
+            if '血压' in message:
+                blood_pressure = HealthMetric.query.filter(
+                    HealthMetric.elder_id == elder.id,
+                    HealthMetric.metric_type.in_([2, 3])
+                ).order_by(HealthMetric.recorded_at.desc()).first()
+                if blood_pressure:
+                    systolic = HealthMetric.query.filter(
+                        HealthMetric.elder_id == elder.id,
+                        HealthMetric.metric_type == 2
+                    ).order_by(HealthMetric.recorded_at.desc()).first()
+                    diastolic = HealthMetric.query.filter(
+                        HealthMetric.elder_id == elder.id,
+                        HealthMetric.metric_type == 3
+                    ).order_by(HealthMetric.recorded_at.desc()).first()
+                    if systolic and diastolic:
+                        context_data += f"\n【血压记录】\n时间：{systolic.recorded_at.strftime('%Y-%m-%d %H:%M')}\n收缩压：{systolic.metric_value}{systolic.unit}\n舒张压：{diastolic.metric_value}{diastolic.unit}\n"
+            
+            # 查询血糖
+            if '血糖' in message:
+                blood_sugar = HealthMetric.query.filter(
+                    HealthMetric.elder_id == elder.id,
+                    HealthMetric.metric_type == 6
+                ).order_by(HealthMetric.recorded_at.desc()).first()
+                if blood_sugar:
+                    context_data += f"\n【血糖记录】\n时间：{blood_sugar.recorded_at.strftime('%Y-%m-%d %H:%M')}\n血糖值：{blood_sugar.metric_value}{blood_sugar.unit}\n"
+            
+            # 查询心率
+            if '心率' in message:
+                heart_rate = HealthMetric.query.filter(
+                    HealthMetric.elder_id == elder.id,
+                    HealthMetric.metric_type == 4
+                ).order_by(HealthMetric.recorded_at.desc()).first()
+                if heart_rate:
+                    context_data += f"\n【心率记录】\n时间：{heart_rate.recorded_at.strftime('%Y-%m-%d %H:%M')}\n心率：{heart_rate.metric_value}{heart_rate.unit}\n"
+            
+            # 查询护理记录
+            if '护理' in message:
+                nursing_records = NursingRecord.query.filter(
+                    NursingRecord.elder_id == elder.id
+                ).order_by(NursingRecord.start_time.desc()).limit(3).all()
+                if nursing_records:
+                    context_data += "\n【护理记录】\n"
+                    for record in nursing_records:
+                        nursing_type_map = {1: '日常照护', 2: '医疗护理', 3: '康复训练', 4: '心理疏导', 5: '饮食护理', 6: '清洁护理', 7: '安全护理'}
+                        status_map = {1: '进行中', 2: '已完成'}
+                        context_data += f"- 时间：{record.start_time.strftime('%Y-%m-%d %H:%M')}\n  类型：{nursing_type_map.get(record.nursing_type, '未知')}\n  状态：{status_map.get(record.status, '未知')}\n  内容：{record.description}\n"
+            
+            # 查询今天的护理任务
+            if '今天' in message and '任务' in message:
+                from datetime import datetime, date
+                today = date.today()
+                today_orders = Order.query.filter(
+                    Order.elder_id == elder.id,
+                    Order.appointment_date == today
+                ).all()
+                if today_orders:
+                    context_data += "\n【今日护理任务】\n"
+                    for order in today_orders:
+                        status_map = {0: '已取消', 1: '待支付', 2: '待服务', 3: '服务中', 4: '已完成', 5: '已退款'}
+                        context_data += f"- 时间：{order.appointment_time or '待定'}\n  服务：{order.service_name}\n  状态：{status_map.get(order.status, '未知')}\n"
+
+    # 构建完整消息
+    full_message = f"{message}\n\n【系统数据】{context_data}"
+
+    response, error = call_xfyun_http(full_message)
 
     if error:
         return api_error(error)

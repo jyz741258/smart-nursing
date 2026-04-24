@@ -340,9 +340,11 @@ const checkAIStatus = async () => {
       modelInfo.value = res.data.model || '未知'
     } else {
       aiStatus.value = 'offline'
+      modelInfo.value = '未知'
     }
   } catch (error) {
     aiStatus.value = 'offline'
+    modelInfo.value = '未知'
   }
 }
 
@@ -352,16 +354,18 @@ const getModelInfo = async () => {
     const res: any = await api.get('/ai/models')
     if (res.code === 200 && res.data.length > 0) {
       modelInfo.value = res.data[0].name
+    } else {
+      modelInfo.value = '未知'
     }
   } catch (error) {
-    // 忽略错误
+    modelInfo.value = '未知'
   }
 }
 
 onMounted(async () => {
   await audioManager.init() // 初始化音频
-  checkAIStatus()
-  getModelInfo()
+  // 并行执行状态检查和模型信息获取
+  await Promise.all([checkAIStatus(), getModelInfo()])
 })
 </script>
 
