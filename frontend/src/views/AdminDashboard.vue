@@ -111,7 +111,7 @@
       <el-col :span="8">
         <div class="card-container">
           <div class="card-header"><span class="card-title">服务类型分布</span></div>
-          <div ref="pieChartRef" style="height: 300px"></div>
+          <div ref="pieChartRef" style="height: 450px"></div>
         </div>
       </el-col>
     </el-row>

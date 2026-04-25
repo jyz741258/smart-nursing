@@ -11,9 +11,6 @@
         :circle-center="fenceCenter"
         :circle-radius="fenceRadius * 1000"
         :show-circle="mapMode === 'fence' && selectedElderId"
-        :track-playback="mapMode === 'track' && isPlaying"
-        :playback-progress="playbackProgress"
-        :playback-path="trackHistory.map(h => h.position)"
         class="map-view"
         @click="handleMapClick"
         @marker-click="handleMarkerClick"
@@ -55,23 +52,13 @@
 
       <!-- 轨迹回放控制 -->
       <div v-if="mapMode === 'track' && selectedElderId && trackHistory.length > 0" class="track-player">
-        <el-button circle size="small" @click="playTrack" :disabled="isPlaying">
-          <el-icon><VideoPlay /></el-icon>
+        <el-button circle size="small" @click="togglePlay" :type="isPlaying ? 'warning' : 'success'">
+          <el-icon v-if="!isPlaying"><VideoPlay /></el-icon>
+          <el-icon v-else><VideoPause /></el-icon>
         </el-button>
-        <el-button circle size="small" @click="pauseTrack" :disabled="!isPlaying">
-          <el-icon><VideoPause /></el-icon>
-        </el-button>
-        <el-slider
-          v-model="playbackProgress"
-          :step="1"
-          :min="0"
-          :max="trackHistory.length - 1"
-          size="small"
-          class="playback-slider"
-          @change="seekTrack"
-        />
-        <span class="playback-time">{{ currentPlaybackTime }}</span>
+        <span class="playback-time">{{ currentTimeDisplay }}</span>
       </div>
+
     </div>
 
     <!-- 侧边信息面板 -->
@@ -401,19 +388,26 @@ const loadElders = async () => {
           id: elder.id,
           name: elder.name,
           avatar: elder.avatar || '',
-          status: 'normal',
+          status: elder.status || 'normal',
           location: locationName,
           lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
           position: position,
           gender: elder.gender
         }
       })
+      
+      // 检查是否有异常状态的老人
+      const warningElders = allElders.value.filter(elder => elder.status !== 'normal')
+      if (warningElders.length > 0) {
+        ElMessage.warning(`发现 ${warningElders.length} 位老人状态异常，请注意查看！`)
+      }
+      
       ElMessage.success(`已加载 ${allElders.value.length} 位老人的位置信息`)
     }
   } catch (error) {
     console.error('获取老人列表失败', error)
     ElMessage.error('获取老人列表失败，使用默认数据')
-    // 使用默认数据，只包含护理员服务的老人（张三和王五）
+    // 使用默认数据，包含护理员服务的老人（张三、李奶奶、王五）
     allElders.value = [
       {
         id: 1,
@@ -426,6 +420,16 @@ const loadElders = async () => {
         gender: '男'
       },
       {
+        id: 2,
+        name: '李奶奶',
+        avatar: '',
+        status: 'warning',
+        location: '餐厅',
+        lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        position: getElderPosition(2),
+        gender: '女'
+      },
+      {
         id: 3,
         name: '王五',
         avatar: '',
@@ -433,6 +437,26 @@ const loadElders = async () => {
         location: '活动室',
         lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
         position: getElderPosition(3),
+        gender: '男'
+      },
+      {
+        id: 4,
+        name: '陈桂兰',
+        avatar: '',
+        status: 'normal',
+        location: '休息室',
+        lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        position: getElderPosition(4),
+        gender: '女'
+      },
+      {
+        id: 5,
+        name: '刘永华',
+        avatar: '',
+        status: 'normal',
+        location: '医务室',
+        lastUpdate: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        position: getElderPosition(5),
         gender: '男'
       }
     ]
@@ -463,7 +487,8 @@ const loadBoundElderIds = async () => {
     }
   } catch (error) {
     console.error('获取绑定老人失败', error)
-    boundElderIds.value = []
+    // 为家属设置默认的绑定老人ID（张三）
+    boundElderIds.value = [1]
   }
 }
 
@@ -483,13 +508,9 @@ const loadNurseElderIds = async () => {
 
 // 根据用户类型过滤老人列表
 const visibleElders = computed(() => {
-  // 管理员可以查看所有老人
-  if (userType.value === 3) {
+  // 管理员和护理员都可以查看所有老人
+  if (userType.value === 3 || userType.value === 2) {
     return allElders.value
-  }
-  // 护理员只能查看自己服务的老人
-  if (userType.value === 2) {
-    return allElders.value.filter(elder => nurseElderIds.value.includes(elder.id))
   }
   // 家属只能查看绑定的老人
   if (userType.value === 4) {
@@ -522,8 +543,8 @@ const activityRange = ref(0)
 const activityStatus = ref('活跃')
 const timeRange = ref('today')
 const isPlaying = ref(false)
-const playbackProgress = ref(0)
-const currentPlaybackTime = ref('00:00')
+const currentTimeDisplay = ref('00:00')
+let playbackAnimationId: number | null = null
 
 // 轨迹统计
 const trackStats = ref({
@@ -618,13 +639,10 @@ const markers = computed(() => {
   return result
 })
 
-let playbackTimer: number | null = null
-
 const handleModeChange = () => {
   selectedElderId.value = null
   trackPath.value = []
   trackHistory.value = []
-  pauseTrack()
 
   if (mapMode.value === 'nursingHome') {
     mapCenter.value = [PIDU_CENTER_LNG, PIDU_CENTER_LAT]
@@ -639,6 +657,7 @@ const handleTimeRangeChange = () => {
 }
 
 const handleElderChange = (id: number) => {
+  selectedElderId.value = id
   const elder = visibleElders.value.find(e => e.id === id)
   if (elder) {
     currentLocation.value = elder.location
@@ -739,53 +758,60 @@ const generateTrackPath = () => {
   trackPath.value = trackHistory.value.map(h => h.position)
 }
 
-const playTrack = () => {
-  if (isPlaying.value || trackHistory.value.length === 0) return
+const togglePlay = () => {
+  if (isPlaying.value) {
+    stopPlayback()
+  } else {
+    startPlayback()
+  }
+}
+
+const startPlayback = () => {
+  if (trackHistory.value.length === 0) return
   isPlaying.value = true
+  let startTime = Date.now()
+  const duration = trackHistory.value.length * 1500
 
-  playbackTimer = window.setInterval(() => {
-    if (playbackProgress.value < trackHistory.value.length - 1) {
-      playbackProgress.value++
-      updatePlaybackTime()
-      updatePlaybackPosition()
+  const animate = () => {
+    if (!isPlaying.value) return
+
+    const elapsed = Date.now() - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    const currentIndex = Math.min(
+      Math.floor(progress * trackHistory.value.length),
+      trackHistory.value.length - 1
+    )
+
+    updatePlaybackDisplay(currentIndex)
+
+    if (progress < 1) {
+      playbackAnimationId = requestAnimationFrame(animate)
     } else {
-      pauseTrack()
+      stopPlayback()
     }
-  }, 1500)
+  }
+
+  playbackAnimationId = requestAnimationFrame(animate)
 }
 
-const pauseTrack = () => {
+const stopPlayback = () => {
   isPlaying.value = false
-  if (playbackTimer) {
-    clearInterval(playbackTimer)
-    playbackTimer = null
+  if (playbackAnimationId) {
+    cancelAnimationFrame(playbackAnimationId)
+    playbackAnimationId = null
   }
 }
 
-const seekTrack = (index: number) => {
-  playbackProgress.value = index
-  updatePlaybackTime()
-  updatePlaybackPosition()
-}
+const updatePlaybackDisplay = (index: number) => {
+  if (trackHistory.value.length === 0 || index >= trackHistory.value.length) return
+  currentTimeDisplay.value = trackHistory.value[index].time
 
-// 更新播放时的位置和轨迹
-const updatePlaybackPosition = () => {
-  if (trackHistory.value.length === 0 || playbackProgress.value >= trackHistory.value.length) return
-  
-  const currentPoint = trackHistory.value[playbackProgress.value]
-  if (currentPoint) {
-    // 移动地图视图到当前位置
-    mapViewRef.value?.setView(currentPoint.position, 17)
-    
-    // 动态更新轨迹路径，只显示到当前播放点
-    trackPath.value = trackHistory.value.slice(0, playbackProgress.value + 1).map(point => point.position)
-  }
-}
+  // 更新轨迹路径，只显示到当前点
+  trackPath.value = trackHistory.value.slice(0, index + 1).map(h => h.position)
 
-const updatePlaybackTime = () => {
-  if (trackHistory.value[playbackProgress.value]) {
-    currentPlaybackTime.value = trackHistory.value[playbackProgress.value].time
-  }
+  // 更新地图中心到当前位置
+  const currentPos = trackHistory.value[index].position
+  mapViewRef.value?.setView(currentPos, 17)
 }
 
 const handleMapClick = (lng: number, lat: number) => {
@@ -1015,24 +1041,8 @@ $gray-800: #1e293b;
         background: $primary-green-dark;
       }
 
-      &:disabled {
-        background: $gray-300;
-      }
-    }
-
-    .playback-slider {
-      width: 200px;
-
-      :deep(.el-slider__runway) {
-        background: $gray-200;
-      }
-
-      :deep(.el-slider__bar) {
-        background: $primary-green;
-      }
-
-      :deep(.el-slider__button) {
-        border-color: $primary-green;
+      &.warning {
+        background: #f97316;
       }
     }
 
@@ -1043,6 +1053,7 @@ $gray-800: #1e293b;
       min-width: 40px;
     }
   }
+
 }
 
 .info-panel {
